@@ -1,11 +1,8 @@
-build: main.o example2.o example1.o
-	gcc main.o example2.o example1.o -o exec.out
+build: main.o animations.o 
+	gcc main.o animations.o -lcurses -o exec.out
 main.o: main.c
 	gcc -c main.c
-example2.o: example2.c example2.h 
-	gcc -c example2.c
-example1.o: example1.c example1.h
-	gcc -c example1.c
-
+animations.o: ./assets/animations.c ./assets/animations.h
+	gcc -c ./assets/animations.c  -o animations.o
 clean:
 	rm -rf ./*.o
