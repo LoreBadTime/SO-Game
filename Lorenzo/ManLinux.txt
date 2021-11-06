@@ -1,0 +1,492 @@
+--------------------------------------------------------------------
+INFO FILESYSTEM
+
+/bin i programmi fondamentali del sistema, utilizzabili da tutti gli utenti ordinari.
+/boot contiene di norma i file essenziali per l’avvio del sistema: quindi contiene
+l’immagine del kernel,
+/cdrom si usa per accedere a CD; ma il device (file in /dev) deve essere prima,
+"montato".
+/dev contiene i file che identificano i vari device
+/etc file di configurazione dei programmi installati nel sistema.
+/home contiene le directory base degli utenti ordinari del sistema
+/root è la directory home dell’amministratore di sistema
+/lib contiene le librerie del sistema come libc. Le altre librerie dei programmi si
+trovano in /usr/lib.
+/proc contiene informazioni prese in real-time dal sistema stesso
+/sbin contiene eseguibili che possono essere lanciati solamente dall’utente root
+/tmp Contiene file temporanei e può di norma essere scritta da tutti gli utenti.
+/usr contiene documentazioni, eseguibili, librerie e molto altro.
+/var contiene ad esempio, i file di spool (di stampa, delle email, ecc.), i PID dei
+processi, ecc
+----------------------------------------------------------------------
+INFO DIRECTORY
+
+directory corrente è rappresentata dal simbolo '.',dir superiore '..'
+root è rappresentata dal simbolo '/'
+percorso completo/assoluto (path/pathname) parte dalla root
+
+----------------------------------------------------------------------
+INFO mio modo di esprimermi
+
+la dicitura "file" intende un qualunque tipo di file,inteso in qualunque modo
+(percorso assoluto,relativo,o in cartella corrente)
+"el-file" indica la possibilità di operare su più files
+"i-directory" dice che è possibile specificare la directory,oppure se non specificato usa la
+cartella corrente implicitamente
+"directory" dice che la cartella deve essere esplicata
+(opzioni) significa che sono obbligatorie
+se un campo è vuoto significa che non sono obbligatorie
+per semplicità nel distinguerle,sono indentate
+----------------------------------------------------------------------
+INFO permessi
+
+questi permessi non sono trsportabili in tutti i filesystem(ex Linux-wind(FAT))
+-rwxrwxrwx(tutti i permessi a tutti)
+----------(eliminati tutti i permessi)
+--wx.r-x.rw-                        (il punto non c'è,solo per distinguere)
+  |   \     \
+prop  gruppo altri
+
+utente root ha tutti i permessi abilitati,solo lui può vedere ed eseguire i file -----------
+inoltre può modificare a piacimento tutti i permessi di altri file/cartelle
+
+----------------------------------------------------------------------
+Leggere variabili/parametri
+
+$(variabile)/$variabile
+per l'assegnamento non deve essere indicato,valide lettere,cifre,sottolineatura(non numero come primo carattere)
+nome­di­variabile=[<valore>]   se vuoto,è intesa stinga vuota
+nome­di­variabile="stringa"
+
+"export VAR" rende disponibile in altre shell la variabile VAR
+"set"        visualizzare le variabili definite
+"env"        visualizzare le variabili di ambiente
+
+Variabili d'ambiente
+GROUPS Un array contenente i numeri GID di cui l'utente è membro
+HOSTTYPE Il nome del tipo di computer.
+OSTYPE Il nome del sistema operativo.
+MACHTYPE Architettura e sistema operativo utilizzato.
+BASH_VERSION Il numero di versione di bash.
+BASH Il percorso completo della copia corrente di bash.
+PPID Il PID del processo genitore della shell attuale.
+UID User ID dell’utente corrente
+
+PATH I percorsi di ricerca per i comandi.è un elenco di directory separato da
+due punti (:). Rappresenta l'insieme dei percorsi di ricerca di vari comandi. Il 
+valore predefinito dipende dalla configurazione di bash.
+Un valore comune potrebbe essere /bin:/usr/bin:/usr/local/bin
+
+HOME La directory home dell'utente.
+CDPATH Il percorso di ricerca per il comando cd.
+
+PS1 Il prompt primario (predefinito ``bash\$ '')Un esempio possibile è \u@\h:\w\$ che in particolare
+mostra anche il nome dell'utente come nell'esempio seguente.
+droms@dedalus:~$
+
+PS2 Il prompt secondario. (predefinito ``>'’)
+
+----------------------------------------------------------------------
+caratteri jolly
+
+espandere nome files
+
+* -> qualsiasi carattere o qualsiasi sequenza di caratteri
+$ -> una sola lettera sconosciuta
+
+il pattern matching con questi tipo di caratteri sono molto potenti
+Ex
+
+lett*  -> lettera1 lettura letto...
+o*o    -> osso oblio ...
+lett?  -> letta letto lett1 letti...
+o?o    -> oso olo o3o ...
+
+il quoting serve per evitare misinterpretazioni "stringa"
+ex 
+"cd la mia cartella" -> errore
+"cd "la mia cartella"" -> ok
+a volte potrebbe essere necessario anche l'escape(backslash),che annulla la specialità del carattere successivo
+echo "$PATH"=echo $PATH -> stampa il contenuto
+se voglio stampare la stringa  echo "\$PATH" -> $PATH
+
+----------------------------------------------------------------------
+COMMAND SUBSTITUTION
+utilizzare l’output di un comando come input per altri comandi,interpretando stringhe come comandi
+comando opzioni ` comando in forma di stringa`
+Ex
+mkdir "backup `date `" -> crea la cartell "backup (data odierna)"
+
+----------------------------------------------------------------------
+SCORCIATOIE PER LA SHELL
+
+!! riesegue l'ultimo comando appena eseguito
+!n riesegue l'ennesimo comando presente nella storia, dove 'n' è il numero del comando da rieseguire
+!stringa riesegue l'ultimo comando che inizia con i caratteri specificati in 'stringa'
+!stringa:p visualizza l'ultimo comando che inizia con i caratteri specificati in 'stringa'
+!?comando? ricerca il comando specificato tra punti interrogativi
+fc 4 permette di modificare in comando numero 4 con l'editor predefinito
+fc -e 'nome' 4 permette di modificare in comando numero 4 con l'editor specificato
+^comando1^comando2 riesegue l'ultimo comando eseguito che contiene la parola
+'comando1' sostituendola con 'comando2'.
+"history" visualizza l'elenco di tutti i comandi eseguiti
+tasto TAB espande il nome di un file o di un comando
+Alt Gr + ì permette di inserire un simbolo di Tilde (~) N.B. (il pulsante della tastiera da premere è la i accentata)
+Alt Gr + ' permette di inserire un apice inverso (`)
+
+-----------------------------------------------------------------------
+Alias
+
+servono per evitare di riscrivere lo stesso comando troppe volte(utile per comandi lunghi),
+una specie sinonimo
+creazione 
+"alias rmf='rm -rf'",possibili anche ridefinizioni(rm='rm -rf')
+rimozione 
+"unalias rmf"
+
+-----------------------------------------------------------------------
+redirezione
+
+< è l'operatore di redirezione dell'input standard
+
+"cat < tmp.txt" prenderà in input tmp.txt per il comando cat (anche se non sempre molto utile)
+
+> e >> sono gli operatori di redirezione dell'output standard.
+"ls > tmp.txt" -> sovrascriverà tmp.txt con l'output di ls
+"ls >> tmp.txt" -> stessa cosa di > ma appende al posto di sovrascivere
+
+2> è l'operatore di redirezione dello standard error,funziona come > e >>,può essere usato in coppia con esso
+
+
+OPERATORE PIPE
+
+"|" utile per inviare l’output di un comando,senza stampare durante il trasferimento
+
+"ls | more" ->invia il risultato del comando ls al comando more,che a sua volta formatta tale risultato e lo
+invia a video.
+
+Backgound
+
+UN programma viene avviato come job in background quando alla fine della riga di
+comando viene aggiunto il simbolo "&"
+
+Ex "find / ­name “*.txt” > output.txt 2> error.txt &" -> [1] 173
+                                                         |     \
+la shell restituisce poi una riga contenente il numero del job e il numero del primo processo
+generato da questo job (PID)
+
+Se un job in background ha la necessità di emettere dati attraverso lo standard
+output o lo standard error e questi non sono stati ridiretti si avrà una segnalazione
+
+[1]+ Stopped (tty output) emettidati
+
+il job avviato con il comando emettidati si è bloccato in attesa di poter emettere dell'output.
+
+Questo accade allo stesso modo per ricevere dati dallo standard input se questo non è stato
+ridiretto, si ottiene una segnalazione simile alla seguente.
+
+[1]+ Stopped (tty input) ricevidati
+
+se si vuole sospendere un job in foreground -> [Ctrl+z]
+
+Il job viene sospeso e posto in background. -> "[1]+ Stopped (job)"
+
+Il job attuale è quello a cui si fa riferimento in modo predefinito tutte le
+volte che un comando richiede l'indicazione di un job e questo non viene fornito
+
+si indica un job con il suo numero preceduto dal simbolo %,ma valgono anche questi
+
+%n -> Il job con il numero indicato dalla
+lettera n
+%<stringa> -> Il job il cui comando inizia con la stringa indicata
+%?<stringa> ->Il job il cui comando contiene la stringa indicata
+%% -> Il job attuale
+%+ -> Il job attuale
+%- -> Il job precedente a quello attuale
+
+"fg job " porta in foreground un job che prima era in background se non
+          viene specificato il job su cui agire, si intende quello attuale.
+
+"bg job " permette di fare riprendere (in background) l'esecuzione di un job sospeso,
+          Se non si specifica il job, si intende quello attuale.solo se il job in questione non è in
+          attesa di un input o di poter emettere l'output,viene usato con [Ctrl+z] per runnare il job in background
+
+"jobs     " permette di conoscere l'elenco dei job esistenti e il loro stato(deve essere in foreground)
+       -l   permette di conoscere il numero PID del processo leader,
+            + -> job attuale
+            - -> il potenziale attuale dopo che termina quello realmente attuale
+"kill (segnale) (job)"  termina il job
+      SIGHUP/1         -> Hangup
+      SIGINT/2          -> Interrupt da keyboard
+      SIGKILL/9        -> kill signal
+      SIGTERM/15       -> Termination signal
+      SIGSTOP/17,19,23  ->stoppa il processo
+
+"ps"      fornisce i processi dell'utente associati al terminale corrente
+          PID è il PID del processo
+          TTY = terminale (virtuale)
+          TIME = tempo di CPU utilizzato;
+          CMD = comando che ha generato il processo.
+
+"tty" per ottenere il nome del terminale corrente
+
+"pstree" Mostra l'albero dei processi,init è la radice
+
+"top" monitorare i processi
+-----------------------------------------------------------------------
+espressione regolari
+Metacaratteri
+"." -> Singolo carattere 
+"^" -> inizio della riga
+"\" -> Neutralizza il significato del carattere dopo
+"$" -> Identifica la fine della stringa
+"[]"-> qualsiasi carattere indicato tra parentesi
+"[^]" -> identifica tutti i caratteri non specificati
+{0-9} -> IDentifica ogni carattere compreo nell'intervallo
+
+Modificatori
+
+"?" -> i volta o mia
+"+" -> da una a n volte
+"*" -> da 0 a n volte 
+
+"grep [OPTION]... PATTERN el-file" è comunemente utilizzato per ricercare le occorrenze di
+                                   una o più parole in una serie di file
+                    [RE]
+        ­-i                         ignora la distinzione fra lettere maiuscole e minuscole,
+
+        ­-l                         fornisce la lista dei file che contengono il pattern,
+        
+        -­n                         le linee in output sono precedute dal numero di linea,
+
+        -­v                          restituisce le linee che non contengono il pattern,
+        
+        -w                          restituisce le linee contenenti il pattern come parola completa,
+
+­        -x                          restituisce le linee coincidenti esattamente con il pattern
+
+grep '^1' list.txt
+Ricerca in list.txt le righe che iniziano con 1
+
+grep '1$' list.txt
+Ricerca in list.txt le righe che finiscono con 1
+
+grep '^2[234]' list.txt
+Ricerca le righe che iniziano con 22,23,24
+
+grep '^Linux$' list.txt
+Ricerca le righe che contengono SOLO la parola Linux
+
+grep -c '^$' list.txt
+Visualizza il numero di righe vuote in list.txt
+
+grep '^[^0-9]' list.txt
+Visualizza le righe che NON iniziano con un numero
+
+grep '\<[Ll]inux\>' list.txt
+Visualizza le righe che contengono la parola singola Linux o linux, ma
+non visualizza quelle con, per esempio, LinuxOS ( la sequenza \<
+indica il punto d'inizio di una parola, così come \> quello in cui termina
+una parola)
+
+"sort     el-file"     ordinamento,tratta ogni linea come una collezione di vari campi
+                    separati da delimitatori (default: spazi, tab,in base al primo campo e
+                    alfabetico.)
+
+      -­b            ignora eventuali spazi nelle chiavi di ordinamento,
+
+      -­f            ignora le distinzioni fra maiuscole e minuscole,
+
+      -­n            considera numerica la chiave di ordinamento
+
+­      -r            ordina in modo decrescente,
+
+      -­o  file      invia l’output al file
+
+      -­t  (sep)     usa sep come separatore di campo,
+
+      -k s1,s2      usa i campi da s1 a s2­-1 come chiavi di ordinamento.
+
+
+
+"tr      (cartteri da sostituire) (caratteri che sostituiscono)"   permette di modificare o cancellare caratteri da uno stream di input
+     -c                                                            fa il complementare dei caratteri da sostituire
+
+     -s                                                            comprime gli spazi adiacenti in un unico spazio
+
+     -d  "stringa"                                                 cancella i caratteri contenuti nella "stringa"                                                           
+
+alcuni comandi come per esempio tr, si avvalgono solitamente
+del meccanismo di pipe | 
+
+"wc        file" fornisce delle informazioni circa il contenuto di un file
+                 (o di uno stream in input) dimensione in Byte del file,
+                 il numero di parole contenute ed il numero di
+                 linee che lo compongono 
+                 di default restituisce tutte le info nell'ordine 
+                 RIGHE | PAROLE | BYTE
+
+      -c         BYTE     
+
+      -w         PAROLE
+
+      -l         RIGHE
+
+
+"cut (opzioni) nomefile" estrarre una parte di un file che potrà 
+                         essere utilizzata per un altro scopo
+
+    -c lista_caratteri    posizioni dei caratteri da selezionare
+                          (il primo carattere è in posizione 1) 
+
+    -d delimitatore       indica delimitatore di campo (tab di default)                     
+        
+    -f lista_campi        campi da selezionare (il primo campo è 1) 
+
+cut -c3-6 nomefile -> Visualizza dal terzo al sesto carattere di ogni riga di nomefile   
+cut –f3-5 nomefile -> Visualizza dal terzo al quinto campo di ogni riga di nomefile
+
+si può specificare -> 1-5 = 1,2,3,4,5
+
+
+
+"head             file"     di default restituisce le sue prime 10 righe
+
+       -n numero            visualizza le prime numero righe(-n2 -> le prime due)
+ 
+       -c numero            Visualizza i primi numero byte(-c100 -> i primi 100 byte )
+
+       -v                   in aggiunta ai precedenti aggiunge info aggiutive (v = verbose)
+
+
+"tail             file"     stessa cosa di head solo che le fa alla fine del file 
+                            (sostituisci primo con ultimo nella def di head)
+
+
+"uniq file"                 Rimuove le righe duplicate consecutive da un file
+
+"cmp file1 file2"           compara due file di qualunque tipo, e manda in out il byte ed il numero di riga
+                            della prima differenza riscontrata
+
+
+-----------------------------------------------------------------------
+
+_______________________________________________________________________
+"man (comando)" se non conosco la sintassi
+
+"apropos (comando)" se non si ricorda il nome del comando(anche se si cerca un 
+comando con una certa funzionalità,cerca nelle man page di linux)
+
+"whatis (comando)" cosa fa un comando
+
+"pwd" visualizza la path della directory corrente
+
+"whoami" stampa il nome utente dell’utente corrente
+_______________________________________________________________________
+"chmod (opzioni) (el-file)" modifica permessi file
+          +             abilitazione permessi,i permessi devono essere in lista(+wr)
+
+          -             negazione permessi(opposto +),può essere usato con +(ma bisogna attaccarlo,ex +w-r)
+
+        u/g/o/a         riferimento di abilitazione a tipo di utente specifico(usr,group,others,all),di default(implicito) all
+                        va specificato prima del +/-(ex g+r-w)
+                        (QUESTI COMANDI DEVONO ESSERE ATTACCATI)(ex g+r-w)
+
+         ---            modifica mediante maschere binarie(0-7 al posto di -)
+_______________________________________________________________________
+"chown newpropr (el-file)"   cambia il proprietario del file in quello nuovo specificato
+_______________________________________________________________________
+"echo $VAR"             stampa contnuto VAR
+_______________________________________________________________________
+"chgrp newgrp (el-file)"     cambia il gruppo di apparenenza del file in quello nuovo specificato
+_______________________________________________________________________
+"ln     file new-inode-file"     creare un link ad un file(default link fisico)
+    -s                           link simbolico
+
+_______________________________________________________________________
+"ls     (i-directory)" visualizzare il contenuto della directory corrente
+
+    -l                 Visualizzare alcuni dettagli importanti di ciascun file.
+                        (-rw-rw--rw 1 prop grp 553, Jul 18 2016 file)
+                        Il primo carattere indica il tipo di file 
+                            "-" file regolare
+                            "d" directory
+                            "l" link (collegamento)
+                            "b" periferica a blocchi con buffer
+                            "c" periferica a caratteri con buffer
+                            "u" periferica a caratteri senza buffer
+                            "p" pipe FIFO
+                            "s" socket
+                        I 9 successivi indicano i permessi di accesso al file.
+                        2 campo il numero di link
+                        3 il nome del proprietario del file
+                        4 il nome del gruppo a cui appartiene il proprietario
+                        5 le dimensioni in byte
+                        6 la data e l'ora dell'ultima modifica 
+                        7 il nome del file stesso
+
+    -a                -l con file nascosti
+    -i                stampa i link
+_______________________________________________________________________
+"cd (i-directory)" spostarsi da una directory all'altra,con "/" all'inizio ci si 
+                   sposta mediante path assoluta,con ".." invece con quella relativa
+_______________________________________________________________________
+"touch file" cambia data modifica o crea file
+_______________________________________________________________________
+"mv file_sorgente file_destinazione" rinomina file
+"mv file_sorgente directory/" sposta in directory
+"mv file_sorgente directory/file_destinazione" sposta + rinomina
+_______________________________________________________________________
+"cp" tale e quale a mv solo che copia al posto di rimuovere
+_______________________________________________________________________
+"rm     file" rimuove file
+    -i         chiede conferma
+_______________________________________________________________________
+"mkdir nome_directory" crea directory
+_______________________________________________________________________
+"rmdir nome_directory" rimuove directory vuote
+_______________________________________________________________________
+"find directory -name "nomedelfile" -print"    ricercare un file,(comprese sottodirectory) 
+                                               e stampa il risultato
+_______________________________________________________________________
+"cat file" Visualizza il contenuto di un file di testo
+_______________________________________________________________________
+"less file" Visualizza il file testo, pagina per pagina
+_______________________________________________________________________
+"more file" Come less, ma con meno funzioni
+_______________________________________________________________________
+"tail file " Visualizza l'ultima parte di un file di testo
+_______________________________________________________________________
+"head file" Visualizza la prima parte di un file di testo
+_______________________________________________________________________
+"file file" Analizza e mostra il tipo di un file
+_______________________________________________________________________
+"strings file" Visualizza stringhe di testo all'interno di un file binario
+_______________________________________________________________________
+"tar ­(opzioni) file.tar directory"       creare degli archivi che contengono file e anche intere directory
+                                         possibile anche modifica e cancellazione in tar già creati
+
+       -cf                               crea un archivio,anche multiple
+
+       -­xf     file.tar                  estrae file.tar,se incluse nel comando le dir o files verranno estratte solo quelle
+                                         con -C si puè specificare la destinazione 
+
+       -­czf    file.tar.gz               -cf con compressione gzip,per estrarre sarà necessario usare gzip -d file.tar.gz
+                                         e poi tar -xf
+------------------------------------------------------------------------
+comandi improbabili
+"df" calcola lo spazio disponibile di tutte le periferiche di memorizzazione montate sul file system
+"du" visualizza informazioni sull'utilizzo del disco
+"fdisk" partiziona un disco fisso
+"fsck" controlla e ripara un file system danneggiato
+"sync" scrive i dati contenuti nei buffer in ram
+"killall" come kill ma si può specificare un nome al posto del PID
+"date" senza argomenti visualizza la data corrente; può inoltre essere utilizzato per la modifica della data e dell'ora del sistema
+"free" visualizza informazioni sulla memoria di sistema (RAM e SWAP)
+"whereis" visualizza la locazione dell'eseguibile, passatogli come argomento.
+"adduser" Crea un nuovo profilo utente
+"halt" Arresta il sistema
+"ifconfig" Permette di configurare le interfacce di rete
+"shutdown" Esegue un reboot (opzione -r) o uno spegnimento (-h) del sistema dopo un determinato tempo
+
+

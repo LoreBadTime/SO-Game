@@ -1,0 +1,72 @@
+"gcc      files.c        "          -> compilazione della sorgente in a.out
+                  -o eseguibile.out -> specifica nome file in uscita
+      -c                            -> produce solo file oggetto
+      
+      -D  MACRO=value               -> assegna i valori alle macro del codice
+
+      -O                            -> ottimizza il codice
+
+      -Wall                         -> produce warning              
+______________________________________________________________________________
+
+debugger: analizzare il comportamento di un altro programma
+
+requisiti:
+il programma deve essere compilato con
+"gcc -g file.c -o file.out"
+
+per lanciare il debugger
+
+"gdb file.out"    (disponibile lista comandi e autocompletamento con TAB )
+
+per eseguire il programma:
+"run     " 
+di norma però prima si inseriscono breakpoint,in modo da sospendere l'exec quando richiesto(per inserire altri comandi ecc)
+
+per inserirlo prima di runnare bisogna digitare
+
+"b nome_funzione/numero_riga "
+a questo breakpoint verra assegnato un numero
+la lista dei breakpoint si ottiene con
+"info breakpoints"
+
+per cancellarli
+"delete numero_breakpoint"
+
+COMANDI PRINCIPALI
+
+"n, next" -> per avanzare alla successiva linea di programma senza entrare nelle sotto funzioni;
+"s, step" -> per avanzare alla successiva linea di programma entrando nelle sotto funzioni;
+"p, print+ [variabile]"/display+[variabile] -> per visualizzare o assegnare il contenuto di una variabile;
+"l, list" -> per visualizzare il codice sorgente del programma sotto esame;
+"finish" -> per completare l'esecuzione del programma fino alla fine della funzione corrente;
+"c, continue" -> per continuare l'esecuzione del programma fino al prossimo breakpoint;
+"quit" -> per uscire dal gdb.
+
+
+IN ALTERNATIVA USARE DDD -> con interfaccia grafica
+_____________________________________________
+makefile 
+
+
+Target: source
+    Azione
+
+$@ nome del target corrente;
+
+ $< Il nome del file per il quale è stato scelto il target per deduzione.
+ $* Il nome del target senza suffisso.
+ $? lista dei file sorgente (prerequisiti) della regola corrente che hanno una
+data più recente del target;
+ $^ lista dei file sorgente (prerequisiti) della regola corrente.
+ CC specifica il compilatore C da utilizzare (default: gcc);
+ CFLAGS: opzioni di default da passare al compilatore;
+ CXX compilatore (default: gcc);
+ FC compilatore fortran
+ CXXFLAGS: opzioni di default da passare al compilatore;
+ MAKE programma che fa il make
+ AR comando per creare librerie statiche
+ ARFLAGS
+ LEX
+progr. Lex per pattern matching
+___________________________________________________

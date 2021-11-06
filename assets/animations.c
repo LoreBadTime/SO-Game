@@ -96,3 +96,152 @@ void game_over(int x,int y){
 	clear(); 
 	refresh();
 }
+
+//per adesso queste non servono,sono solo un template per l'algoritmo
+/*
+int linearbullet(int x,int y,int slownes){
+    int i = 0;
+    while (i < COLS + 1){
+        mvprintw(y,x+i,"-");
+        mvprintw(y,x+i-1," ");
+        //if(y == cordinata_enemy(y) && x+i == cordinata_enemy(x)) then nemico colpito/distrutto
+        refresh();
+        napms(slownes);
+        i++;
+    }    
+}
+
+int enemylinearbullet(int x,int y,int slownes, int pipe[]){
+    int i = 0;
+    while (x - i > -2){
+        mvprintw(y,x-i,"-");
+        mvprintw(y,x-i+1," ");
+        //if(y == cordinata_nave(y) && x+i == cordinata_nave(x)) then nave colpita/distrutta
+        refresh();
+        napms(slownes);
+        i++;
+   
+    }    
+}
+*/
+//test nemici a livello 1,
+
+int enemyLV1(int x,int y,int slownes){
+    //dichiarazioni iniziali
+    int alive = 1;
+    int enemy_posX = x;
+    int enemy_posY = y;
+    int bullet_Y = 0;
+    int tmp = 0;
+    int go_up = 1;
+    pid_t enemy,bullet;
+    int p_enemy_X[2],p_enemy_Y[2],p_bullet[2];
+    pipe(p_enemy_Y);
+    pipe(p_enemy_X);
+    pipe(p_bullet);
+    write(p_bullet[1], &tmp, sizeof(enemy_posY));
+
+    //ciclo che gesitisce il nemico
+    while (enemy_posX > 0 && alive)
+    {   
+        //ciclo che gestisce il rimbalzo
+        while ((enemy_posY >= 0 && enemy_posY <= COLS))
+        {
+            //creazione processo (P)schermo - (C)navicella/proiettile
+            enemy = fork();
+            switch (enemy){
+            case 0:
+
+                //creazione sottoprocessi (P)navicella (C)proiettile
+                bullet = fork();
+                switch (bullet)
+                {
+
+                //processo proiettile,serve per aquisire separatamente le coordinate del proiettile
+                case 0:
+                    close(p_bullet[0]);
+                    --tmp;
+                    if(write(p_bullet[1], &tmp, sizeof(tmp)) <= 0){
+                        mvprintw( 24, 15, "E wr tmp,switch");
+                        refresh();
+                    }
+                    close(p_bullet[1]);
+                    exit(0);
+                    break;
+                //processo navicella,gestisce il rimbalzo eil movimento della navicella,potrebbe essere ottimizzabile
+                default:
+                    if (go_up == 1){
+                        enemy_posY--;
+                    }
+                    else{
+                        enemy_posY++;
+                    }
+
+                    if (write(p_enemy_X[1], &enemy_posX, sizeof(enemy_posX)) <= 0){
+                        mvprintw( 24, 15, "error writing enemy_posX");
+                        refresh();
+                    }
+                    if (write(p_enemy_Y[1], &enemy_posY, sizeof(enemy_posY)) <= 0){
+                        mvprintw( 25, 15, "error writing enemy_posY");
+                        refresh();
+                    }
+                    exit(0);
+                    break;
+                }
+            case -1:
+                refresh();
+                exit(-1);
+                break;
+            //processo schermo,molto probabilemente dovra essere modificato dato che per ora solo questa funzione lo gestisce
+            //in futuro molto probabilmente sara costituito da pipe che riporteranno le cordinate
+            default:
+                if (read(p_enemy_X[0], &enemy_posX, sizeof(enemy_posX)) <= 0)
+                {
+                    mvprintw( 26, 15, "error reading enemy_posX outproc");
+                    refresh();
+                }
+                if (read(p_enemy_Y[0], &enemy_posY, sizeof(enemy_posY)) <= 0)
+                {
+                    mvprintw( 27, 15, "error reading enemy_posY outproc");
+                    refresh();
+                }
+
+                if(read(p_bullet[0], &tmp, sizeof(tmp)) <= 0){
+                    mvprintw( 24, 15, "E reading tmp,while");
+                    refresh();
+                }
+                mvprintw( enemy_posY, enemy_posX, "<");
+                mvprintw( enemy_posY - 1, enemy_posX, " ");
+                mvprintw( enemy_posY + 1, enemy_posX, " ");
+                mvprintw( enemy_posY, enemy_posX - 1, " ");
+                mvprintw( enemy_posY, enemy_posX + 1, " ");
+                mvprintw( enemy_posY - 1, enemy_posX + 1, " ");
+                mvprintw( enemy_posY + 1, enemy_posX + 1, " ");
+                mvprintw( bullet_Y, tmp, "-");
+                mvprintw( bullet_Y, tmp + 1, " ");
+                //ottenimento info per lanciare il processo proiettile
+                if(tmp <= -1){
+                    tmp = enemy_posX;
+                    bullet_Y = enemy_posY;
+                }
+                refresh();
+                napms(slownes);
+                break;
+            }
+        }
+        //avanzamento fino alla navicella
+        --enemy_posX;
+        //cambio modalita di incremento delle y nella navicella(per il rimbalzo)
+        go_up = !go_up;
+        //incrementi per rientrare nel ciclo
+        if (enemy_posY <= -1){
+            enemy_posY++;
+        }
+        else{
+            enemy_posY--;
+        }
+    }
+    //questo nel caso in cui arrivi alla fine
+    game_over(1,11);
+}
+

@@ -2,6 +2,7 @@
 #define ANIMATIONS_H
 #include "../globalincludes.h"
 
+
 #define GM_SPEED 150
 #define GM_CYCLES 5
 #define GM_CYCLES2 10
