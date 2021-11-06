@@ -145,7 +145,7 @@ int enemyLV1(int x,int y,int slownes){
     while (enemy_posX > 0 && alive)
     {   
         //ciclo che gestisce il rimbalzo
-        while ((enemy_posY >= 0 && enemy_posY <= COLS))
+        while ((enemy_posY >= 0 && enemy_posY <= 23))
         {
             //creazione processo (P)schermo - (C)navicella/proiettile
             enemy = fork();
