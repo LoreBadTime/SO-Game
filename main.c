@@ -38,7 +38,7 @@ void menu(){
         
         case ENEMY_LV1:
         //standard screen,da piu controllo
-			enemyLV1(5,11,50);
+			enemyLV1(20,11,40);
         break;
 
 		case GAME_OVER:

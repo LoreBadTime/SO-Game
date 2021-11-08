@@ -126,26 +126,26 @@ int enemylinearbullet(int x,int y,int slownes, int pipe[]){
 */
 //test nemici a livello 1,
 
+# define pos_X 0
+# define pos_Y 1
+
 int enemyLV1(int x,int y,int slownes){
     //dichiarazioni iniziali
     int alive = 1;
-    int enemy_posX = x;
-    int enemy_posY = y;
+    int enemy_pos[2] = {x,y}; //[0] = x,[1] = y;
     int bullet_Y = 0;
     int tmp = 0;
     int go_up = 1;
     pid_t enemy,bullet;
-    int p_enemy_X[2],p_enemy_Y[2],p_bullet[2];
-    pipe(p_enemy_Y);
-    pipe(p_enemy_X);
+    int p_enemy_pos[2],p_bullet[2];
+    pipe(p_enemy_pos);
     pipe(p_bullet);
-    write(p_bullet[1], &tmp, sizeof(enemy_posY));
-
+    write(p_bullet[1], &tmp, sizeof(enemy_pos[pos_X]));
     //ciclo che gesitisce il nemico
-    while (enemy_posX > 0 && alive)
+    while (enemy_pos[pos_X] > 0 && alive)
     {   
         //ciclo che gestisce il rimbalzo
-        while ((enemy_posY >= 0 && enemy_posY <= 23))
+        while ((enemy_pos[pos_Y] >= 0 && enemy_pos[pos_Y] <= 23)) //necessario fix per ottenere dinamicamente le y dello schermo
         {
             //creazione processo (P)schermo - (C)navicella/proiettile
             enemy = fork();
@@ -170,21 +170,18 @@ int enemyLV1(int x,int y,int slownes){
                     break;
                 //processo navicella,gestisce il rimbalzo eil movimento della navicella,potrebbe essere ottimizzabile
                 default:
+                    close(p_enemy_pos[0]);
                     if (go_up == 1){
-                        enemy_posY--;
+                        enemy_pos[pos_Y]--;
                     }
                     else{
-                        enemy_posY++;
+                        enemy_pos[pos_Y]++;
                     }
-
-                    if (write(p_enemy_X[1], &enemy_posX, sizeof(enemy_posX)) <= 0){
-                        mvprintw( 24, 15, "error writing enemy_posX");
+                    if (write(p_enemy_pos[1], enemy_pos, sizeof(int) * 2) <= 0){
+                        mvprintw( 24, 15, "error writing enemy_pos[pos_X]-Y");
                         refresh();
                     }
-                    if (write(p_enemy_Y[1], &enemy_posY, sizeof(enemy_posY)) <= 0){
-                        mvprintw( 25, 15, "error writing enemy_posY");
-                        refresh();
-                    }
+                    close(p_enemy_pos[1]);
                     exit(0);
                     break;
                 }
@@ -195,34 +192,29 @@ int enemyLV1(int x,int y,int slownes){
             //processo schermo,molto probabilemente dovra essere modificato dato che per ora solo questa funzione lo gestisce
             //in futuro molto probabilmente sara costituito da pipe che riporteranno le cordinate
             default:
-                if (read(p_enemy_X[0], &enemy_posX, sizeof(enemy_posX)) <= 0)
+                if (read(p_enemy_pos[0], enemy_pos, sizeof(int)*2) <= 0)
                 {
-                    mvprintw( 26, 15, "error reading enemy_posX outproc");
+                    mvprintw( 26, 15, "error reading enemy_pos[pos_X] outproc");
                     refresh();
                 }
-                if (read(p_enemy_Y[0], &enemy_posY, sizeof(enemy_posY)) <= 0)
-                {
-                    mvprintw( 27, 15, "error reading enemy_posY outproc");
-                    refresh();
-                }
-
                 if(read(p_bullet[0], &tmp, sizeof(tmp)) <= 0){
                     mvprintw( 24, 15, "E reading tmp,while");
                     refresh();
                 }
-                mvprintw( enemy_posY, enemy_posX, "<");
-                mvprintw( enemy_posY - 1, enemy_posX, " ");
-                mvprintw( enemy_posY + 1, enemy_posX, " ");
-                mvprintw( enemy_posY, enemy_posX - 1, " ");
-                mvprintw( enemy_posY, enemy_posX + 1, " ");
-                mvprintw( enemy_posY - 1, enemy_posX + 1, " ");
-                mvprintw( enemy_posY + 1, enemy_posX + 1, " ");
+                mvprintw( enemy_pos[pos_Y], enemy_pos[pos_X], "<");
+                mvprintw( enemy_pos[pos_Y] - 1, enemy_pos[pos_X], " ");
+                mvprintw( enemy_pos[pos_Y] + 1, enemy_pos[pos_X], " ");
+                mvprintw( enemy_pos[pos_Y], enemy_pos[pos_X] - 1, " ");
+                mvprintw( enemy_pos[pos_Y], enemy_pos[pos_X] + 1, " ");
+                mvprintw( enemy_pos[pos_Y] - 1, enemy_pos[pos_X] + 1, " ");
+                mvprintw( enemy_pos[pos_Y] + 1, enemy_pos[pos_X] + 1, " ");
                 mvprintw( bullet_Y, tmp, "-");
                 mvprintw( bullet_Y, tmp + 1, " ");
+
                 //ottenimento info per lanciare il processo proiettile
                 if(tmp <= -1){
-                    tmp = enemy_posX;
-                    bullet_Y = enemy_posY;
+                    tmp = enemy_pos[pos_X];
+                    bullet_Y = enemy_pos[pos_Y];
                 }
                 refresh();
                 napms(slownes);
@@ -230,18 +222,22 @@ int enemyLV1(int x,int y,int slownes){
             }
         }
         //avanzamento fino alla navicella
-        --enemy_posX;
+        --enemy_pos[pos_X];
         //cambio modalita di incremento delle y nella navicella(per il rimbalzo)
         go_up = !go_up;
         //incrementi per rientrare nel ciclo
-        if (enemy_posY <= -1){
-            enemy_posY++;
+        if (enemy_pos[pos_Y] <= -1){
+            enemy_pos[pos_Y]++;
         }
         else{
-            enemy_posY--;
+            enemy_pos[pos_Y]--;
         }
     }
     //questo nel caso in cui arrivi alla fine
     game_over(1,11);
+    close(p_enemy_pos[0]);
+    close(p_enemy_pos[1]);
+    close(p_bullet[0]);
+    close(p_bullet[1]);
 }
 
