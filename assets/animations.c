@@ -90,6 +90,7 @@ void game_over(int x,int y){
     //Fine dell'esecuzione
 	clear(); 
 	refresh();
+    exit(0);
 }
 
 //per adesso queste non servono,sono solo un template per l'algoritmo
@@ -124,10 +125,13 @@ int enemylinearbullet(int x,int y,int slownes, int pipe[]){
 # define pos_X 0
 # define pos_Y 1
 
-int enemyLV1(int x,int y,int slownes){
+//l'ultimo paramtro e una pipe
+int enemyLV1(int x,int y,int slownes,int *sender){
     //dichiarazioni iniziali
+ 
     int alive = 1;
     int enemy_pos[2] = {x,y}; //[0] = x,[1] = y;
+    int send_info[4] = {};
     int bullet_Y = 0;
     int tmp = 0;
     int go_up = 1;
@@ -184,9 +188,8 @@ int enemyLV1(int x,int y,int slownes){
                 refresh();
                 exit(-1);
                 break;
-            //processo schermo,molto probabilemente dovra essere modificato dato che per ora solo questa funzione lo gestisce
-            //in futuro molto probabilmente sara costituito da pipe che riporteranno le cordinate
-            default:
+                //invio info del processo
+           default:
                 if (read(p_enemy_pos[0], enemy_pos, sizeof(int)*2) <= 0)
                 {
                     mvprintw( 26, 15, "error reading enemy_pos[pos_X] outproc");
@@ -196,23 +199,20 @@ int enemyLV1(int x,int y,int slownes){
                     mvprintw( 24, 15, "E reading tmp,while");
                     refresh();
                 }
-                mvprintw( enemy_pos[pos_Y], enemy_pos[pos_X], "<");
-                mvprintw( enemy_pos[pos_Y] - 1, enemy_pos[pos_X], " ");
-                mvprintw( enemy_pos[pos_Y] + 1, enemy_pos[pos_X], " ");
-                mvprintw( enemy_pos[pos_Y], enemy_pos[pos_X] - 1, " ");
-                mvprintw( enemy_pos[pos_Y], enemy_pos[pos_X] + 1, " ");
-                mvprintw( enemy_pos[pos_Y] - 1, enemy_pos[pos_X] + 1, " ");
-                mvprintw( enemy_pos[pos_Y] + 1, enemy_pos[pos_X] + 1, " ");
-                mvprintw( bullet_Y, tmp, "-");
-                mvprintw( bullet_Y, tmp + 1, " ");
+                send_info[0] = enemy_pos[pos_X];
+                send_info[1] = enemy_pos[pos_Y];
+                send_info[2] = tmp;
+                send_info[3] = bullet_Y;
+
+                write(sender[1],send_info,4*sizeof(int));
+                napms(slownes);
+
 
                 //ottenimento info per lanciare il processo proiettile
                 if(tmp <= -1){
                     tmp = enemy_pos[pos_X];
                     bullet_Y = enemy_pos[pos_Y];
                 }
-                refresh();
-                napms(slownes);
                 break;
             }
         }
@@ -229,10 +229,71 @@ int enemyLV1(int x,int y,int slownes){
         }
     }
     //questo nel caso in cui arrivi alla fine
-    game_over(1,11);
     close(p_enemy_pos[0]);
     close(p_enemy_pos[1]);
     close(p_bullet[0]);
     close(p_bullet[1]);
+    exit(0);
+}
+
+
+//VERSIONE MOLTO INSTABILE,cambia la define per modificare il numero di nemici a schermo
+
+#define ENEM_TEST 10
+void screen(){
+    pid_t proc;
+    //int tmp[ENEM_TEST][2];
+    int tmp[2];
+    int enemy_counter[2];
+    int arr[4];
+    pipe(tmp);
+    //pipe(tmp[1]);
+    //pipe(tmp[2]);
+    pipe(enemy_counter);
+    int maxenemies = ENEM_TEST;
+    int lol[2];
+    write(enemy_counter[1],&maxenemies,sizeof(int));
+    int i = 0;
+    int j = -1;
+    while(1){
+        ++j;//lo uso solo per modificare la posizione dei processi
+        proc = fork();
+        switch (proc)
+        {
+        //spawn dei processi dei nemici
+        case 0:
+            //necessario aggiornare questa variabile per non eccedere con i processi e per non creare un ciclo di creazione di processi
+
+            read(enemy_counter[0],&maxenemies,sizeof(int));
+            --maxenemies;
+            write(enemy_counter[1],&maxenemies,sizeof(int));
+
+            if (maxenemies > -1){
+            enemyLV1(30,20+(2*j), 30, tmp);
+            }
+            exit(0);
+            break;
+
+        default:
+        //raccoglimento dati dei nemici,la pipe per fortuna funziona come un interrupt
+            i = 0; 
+            while (i < ENEM_TEST)
+            {
+                read(tmp[0], arr, 4 * sizeof(int));
+                if (arr[0] <= 1)
+                {
+                    game_over(arr[0],arr[1]);
+                }
+                mvaddch(arr[1], arr[0], '<');
+                mvaddch(arr[3], arr[2], '-');
+                ++i;
+                
+            }
+            refresh();
+            clear();
+            break;
+        }
+
+    }
 }
 

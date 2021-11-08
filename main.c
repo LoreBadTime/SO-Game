@@ -21,7 +21,7 @@ void menu(){
 	printf("\nInserire una modalità:"
 		"\n0) EXIT"
 		"\n1) Game-Over"
-        "\n2) Test nemico-lv1"
+        "\n2) Test nemici multipli lv1"
 		"\n\nScelta:");
 	scanf("%d",&mode);
 
@@ -38,7 +38,7 @@ void menu(){
         
         case ENEMY_LV1:
         //standard screen,da piu controllo
-			enemyLV1(20,11,40);
+			screen();
         break;
 
 		case GAME_OVER:
