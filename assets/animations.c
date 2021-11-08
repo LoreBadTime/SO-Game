@@ -35,8 +35,6 @@ void game_over(int x,int y){
 		refresh();
 		//Fine frame sfondo giallo
 		napms(GM_SPEED);
-		clear();
-		refresh();
 
 		//Inizio frame sfondo rosso
 		mvprintw(y,x,NAVE_ESPLOSA);
@@ -44,7 +42,6 @@ void game_over(int x,int y){
 		refresh();
 		//Fine frame sfondo rosso
 		napms(GM_SPEED);
-		clear();
 	}
 	
 	//Inizio animazione morte lenta - Rosso chiaro
@@ -53,16 +50,14 @@ void game_over(int x,int y){
 	bkgd(COLOR_PAIR(3));
 	refresh();
 	napms(GM_DEATH-GM_SPEED);
-	clear();
-	refresh(); //Fine
+     //Fine
 
 	//Inizio animazione morte lenta - Rosso scuro
 	mvprintw(y,x,NAVE_ESPLOSA);
 	bkgd(COLOR_PAIR(4));
 	refresh();
 	napms(GM_DEATH-GM_SPEED);
-	clear();
-	refresh(); //Fine
+    //Fine
 
 	//Inizio animazione morte lenta - Nero
 	mvprintw(y,x,NAVE_ESPLOSA);
