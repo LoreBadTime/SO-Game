@@ -6,6 +6,8 @@
 #include <sys/wait.h>
 #include <curses.h>
 #include <stdlib.h>
+#include <time.h>
+#include <pthread.h>
 #include "./assets/animations.h"
 
 #endif
