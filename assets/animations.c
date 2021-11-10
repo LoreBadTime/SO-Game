@@ -3,7 +3,6 @@
 
 //NEL MAKEFILE INSERIRE QUESTA RIGA,OPPURE DIGITARE IL COMANDO NELLA SHELL:"export TERM=xterm-256color",abilitera la modifica e l'aggiunta di più colori
 
-
 /* game_over = Animazione di gameover.
  * int x prende le ascisse della navetta attuali(potrebbe non servire).
  * int y prende le ordinate della navetta attuali.*/
@@ -72,11 +71,11 @@ void game_over(int x,int y){
 	/* Stampa lettera per lettera della stringa GAME OVER.
 	 * mvprintw accepts only strings, so i need to convert 
 	 * single char into strings to make the animation */
-	for(i=0;i < GM_CYCLES2;i++){
-		tmp[1] = string[i];
-		mvprintw(LINES/2,(COLS/2+i)-5,tmp);
+	for(i=0;i < GM_CYCLES2-1;i++){
+		mvaddch(LINES/2,(COLS/2+i)-5,string[i]);
 		refresh();
 		napms(3*GM_SPEED);
+        clear();
 	}
 	clear(); 
 	refresh();
@@ -238,62 +237,106 @@ int enemyLV1(int x,int y,int slownes,int *sender){
 
 
 //VERSIONE MOLTO INSTABILE,cambia la define per modificare il numero di nemici a schermo
+int c;
+int plarr[5] = {1,1,0,0,0};
+int drawing = 0;
+void *getinput(){
+    int c;
+    while (1){
+        while(drawing){0+0;}
+        c = getch();
+        if (c != ERR)
+        {
+            switch (c)
+            {
+            case KEY_UP:
+                plarr[1] -= 1;
+                break;
+            case KEY_DOWN:
+                plarr[1] += 1;
+                break;
+            case KEY_RIGHT:
+                plarr[0] += 1;
+                break;
+            case KEY_LEFT:
+                plarr[0] -= 1;
+                break;
+            default:
+                break;
+            }
+        }
+    }
+}
+
 
 #define ENEM_TEST 10
 void screen(){
-    pid_t proc;
+    pid_t proc,spawn,player;
+    pthread_t inpt_id;
     //int tmp[ENEM_TEST][2];
     int tmp[2];
     int enemy_counter[2];
+    int playerpipe[2];
     int arr[4];
+ 
     pipe(tmp);
     //pipe(tmp[1]);
     //pipe(tmp[2]);
     pipe(enemy_counter);
+    pipe(playerpipe);
     int maxenemies = ENEM_TEST;
-    int lol[2];
     write(enemy_counter[1],&maxenemies,sizeof(int));
     int i = 0;
     int j = -1;
-    while(1){
-        ++j;//lo uso solo per modificare la posizione dei processi
-        proc = fork();
-        switch (proc)
+    int player_started = 0;
+    int c;
+    int k = 0;
+    //farlo con i processi distrugge la performance,conviene chiederlo al prof se possiamo usare i thread per entrambe le versioni
+    pthread_create(&inpt_id, NULL, getinput, NULL);
+    proc = fork();
+    switch (proc)
+    {
+    //spawn
+    case 0:
+        while (k < maxenemies)
         {
-        //spawn dei processi dei nemici
-        case 0:
-            //necessario aggiornare questa variabile per non eccedere con i processi e per non creare un ciclo di creazione di processi
-
-            read(enemy_counter[0],&maxenemies,sizeof(int));
-            --maxenemies;
-            write(enemy_counter[1],&maxenemies,sizeof(int));
-
-            if (maxenemies > -1){
-            enemyLV1(30,20+(2*j), 30, tmp);
+            spawn = fork();
+            switch (spawn)
+            {
+            case 0:        //variabili di spawn
+                enemyLV1(70, 20 + (2 * k), 30, tmp);
+                exit(-1);
+                break;
+            default:
+                ++k;
+                break;
             }
-            exit(0);
-            break;
-
-        default:
-        //raccoglimento dati dei nemici,la pipe per fortuna funziona come un interrupt
-            i = 0; 
-            while (i < ENEM_TEST)
+        }
+        exit(0);
+        break;
+    default:
+        wait((int *)0);
+        while (1)
+        {  
+            drawing = 0;
+            refresh();
+            napms(30);
+            drawing = 1;
+            clear();
+            i = 0;
+            while (i < maxenemies)
             {
                 read(tmp[0], arr, 4 * sizeof(int));
                 if (arr[0] <= 1)
                 {
-                    game_over(arr[0],arr[1]);
+                    game_over(plarr[0], plarr[1]);
                 }
                 mvaddch(arr[1], arr[0], '<');
                 mvaddch(arr[3], arr[2], '-');
                 ++i;
-                
             }
-            refresh();
-            clear();
-            break;
+            mvprintw(10, 10, "y=%d,x=%d", plarr[1], plarr[0]);
+            mvaddch(plarr[1], plarr[0], '>');
         }
-
     }
 }
-
