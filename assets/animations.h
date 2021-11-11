@@ -14,7 +14,7 @@
 #define NAVE_OK "O"
 #define NAVE_ESPLOSA "X"
 
-void game_over(int x,int y);
+void game_over(WINDOW *w1,int x,int y);
 
 
 #endif
