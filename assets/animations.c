@@ -5,10 +5,12 @@
 
 /* game_over = Animazione di gameover.
  * int x prende le ascisse della navetta attuali(potrebbe non servire).
- * int y prende le ordinate della navetta attuali.*/
-void game_over(int x,int y){
+ * int y prende le ordinate della navetta attuali.
+ * WINDOW w1, a quanto pare se non si passa questa funzione non viene visualizzato il carattere	*/
+void game_over(WINDOW *w1,int x,int y){
 	clear();
 	refresh();
+	start_color();
 	//print sprite with x and y
 	
 	const char string[] = "GAME OVER";
@@ -89,6 +91,7 @@ void game_over(int x,int y){
     //Fine dell'esecuzione
 	clear(); 
 	refresh();
+	endwin();
     exit(0);
 }
 
@@ -270,7 +273,7 @@ void *getinput(){
 
 
 #define ENEM_TEST 10
-void screen(){
+void screen(WINDOW *w1){
     pid_t proc,spawn,player;
     pthread_t inpt_id;
     //int tmp[ENEM_TEST][2];
@@ -329,7 +332,7 @@ void screen(){
                 read(tmp[0], arr, 4 * sizeof(int));
                 if (arr[0] <= 1)
                 {
-                    game_over(plarr[0], plarr[1]);
+                    game_over(w1,plarr[0], plarr[1]);
                 }
                 mvaddch(arr[1], arr[0], '<');
                 mvaddch(arr[3], arr[2], '-');
