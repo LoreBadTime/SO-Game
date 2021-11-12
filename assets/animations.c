@@ -5,12 +5,10 @@
 
 /* game_over = Animazione di gameover.
  * int x prende le ascisse della navetta attuali(potrebbe non servire).
- * int y prende le ordinate della navetta attuali.
- * WINDOW w1, a quanto pare se non si passa questa funzione non viene visualizzato il carattere	*/
+ * int y prende le ordinate della navetta attuali.*/
 void game_over(WINDOW *w1,int x,int y){
-	clear();
-	refresh();
-	start_color();
+	wclear(w1);
+	wrefresh(w1);
 	//print sprite with x and y
 	
 	const char string[] = "GAME OVER";
@@ -31,42 +29,48 @@ void game_over(WINDOW *w1,int x,int y){
 	//Animazione schermo che flasha
 	for(i=0;i < GM_CYCLES;i++){
 		//Inizio frame sfondo giallo
-		mvprintw(y,x,NAVE_OK);
-		bkgd(COLOR_PAIR(1));
-		refresh();
+		mvwprintw(w1,y,x,NAVE_OK);
+		wbkgd(w1,COLOR_PAIR(1));
+        refresh();
+		wrefresh(w1);
 		//Fine frame sfondo giallo
 		napms(GM_SPEED);
 
 		//Inizio frame sfondo rosso
-		mvprintw(y,x,NAVE_ESPLOSA);
-		bkgd(COLOR_PAIR(2));
-		refresh();
+		mvwprintw(w1,y,x,NAVE_ESPLOSA);
+		wbkgd(w1,COLOR_PAIR(2));
+        refresh();
+		wrefresh(w1);
 		//Fine frame sfondo rosso
 		napms(GM_SPEED);
 	}
 	
 	//Inizio animazione morte lenta - Rosso chiaro
 	napms(GM_DEATH);
-	mvprintw(y,x,NAVE_ESPLOSA);
-	bkgd(COLOR_PAIR(3));
-	refresh();
+	mvwprintw(w1,y,x,NAVE_ESPLOSA);
+	wbkgd(w1,COLOR_PAIR(3));
+    refresh();
+	wrefresh(w1);
 	napms(GM_DEATH-GM_SPEED);
      //Fine
 
 	//Inizio animazione morte lenta - Rosso scuro
-	mvprintw(y,x,NAVE_ESPLOSA);
-	bkgd(COLOR_PAIR(4));
-	refresh();
+	mvwprintw(w1,y,x,NAVE_ESPLOSA);
+	wbkgd(w1,COLOR_PAIR(4));
+    refresh();
+	wrefresh(w1);
 	napms(GM_DEATH-GM_SPEED);
     //Fine
 
 	//Inizio animazione morte lenta - Nero
-	mvprintw(y,x,NAVE_ESPLOSA);
-	bkgd(COLOR_PAIR(5));
-	refresh();
+	mvwprintw(w1,y,x,NAVE_ESPLOSA);
+	wbkgd(w1,COLOR_PAIR(5));
+    refresh();
+	wrefresh(w1);
 	napms(7*GM_SPEED);
-	clear(); 
-	refresh(); //Fine
+	wclear(w1); 
+    refresh();
+	wrefresh(w1); //Fine
 
 	sleep(3);	
 
@@ -74,25 +78,23 @@ void game_over(WINDOW *w1,int x,int y){
 	 * mvprintw accepts only strings, so i need to convert 
 	 * single char into strings to make the animation */
 	for(i=0;i < GM_CYCLES2-1;i++){
-		mvaddch(LINES/2,(COLS/2+i)-5,string[i]);
-		refresh();
+		mvwaddch(w1,LINES/2,(COLS/2+i)-5,string[i]);
+		wrefresh(w1);
 		napms(3*GM_SPEED);
-        clear();
+        wclear(w1);
 	}
-	clear(); 
-	refresh();
+	wclear(w1); 
+	wrefresh(w1);
 	napms(3*GM_SPEED);
 
 	//Stampa della stringa GAME OVER per intero
-	mvprintw(LINES/2,(COLS/2)-5,string);
-	refresh();
+	mvwprintw(w1,LINES/2,(COLS/2)-5,string);
+	wrefresh(w1);
 	sleep(3);
     
     //Fine dell'esecuzione
-	clear(); 
-	refresh();
-	endwin();
-    exit(0);
+	wclear(w1); 
+	wrefresh(w1);
 }
 
 //per adesso queste non servono,sono solo un template per l'algoritmo
@@ -107,41 +109,31 @@ int linearbullet(int x,int y,int slownes){
         napms(slownes);
         i++;
     }    
-}
+}*/
 
-int enemylinearbullet(int x,int y,int slownes, int pipe[]){
-    int i = 0;
-    while (x - i > -2){
-        mvprintw(y,x-i,"-");
-        mvprintw(y,x-i+1," ");
-        //if(y == cordinata_nave(y) && x+i == cordinata_nave(x)) then nave colpita/distrutta
-        refresh();
-        napms(slownes);
-        i++;
-   
-    }    
-}
-*/
+
 //test nemici a livello 1,
 
 # define pos_X 0
 # define pos_Y 1
 
 //l'ultimo paramtro e una pipe
-int enemyLV1(int x,int y,int slownes,int *sender){
+int enemyLV1(int x,int y,int slownes,int *sender,int *receiver){
     //dichiarazioni iniziali
  
     int alive = 1;
     int enemy_pos[2] = {x,y}; //[0] = x,[1] = y;
-    int send_info[4] = {};
+    int send_info[5] = {};
     int bullet_Y = 0;
     int tmp = 0;
+    int rec = 0;
     int go_up = 1;
     pid_t enemy,bullet;
     int p_enemy_pos[2],p_bullet[2];
     pipe(p_enemy_pos);
     pipe(p_bullet);
     write(p_bullet[1], &tmp, sizeof(enemy_pos[pos_X]));
+    close(receiver[1]);
     //ciclo che gesitisce il nemico
     while (enemy_pos[pos_X] > 0 && alive)
     {   
@@ -205,12 +197,14 @@ int enemyLV1(int x,int y,int slownes,int *sender){
                 send_info[1] = enemy_pos[pos_Y];
                 send_info[2] = tmp;
                 send_info[3] = bullet_Y;
+                send_info[4] = getpid();
 
-                write(sender[1],send_info,4*sizeof(int));
+                write(sender[1],send_info,5*sizeof(int));
+                read(receiver[0],&rec,sizeof(int));
                 napms(slownes);
 
 
-                //ottenimento info per lanciare il processo proiettile
+                //ottenimento info per lanciare il processo proiettile,se lo facciamo comunicare possiamo decidere il numero di proiettili generati
                 if(tmp <= -1){
                     tmp = enemy_pos[pos_X];
                     bullet_Y = enemy_pos[pos_Y];
@@ -235,6 +229,8 @@ int enemyLV1(int x,int y,int slownes,int *sender){
     close(p_enemy_pos[1]);
     close(p_bullet[0]);
     close(p_bullet[1]);
+    close(sender[1]);
+    close(sender[1]);
     exit(0);
 }
 
@@ -242,11 +238,11 @@ int enemyLV1(int x,int y,int slownes,int *sender){
 //VERSIONE MOLTO INSTABILE,cambia la define per modificare il numero di nemici a schermo
 int c;
 int plarr[5] = {1,1,0,0,0};
-int drawing = 0;
+int out = 1;
+//meglio usare la getch,cosi non fa refresh allo schermo princiale
 void *getinput(){
     int c;
-    while (1){
-        while(drawing){0+0;}
+    while (out){
         c = getch();
         if (c != ERR)
         {
@@ -272,42 +268,43 @@ void *getinput(){
 }
 
 
-#define ENEM_TEST 10
+#define ENEM_TEST 5
 void screen(WINDOW *w1){
     pid_t proc,spawn,player;
+    //purtroppo questa cosa deve essere asincrona,altrimenti la performance crolla completamente,per questo ho usato i thread qui
     pthread_t inpt_id;
-    //int tmp[ENEM_TEST][2];
     int tmp[2];
-    int enemy_counter[2];
+    int enemy_frame[2];
     int playerpipe[2];
-    int arr[4];
- 
+    int arr[5];
+    int send = 1;
+    out = 1;
     pipe(tmp);
-    //pipe(tmp[1]);
-    //pipe(tmp[2]);
-    pipe(enemy_counter);
+    pipe(enemy_frame);
     pipe(playerpipe);
     int maxenemies = ENEM_TEST;
-    write(enemy_counter[1],&maxenemies,sizeof(int));
     int i = 0;
     int j = -1;
-    int player_started = 0;
+    int player_started = 1;
     int c;
     int k = 0;
-    //farlo con i processi distrugge la performance,conviene chiederlo al prof se possiamo usare i thread per entrambe le versioni
+    //creazione thread
     pthread_create(&inpt_id, NULL, getinput, NULL);
+    wclear(w1);
     proc = fork();
+    //screazione processo schermo-nemici
     switch (proc)
     {
-    //spawn
-    case 0:
+    //spawn dei nemici,diveneranno tutti proccessi separati
+    case 0:   //k mi serve per decidere quando spawnarli
         while (k < maxenemies)
         {
             spawn = fork();
             switch (spawn)
             {
             case 0:        //variabili di spawn
-                enemyLV1(70, 20 + (2 * k), 30, tmp);
+                enemyLV1(70, 20 + (2 * k), 10, tmp, enemy_frame);
+                //se si chiudono bene non passano da questo exit,di norma si auto terminano appena raggiungono la fine dello schermo
                 exit(-1);
                 break;
             default:
@@ -318,28 +315,47 @@ void screen(WINDOW *w1){
         exit(0);
         break;
     default:
+        //aspetto l'avvio dei nemici prima di iniziare la scrittura schermo
         wait((int *)0);
-        while (1)
+        // finche non raggiungo il gameover scrivo lo schermo
+        while (player_started)
         {  
-            drawing = 0;
-            refresh();
-            napms(30);
-            drawing = 1;
-            clear();
+            wrefresh(w1);
+            wclear(w1);
             i = 0;
+            mvwaddch(w1,plarr[1], plarr[0], '>');
+            //questo non penso possa essere parallelizzabile,dato che deve mettere tutto nello schermo,aggiungere troppe pipe poi lo rallenterebbe
             while (i < maxenemies)
             {
-                read(tmp[0], arr, 4 * sizeof(int));
+                read(tmp[0], arr, 5 * sizeof(int));
+                //dopo la read possimo gestire le collisioni,e l'eventuale terminazione di processi
                 if (arr[0] <= 1)
                 {
                     game_over(w1,plarr[0], plarr[1]);
+                    player_started = 0;
+                    out = 0;
+                }         
+                mvwaddch(w1,arr[1], arr[0], '<');
+                mvwaddch(w1,arr[3], arr[2], '-');
+                if (arr[3] == plarr[1] && arr[2] == plarr[0])
+                {
+                    game_over(w1,plarr[0], plarr[1]);
+                    player_started = 0;
+                    out = 0;
                 }
-                mvaddch(arr[1], arr[0], '<');
-                mvaddch(arr[3], arr[2], '-');
+                
                 ++i;
             }
-            mvprintw(10, 10, "y=%d,x=%d", plarr[1], plarr[0]);
-            mvaddch(plarr[1], plarr[0], '>');
+            i = 0;
+            //questo probabilmente si puo parallelizzare,serve per sincronizzare tutti i sottoprocessi nemici(in modo da evitare il precedente sfarfallio di posizioni)
+
+            while (i < maxenemies){
+                write(enemy_frame[1],&send,sizeof(int));
+                ++i;
+            }
+            
         }
     }
+
 }
+
