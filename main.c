@@ -3,7 +3,7 @@
 
 typedef struct {
   int x;        // Coordinata x
-  int y;        // coordinata y
+  int y;        // Coordinata y
 } Posizione;
 
 void menu();
@@ -58,13 +58,25 @@ void menu(){
 		
 			switch(key) {
 			      	case 65: //Freccia verso l'alto
-					if(oggetto.y == yext){oggetto.y=yflscr;} //Ritorno dalla prima all'ultima opzione
-					else{ if(oggetto.y > 0) oggetto.y -= 1; }
+					if(oggetto.y == yext){ //Ritorno dalla prima all'ultima opzione
+						oggetto.y=yflscr;
+					}
+					else{ 
+						if(oggetto.y > 0){
+							oggetto.y -= 1; //Aggiornamento ordinata dell'indicatore
+						}
+					}
 					break;
 
 				case 66: //Freccia verso il basso
-					if(oggetto.y == yflscr){oggetto.y=yext;} //Ritorno dall'ultima alla prima opzione
-					else{ if(oggetto.y < maxy - 1) oggetto.y += 1; }
+					if(oggetto.y == yflscr){ //Ritorno dall'ultima alla prima opzione
+						oggetto.y=yext;
+					}
+					else{ 
+						if(oggetto.y < maxy - 1){
+							oggetto.y += 1; //Aggiornamento ordinata dell'indicatore
+						}
+					}
 					break;
 
 				case 10: //Tasto invio
@@ -81,11 +93,14 @@ void menu(){
 					}
 					if(oggetto.y == yflscr){ //Scelta menù = Animazione completa
 						screen(w1);
+						wclear(w1);
+						endwin();
+						exit(0);
 					}
 					break; 
 				}
 
-		/* Spostamento del cursore in base al tasto premuto */
+		/* Spostamento dell'indicatore in base al tasto premuto */
 		wclear(w1);
 		mvwaddch(w1,oggetto.y, oggetto.x, '-');
 		}
