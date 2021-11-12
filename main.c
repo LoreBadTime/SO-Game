@@ -24,15 +24,21 @@ void menu(){
 	int mode=-1;
 	int key=0;
 	int enter='\n';
+
 	WINDOW *w1;
 
 	initscr();
 	noecho();
 	keypad(stdscr, 1);
 	curs_set(0);
+	start_color();
+	init_color(COLOR_BLACK,0, 0, 0);
+	init_pair(5,COLOR_WHITE,COLOR_BLACK);
 
 	getmaxyx(stdscr, maxy, maxx);
 	w1 = newwin (maxy,maxx,0,0);
+	//non so il perche ma anche se non lo inserisco il colore viene cambiato comunque ?.?
+	//wbkgd(w1,COLOR_PAIR(1));
 
 	struct posizione oggetto = { (maxx/2)-12, (maxy/2)+1 };
 	/* Prima visualizzazione al centro */
@@ -44,6 +50,7 @@ void menu(){
 			mvwprintw(w1,(maxy/2)+1,(maxx/2)-10,"EXIT");
 			mvwprintw(w1,(maxy/2)+2,(maxx/2)-10,"Game-Over");
 			mvwprintw(w1,(maxy/2)+3,(maxx/2)-10,"Schermo completo");
+			
 			wrefresh(w1);
 			key = wgetch(w1);
 		
@@ -65,7 +72,7 @@ void menu(){
 				wclear(w1);
 				endwin();
 				exit(0);}
-				if(oggetto.y == (maxy/2)+3) screen();
+				if(oggetto.y == (maxy/2)+3) screen(w1);
 			}
 
 		wclear(w1);
