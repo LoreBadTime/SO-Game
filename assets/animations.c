@@ -201,6 +201,11 @@ int enemyLV1(int x,int y,int slownes,int *sender,int *receiver){
 
                 write(sender[1],send_info,5*sizeof(int));
                 read(receiver[0],&rec,sizeof(int));
+                if (rec == 0){
+                    enemy_pos[pos_Y] = -1;
+                    alive = 0;
+                }
+                
                 napms(slownes);
 
 
@@ -225,6 +230,12 @@ int enemyLV1(int x,int y,int slownes,int *sender,int *receiver){
         }
     }
     //questo nel caso in cui arrivi alla fine
+    send_info[0] = -1;
+    send_info[1] = -1;
+    send_info[2] = -1;
+    send_info[3] = -1;
+    send_info[4] = getpid();
+    write(sender[1],send_info,5*sizeof(int));
     close(p_enemy_pos[0]);
     close(p_enemy_pos[1]);
     close(p_bullet[0]);
@@ -236,13 +247,15 @@ int enemyLV1(int x,int y,int slownes,int *sender,int *receiver){
 
 
 //VERSIONE MOLTO INSTABILE,cambia la define per modificare il numero di nemici a schermo
+//queste variabili sono messe qui come globali solo per comodita,in futuro e meglio metterle nella funzione
 int c;
 int plarr[5] = {1,1,0,0,0};
 int out = 1;
-//meglio usare la getch,cosi non fa refresh allo schermo princiale
+
 void *getinput(){
     int c;
     while (out){
+        //meglio usare la getch,cosi non fa refresh allo schermo princiale
         c = getch();
         if (c != ERR)
         {
@@ -260,6 +273,8 @@ void *getinput(){
             case KEY_LEFT:
                 plarr[0] -= 1;
                 break;
+            case (int)' ':
+                plarr[4] = 1;
             default:
                 break;
             }
@@ -271,7 +286,8 @@ void *getinput(){
 #define ENEM_TEST 5
 void screen(WINDOW *w1){
     pid_t proc,spawn,player;
-    //purtroppo questa cosa deve essere asincrona,altrimenti la performance crolla completamente,per questo ho usato i thread qui
+    // purtroppo questa cosa deve essere asincrona,altrimenti la performance crolla completamente,per questo ho usato i thread qui per ottenere gli input
+    // servirebbe chiedere ai prof che fare
     pthread_t inpt_id;
     int tmp[2];
     int enemy_frame[2];
@@ -288,6 +304,9 @@ void screen(WINDOW *w1){
     int player_started = 1;
     int c;
     int k = 0;
+    // purtoppo per adesso 6,dato che ad ogni fps viene contata la posizione,come workaround ho usato 6 per il numevo di vite
+    // un fix con invincibilta e possiblie 
+    int life = 6;
     //creazione thread
     pthread_create(&inpt_id, NULL, getinput, NULL);
     wclear(w1);
@@ -303,7 +322,7 @@ void screen(WINDOW *w1){
             switch (spawn)
             {
             case 0:        //variabili di spawn
-                enemyLV1(70, 20 + (2 * k), 10, tmp, enemy_frame);
+                enemyLV1(70, 20 + (2 * k), 50, tmp, enemy_frame);
                 //se si chiudono bene non passano da questo exit,di norma si auto terminano appena raggiungono la fine dello schermo
                 exit(-1);
                 break;
@@ -320,41 +339,68 @@ void screen(WINDOW *w1){
         // finche non raggiungo il gameover scrivo lo schermo
         while (player_started)
         {  
-            wrefresh(w1);
             wclear(w1);
             i = 0;
             mvwaddch(w1,plarr[1], plarr[0], '>');
             //questo non penso possa essere parallelizzabile,dato che deve mettere tutto nello schermo,aggiungere troppe pipe poi lo rallenterebbe
-            while (i < maxenemies)
+            if(plarr[4] == 1 && plarr[2] < plarr[0]){
+                plarr[3] = plarr[1];
+                plarr[2] = plarr[0];
+                ++plarr[2];
+            }
+            if (plarr[2] > 1 && plarr[4] == 1)
             {
+                ++plarr[2];
+            }
+            if(plarr[2] > 83 && plarr[4] == 1){
+                plarr[4] = 0;
+                plarr[2] = 0;
+                plarr[3] = 0;
+            }
+            mvwaddch(w1,plarr[3], plarr[2], '-');
+            while (i < maxenemies){
                 read(tmp[0], arr, 5 * sizeof(int));
-                //dopo la read possimo gestire le collisioni,e l'eventuale terminazione di processi
-                if (arr[0] <= 1)
-                {
-                    game_over(w1,plarr[0], plarr[1]);
+                //collisione fine_schermo-nemici/nemico-navetta,gameover
+                if ((arr[0] <= 1) || (arr[1] == plarr[1] && arr[0] == plarr[0]) || life == 0){   
+                    send = 0;
                     player_started = 0;
                     out = 0;
                 }         
                 mvwaddch(w1,arr[1], arr[0], '<');
                 mvwaddch(w1,arr[3], arr[2], '-');
-                if (arr[3] == plarr[1] && arr[2] == plarr[0])
-                {
-                    game_over(w1,plarr[0], plarr[1]);
-                    player_started = 0;
-                    out = 0;
+                //collisione navetta-proiettile_nemico
+                if (arr[3] == plarr[1] && arr[2] == plarr[0]){
+                    mvwaddch(w1,plarr[1], plarr[0], 'X');
+                    --life;
                 }
-                
+
+                //collisione processo navetta
+                if(plarr[2] == arr[0] && plarr[3] == arr[1]){
+                    //magari si puo trovare un modo piu elegante per killare il processo nemico
+                    kill(arr[4],SIGKILL);
+                    mvwaddch(w1,arr[1], arr[0], 'X');
+                    --maxenemies;
+                    --i;
+                }
                 ++i;
             }
             i = 0;
-            //questo probabilmente si puo parallelizzare,serve per sincronizzare tutti i sottoprocessi nemici(in modo da evitare il precedente sfarfallio di posizioni)
+            wrefresh(w1);
 
+            //mandando a 0 send invio a tutti i processi l'autokill,di norma pero serve per sincronizzare i processi con lo schermo(in modo da evitare lo sfarfallio di posizioni)
             while (i < maxenemies){
                 write(enemy_frame[1],&send,sizeof(int));
                 ++i;
             }
             
         }
+    }
+    game_over(w1,plarr[0], plarr[1]);
+    i = 0;
+    //chiusura pulita in caso di gameover
+    while (i < maxenemies){
+        read(tmp[0], arr, 5 * sizeof(int));
+        ++i;
     }
 
 }

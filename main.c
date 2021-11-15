@@ -81,7 +81,7 @@ void menu(){
 
 				case 10: //Tasto invio
 					if(oggetto.y == yext){ //Scelta menù = EXIT
-				     		endwin();
+				     	endwin();
 						exit(0);
 					}
 					if(oggetto.y == ygov){ //Scelta menù = Animazione Game Over
