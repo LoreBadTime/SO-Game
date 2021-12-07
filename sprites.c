@@ -13,7 +13,20 @@ typedef struct {
 	char* c[DIM-1];
 } oggetto;
 
-void main(){
+void printnavetta(int x,int y,WINDOW *w){
+	oggetto sprite;
+	sprite.c[0]="|\\ ";
+	sprite.c[1]="| \\ ";
+	sprite.c[2]="|  |==";
+	sprite.c[3]="| /";
+	sprite.c[4]="|/";
+	mvwprintw(w,y-2,x,sprite.c[0]);
+	mvwprintw(w,y-1,x,sprite.c[1]);
+	mvwprintw(w,y,x,sprite.c[2]);
+	mvwprintw(w,y+1,x,sprite.c[3]);
+	mvwprintw(w,y+2,x,sprite.c[4]);
+}
+void main_test(){
 	initscr();
 	noecho();
 	curs_set(0);
