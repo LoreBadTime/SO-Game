@@ -1,18 +1,3 @@
-#include <stdio.h>
-#include <curses.h>
-#include <stdlib.h>
-#include <unistd.h>
-
-#define SU 65 /* Freccia su */
-#define GIU 66 /* Freccia giu */
-#define DIM 5
-
-typedef struct {
-	int x;
-	int y;
-	char* c[DIM-1];
-} oggetto;
-
 void printnavetta(int x,int y,WINDOW *w){
 	oggetto sprite;
 	int i,k;
