@@ -1,13 +1,6 @@
 #include "./globalincludes.h"
 #include "./assets/animations.h"
 
-typedef struct {
-  int x;        // Coordinata x
-  int y;        // Coordinata y
-} Posizione;
-
-void menu();
-
 void main(){
     menu();
 }
