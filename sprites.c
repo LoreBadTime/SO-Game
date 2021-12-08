@@ -15,6 +15,7 @@ typedef struct {
 
 void printnavetta(int x,int y,WINDOW *w){
 	oggetto sprite;
+	int i,k;
 	sprite.c[0]="|\\ ";
 	sprite.c[1]="| \\ ";
 	sprite.c[2]="|  |==";
