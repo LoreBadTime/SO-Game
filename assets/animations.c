@@ -98,60 +98,45 @@ void game_over(WINDOW *w1,int x,int y){
 	wrefresh(w1);
 }
 
-//per adesso queste non servono,sono solo un template per l'algoritmo
-/*
-int linearbullet(int x,int y,int slownes){
-    int i = 0;
-    while (i < COLS + 1){
-        mvprintw(y,x+i,"-");
-        mvprintw(y,x+i-1," ");
-        //if(y == cordinata_enemy(y) && x+i == cordinata_enemy(x)) then nemico colpito/distrutto
-        refresh();
-        napms(slownes);
-        i++;
-    }    
-}*/
-
-
-//test nemici a livello 1,
-
-# define pos_X 0
-# define pos_Y 1
-
-//l'ultimo paramtro e una pipe
+// Test nemici di livello 1
+// x,y = coordinate.
+// slownes = velocità di gioco.
+// sender,receiver = pipes.
 int enemyLV1(int x,int y,int slownes,int *sender,int *receiver){
-    //dichiarazioni iniziali
- 
-    int alive = 1;
-    int enemy_pos[2] = {x,y}; //[0] = x,[1] = y;
+    
+	int maxy,maxx;
+    int alive = 1; //Stato navicella nemica
+    int enemy_pos[2] = {x,y}; //Coordinate navicella nemica, [0] = x, [1] = y
     int send_info[5] = {};
     int bullet_Y = 0;
     int tmp = 0;
     int rec = 0;
-    int go_up = 1;
+    int go_up = 1; //Direzione navicella nemica, 1 = Da alto in basso, 0 = Da basso in alto
     pid_t enemy,bullet;
     int p_enemy_pos[2],p_bullet[2];
     pipe(p_enemy_pos);
     pipe(p_bullet);
     write(p_bullet[1], &tmp, sizeof(enemy_pos[pos_X]));
     close(receiver[1]);
-    //ciclo che gesitisce il nemico
+
+    //Ciclo che gesitisce il nemico
     while (enemy_pos[pos_X] > 0 && alive)
     {   
-        //ciclo che gestisce il rimbalzo
-        while ((enemy_pos[pos_Y] >= 0 && enemy_pos[pos_Y] <= 23)) //necessario fix per ottenere dinamicamente le y dello schermo
+	getmaxyx(stdscr, maxy, maxx);
+        //Ciclo che gestisce il rimbalzo
+        while ((enemy_pos[pos_Y] >= 0 && enemy_pos[pos_Y] <= maxy))
         {
-            //creazione processo (P)schermo - (C)navicella/proiettile
+            //Creazione processo: (P)schermo - (C)navicella/proiettile
             enemy = fork();
             switch (enemy){
             case 0:
 
-                //creazione sottoprocessi (P)navicella (C)proiettile
+                //Creazione sottoprocessi: (P)navicella - (C)proiettile
                 bullet = fork();
                 switch (bullet)
                 {
 
-                //processo proiettile,serve per aquisire separatamente le coordinate del proiettile
+                //Processo proiettile, serve per aquisire separatamente le coordinate del proiettile
                 case 0:
                     close(p_bullet[0]);
                     --tmp;
@@ -162,7 +147,8 @@ int enemyLV1(int x,int y,int slownes,int *sender,int *receiver){
                     close(p_bullet[1]);
                     exit(0);
                     break;
-                //processo navicella,gestisce il rimbalzo eil movimento della navicella,potrebbe essere ottimizzabile
+
+                //Processo navicella,gestisce il rimbalzo eil movimento della navicella,potrebbe essere ottimizzabile
                 default:
                     close(p_enemy_pos[0]);
                     if (go_up == 1){
@@ -179,50 +165,52 @@ int enemyLV1(int x,int y,int slownes,int *sender,int *receiver){
                     exit(0);
                     break;
                 }
-            case -1:
-                refresh();
-                exit(-1);
-                break;
-                //invio info del processo
-           default:
-                if (read(p_enemy_pos[0], enemy_pos, sizeof(int)*2) <= 0)
-                {
-                    mvprintw( 26, 15, "error reading enemy_pos[pos_X] outproc");
-                    refresh();
-                }
-                if(read(p_bullet[0], &tmp, sizeof(tmp)) <= 0){
-                    mvprintw( 24, 15, "E reading tmp,while");
-                    refresh();
-                }
-                send_info[0] = enemy_pos[pos_X];
-                send_info[1] = enemy_pos[pos_Y];
-                send_info[2] = tmp;
-                send_info[3] = bullet_Y;
-                send_info[4] = getpid();
 
-                write(sender[1],send_info,5*sizeof(int));
-                read(receiver[0],&rec,sizeof(int));
-                if (rec == 0){
-                    enemy_pos[pos_Y] = -1;
-                    alive = 0;
-                }
-                
-                napms(slownes);
+		//In caso di errore della fork()
+        	case -1:
+		        refresh();
+		        exit(-1);
+		        break;
 
+                //Comunicazione delle info tramite pipe
+		default:
+		        if (read(p_enemy_pos[0], enemy_pos, sizeof(int)*2) <= 0)
+		        {
+		            mvprintw( 26, 15, "error reading enemy_pos[pos_X] outproc");
+		            refresh();
+		        }
+		        if(read(p_bullet[0], &tmp, sizeof(tmp)) <= 0){
+		            mvprintw( 24, 15, "E reading tmp,while");
+		            refresh();
+		        }
+		        send_info[0] = enemy_pos[pos_X];
+		        send_info[1] = enemy_pos[pos_Y];
+		        send_info[2] = tmp;
+		        send_info[3] = bullet_Y;
+		        send_info[4] = getpid();
 
-                //ottenimento info per lanciare il processo proiettile,se lo facciamo comunicare possiamo decidere il numero di proiettili generati
-                if(tmp <= -1){
-                    tmp = enemy_pos[pos_X];
-                    bullet_Y = enemy_pos[pos_Y];
-                }
-                break;
-            }
+		        write(sender[1],send_info,5*sizeof(int));
+		        read(receiver[0],&rec,sizeof(int));
+		        if (rec == 0){
+		            enemy_pos[pos_Y] = -1;
+		            alive = 0;
+		        }
+		        
+		        napms(slownes);
+
+		        //Ottenimento info per lanciare il processo proiettile,se lo facciamo comunicare possiamo decidere il numero di proiettili generati
+		        if(tmp <= -1){
+		            tmp = enemy_pos[pos_X];
+		            bullet_Y = enemy_pos[pos_Y];
+		        }
+                	break;
+            	}
         }
-        //avanzamento fino alla navicella
-        --enemy_pos[pos_X];
-        //cambio modalita di incremento delle y nella navicella(per il rimbalzo)
-        go_up = !go_up;
-        //incrementi per rientrare nel ciclo
+        
+        --enemy_pos[pos_X]; //La navicella nemica avanza finchè non arriva alla x del player
+        go_up = !go_up; //Cambio direzione navicella nemica (per il rimbalzo)
+
+        //Incrementi delle coordinate.y per rientrare nel ciclo
         if (enemy_pos[pos_Y] <= -1){
             enemy_pos[pos_Y]++;
         }
@@ -230,7 +218,8 @@ int enemyLV1(int x,int y,int slownes,int *sender,int *receiver){
             enemy_pos[pos_Y]--;
         }
     }
-    //questo nel caso in cui arrivi alla fine
+
+    //Nel caso in cui arrivi alla fine
     send_info[0] = -1;
     send_info[1] = -1;
     send_info[2] = -1;
@@ -241,7 +230,6 @@ int enemyLV1(int x,int y,int slownes,int *sender,int *receiver){
     close(p_enemy_pos[1]);
     close(p_bullet[0]);
     close(p_bullet[1]);
-    close(sender[1]);
     close(sender[1]);
     exit(0);
 }
@@ -255,9 +243,11 @@ int out = 1;
 
 void *getinput(){
     int c;
+	int maxy,maxx;
     while (out){
         //meglio usare la getch,cosi non fa refresh allo schermo princiale
         c = getch();
+	getmaxyx(stdscr, maxy, maxx);
         if (c != ERR)
         {
             switch (c)
@@ -267,12 +257,6 @@ void *getinput(){
                 break;
             case KEY_DOWN:
                 plarr[1] += 1;
-                break;
-            case KEY_RIGHT:
-                plarr[0] += 1;
-                break;
-            case KEY_LEFT:
-                plarr[0] -= 1;
                 break;
             case (int)' ':
                 plarr[4] = 1;
@@ -323,7 +307,7 @@ void screen(WINDOW *w1){
             switch (spawn)
             {
             case 0:        //variabili di spawn
-                enemyLV1(70, 20 + (2 * k), 50, tmp, enemy_frame);
+                enemyLV1(70, 20 + (2 * k), 5, tmp, enemy_frame);
                 //se si chiudono bene non passano da questo exit,di norma si auto terminano appena raggiungono la fine dello schermo
                 exit(-1);
                 break;
@@ -405,4 +389,3 @@ void screen(WINDOW *w1){
     }
 
 }
-
