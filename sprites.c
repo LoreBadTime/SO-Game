@@ -20,11 +20,9 @@ void printnavetta(int x,int y,WINDOW *w){
 	sprite.c[2]="|  |==";
 	sprite.c[3]="| /";
 	sprite.c[4]="|/";
-	mvwprintw(w,y-2,x,sprite.c[0]);
-	mvwprintw(w,y-1,x,sprite.c[1]);
-	mvwprintw(w,y,x,sprite.c[2]);
-	mvwprintw(w,y+1,x,sprite.c[3]);
-	mvwprintw(w,y+2,x,sprite.c[4]);
+	for(i=(-2),k=0;k<5;i++,k++){
+	mvwprintw(w,y+i,x,sprite.c[k]);
+	}
 }
 void main_test(){
 	initscr();
