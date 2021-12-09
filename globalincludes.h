@@ -30,6 +30,13 @@ typedef struct {
 	char* c[DIM-1];
 } oggetto;
 
+typedef struct {
+	int x;
+	int y;
+	char* c[DIM-1];
+	int ready;
+} Bullet;
+
 void menu();
 
 #endif
