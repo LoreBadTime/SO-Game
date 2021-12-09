@@ -1,5 +1,4 @@
 #include "./globalincludes.h"
-#include "./assets/animations.h"
 
 void main(){
     menu();

@@ -10,6 +10,8 @@
 #include <pthread.h>
 #include <signal.h>
 #include "./assets/animations.h"
+#include "./assets/sprites.h"
+#include "./versione_processi/process.h"
 
 #define pos_X 0
 #define pos_Y 1

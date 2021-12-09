@@ -1,13 +1,16 @@
+
+#include "sprites.h"
+
 void printnavetta(int x,int y,WINDOW *w){
 	oggetto sprite;
 	int i,k;
 	sprite.c[0]="|\\ ";
 	sprite.c[1]="| \\ ";
-	sprite.c[2]="|  |==";
+	sprite.c[2]="|-O|==";
 	sprite.c[3]="| /";
 	sprite.c[4]="|/";
 	for(i=(-2),k=0;k<5;i++,k++){
-	mvwprintw(w,y+i,x,sprite.c[k]);
+	mvwprintw(w,y+i,x-5,sprite.c[k]);
 	}
 }
 void main_test(){
