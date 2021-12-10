@@ -13,6 +13,27 @@ void printnavetta(int x,int y,WINDOW *w){
 	mvwprintw(w,y+i,x-5,sprite.c[k]);
 	}
 }
+void print_vita(int life,WINDOW *w1){
+    int i = 0;
+	while (i < life)
+	{
+		mvwaddch(w1, 0, 3 + i, '>');
+		++i;
+	}
+}
+
+int print_nave(int invincibility,WINDOW *w1,int x,int y){
+	if(invincibility){
+		--invincibility;
+		if (invincibility % 10 < 7){
+			printnavetta(x, y, w1);
+		}
+	}
+	else{
+		printnavetta(x, y, w1);
+	}
+	return invincibility;
+}
 void main_test(){
 	initscr();
 	noecho();

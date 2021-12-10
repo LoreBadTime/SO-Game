@@ -1,6 +1,7 @@
 #include "./globalincludes.h"
 
 void main(){
+	srand(time(NULL));
     menu();
 }
 
@@ -16,6 +17,7 @@ void menu(){
 	noecho();
 	curs_set(0);
 	keypad(stdscr, 1);
+
 	
 	/* Personalizzazione colori e dimensioni dello schermo */
 	getmaxyx(stdscr, maxy, maxx);
@@ -31,6 +33,7 @@ void menu(){
 	int yext=(maxy/2)+1; //Ordinate scritta EXIT
 	int ygov=(maxy/2)+2; //Ordinate scritta Game-Over
 	int yflscr=(maxy/2)+3; //Ordinate scritta Schermo COmpleto
+	int ythdr=(maxy/2)+4; //Ordinate scritta Schermo COmpleto
 	int xbase=(maxx/2)-10; //Ascisse di default
 
 
@@ -42,7 +45,8 @@ void menu(){
 			mvwprintw(w1,ymod,xbase,"Inserire una modalità:");
 			mvwprintw(w1,yext,xbase,"EXIT");
 			mvwprintw(w1,ygov,xbase,"Game-Over");
-			mvwprintw(w1,yflscr,xbase,"Schermo completo");
+			mvwprintw(w1,yflscr,xbase,"Versione processi");
+			mvwprintw(w1,ythdr,xbase,"Versione threads");
 			wrefresh(w1);
 
 			/* Opzione tasti di movimento e selezione */

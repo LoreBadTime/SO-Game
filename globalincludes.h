@@ -33,9 +33,14 @@ typedef struct {
 typedef struct {
 	int x;
 	int y;
-	char* c[DIM-1];
+	//char* c[DIM-1];
 	int ready;
 } Bullet;
+
+typedef struct {
+  Posizione navnemica;
+  Bullet proiettile;
+} Navetta_Nemica;
 
 void menu();
 
