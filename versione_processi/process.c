@@ -6,14 +6,15 @@
 // x,y = coordinate.
 // slownes = velocità di gioco.
 // sender,receiver = pipes.
-int enemyLV1(int x,int y,int slownes,int id,int *sender,int *receiver){
+
+int enemyLV1(int x,int y,int slownes,int id,int direzione,int *sender,int *receiver){
 
     //Inizializzazione navicella nemica
     pid_t enemy;
     int p_enemy[2];
     pipe(p_enemy);
     int alive = 1; //Stato navicella nemica
-    int direzione = 1; //Direzione navicella nemica, 1 = Da alto in basso, 0 = Da basso in alto
+    //int direzione = 1; //Direzione navicella nemica, 1 = Da alto in basso, 0 = Da basso in alto
 
     //Inizializzazione nemico,ho incluso tutte le info qua
     Navetta_Nemica nemico;
@@ -27,8 +28,8 @@ int enemyLV1(int x,int y,int slownes,int id,int *sender,int *receiver){
 
     //Risoluzione e pipe per inviare le coordinate
     int maxy,maxx;
-    int send_info[6] = {};
-    int rec = 0;
+    int send_info[7] = {};
+    int rec[ENEM_TEST + 1] = {};
     close(receiver[1]);
     getmaxyx(stdscr, maxy, maxx);
     //Ciclo che gesitisce il nemico
@@ -44,7 +45,7 @@ int enemyLV1(int x,int y,int slownes,int id,int *sender,int *receiver){
                     //eliminato processo inutile
                     --nemico.proiettile.x;
                     close(p_enemy[0]);
-                    if (direzione == 1)
+                    if (direzione)
                     {
                         nemico.navnemica.y--;
                     }
@@ -80,15 +81,21 @@ int enemyLV1(int x,int y,int slownes,int id,int *sender,int *receiver){
                     send_info[3] = nemico.proiettile.y;
                     send_info[4] = getpid();
                     send_info[5] = id;
-                    write(sender[1],send_info,6*sizeof(int));
-                    read(receiver[0],&rec,sizeof(int));
+                    send_info[6] = direzione;
+                    write(sender[1],send_info,7*sizeof(int));
+                    read(receiver[0],rec,(ENEM_TEST + 1)*sizeof(int));
                     //la read serve per mettere il processo in waiting per il prossimo frame,altrimenti puo esserci un
                     //processo veloce che invia info piu velocemente rispetto ad altri
 
                     //killa navicella nemica
-                    if (rec == 0){
+                    if (rec[0] == 0){
                         nemico.navnemica.y = -1;
                         alive = 0;
+                    }
+                    //dall'array estrae il suo id,serve per il rimbalzo in caso di collisioni con le navette nemiche
+                    if(rec[id + 1]){
+                        direzione = !direzione;
+                        rec[id + 1] = 0;
                     }
                     napms(slownes);
                     //Ottenimento info per lanciare il processo proiettile,+ randomizzazione lancio proiettile(altrimenti diventa un bullet hell)
@@ -101,6 +108,8 @@ int enemyLV1(int x,int y,int slownes,int id,int *sender,int *receiver){
         }
 
         --nemico.navnemica.x; //La navicella nemica avanza finchè non arriva alla x del player
+        --nemico.navnemica.x;
+        --nemico.navnemica.x;
         direzione = !direzione; //Cambio direzione navicella nemica (per il rimbalzo)
 
         //Incrementi delle coordinate.y per rientrare nel ciclo
@@ -119,7 +128,8 @@ int enemyLV1(int x,int y,int slownes,int id,int *sender,int *receiver){
     send_info[3] = -1;
     send_info[4] = getpid();
     send_info[5] = id;
-    write(sender[1],send_info,6*sizeof(int));
+    send_info[6] = -1;
+    write(sender[1],send_info,7*sizeof(int));
     close(p_enemy[0]);
     close(p_enemy[1]);
     close(sender[1]);
@@ -213,9 +223,8 @@ void screen(WINDOW *w1){
     int tmp[2];
     int enemy_frame[2];
     int playerpipe[2];
-    int arr[ENEM_TEST][6];
-    int jump[ENEM_TEST];
-    int send = 1;
+    int arr[ENEM_TEST][7] = {};
+    int jump[ENEM_TEST + 1] = {1}; 
     int helper = 0;
     pipe(tmp);
     pipe(enemy_frame);
@@ -230,11 +239,9 @@ void screen(WINDOW *w1){
     int invincibility = 0;
     int life = 3;
     int killed = 0;
-
-    //creazione thread per l'input del giocatore
-    //pthread_create(&inpt_id, NULL, getinput, NULL);
- 
-    //uso dei processi al posto dei thread
+    int jumpbox = 6; //>2
+    int lol = 0;
+    //processo input    
     player = fork();
     switch (player)
     {
@@ -258,7 +265,7 @@ void screen(WINDOW *w1){
                 switch (spawn)
                 {
                     case 0:        //variabili di spawn
-                        enemyLV1(70, 20 + (2 * k), 30, k, tmp, enemy_frame);
+                        enemyLV1(70, k*3*2, 30, k, k % 2, tmp, enemy_frame);
                         //se si chiudono bene non passano da questo exit,di norma si auto-terminano appena raggiungono la fine dello schermo
                         exit(-1);
                         break;
@@ -277,40 +284,54 @@ void screen(WINDOW *w1){
             {
                 wclear(w1);//prossimo frame,la clear in compenso all'erase non cancella lo schermo ma solo il buffer dello schermo
                 read(playerpipe[0],plarr,7*sizeof(int));
-
+                //helper ci fornisce una specie di angolo per sparare diagonalmente i proietili
                 helper = plarr[6];
                 i = 0;
+
                 //lettura pipes per mettere tutto in un array
                 while (i < maxenemies){
-                    read(tmp[0], arr[i], 6 * sizeof(int));
+                    read(tmp[0], arr[i], 7 * sizeof(int));
                     ++i;
                 }
                 //lettura per rimbalzi
-                /*
+                
                 i = 0;
                 w = 0;
+                // debug
+                /*
+                mvwprintw(w1,1,26,"id:%d X:%d Y:%d ",arr[0][5],arr[0][0],arr[0][1]);
+                mvwprintw(w1,2,26,"id:%d X:%d Y:%d ",arr[1][5],arr[1][0],arr[1][1]);
+                //*/
                 while (i < maxenemies)
-                {   w = 0;
+                {   
+                    //pseudo selectionsort per controllare il rimbalzo in caso di collisioni
+                    w = i+1;
                     while (w < maxenemies)
-                    {
-                        if(arr[i][1] + 1 == arr[w][1] || if(arr[i][1] - 1 == arr[w][1]){ //hitbox di tre
-                           jump[i] = arr[w][5];
-                           break;
+                    {   // modificando jumpbox si puo modificare il rilevamento di caselle prima di fare il salto
+                        // condizione molto lunga
+                        
+                        // controlo distanza tra i due nemici                  controllo se sono nella stessa x e che abbiano direzione diversa
+                        if((abs(abs(arr[i][1]) - abs(arr[w][1])) < jumpbox) && arr[i][0] == arr[w][0] && arr[i][6] != arr[w][6])
+                        {   //ulteriore controllo di direzione 
+                            if ((arr[i][1] < arr[w][1] && arr[i][6] == 0 && arr[w][6] == 1) || (arr[i][1] > arr[w][1] && arr[i][6] == 1 && arr[w][6] == 0))
+                            {
+                                // salvataggio dei processi che necessitano di rimbalzo
+                                jump[arr[w][5] + 1] = 1;
+                                jump[arr[i][5] + 1] = 1;
+                                // info di debug
+                                //mvwprintw(w1, arr[i][5] + 3, 30, "Hit");
+                                break;
+                            }
                         }
                         ++w;
                     }
-                    ++i;
-                }
-                i = 0;
-                */
-               i = 0;
-                while (i < maxenemies)
-                {   //collisione navetta/limite con nemico
+                    //collisione navetta/limite con nemico
                     if ((arr[i][0] <= 1) || (arr[i][1] == plarr[1] && arr[i][0] == plarr[0]) || life == 0){
-                        send = 0;
+                        jump[0] = 0;
                         player_started = 0;
                     }
-                    mvwaddch(w1,arr[i][1], arr[i][0], '<');
+                    //print nemici
+                    printnemicolv1(arr[i][0], arr[i][1], w1);
                     mvwaddch(w1,arr[i][3], arr[i][2], '-');
                     //collisione navetta-proiettile_nemico
                     if (invincibility == 0){
@@ -330,6 +351,7 @@ void screen(WINDOW *w1){
                     }
                     ++i;
                 }
+                //serve per ridurre i nemici nei vari counter
                 while (killed)
                 {
                     --maxenemies;
@@ -340,25 +362,46 @@ void screen(WINDOW *w1){
                 mvwaddch(w1,plarr[3]-helper, plarr[2], 'o');
                 invincibility = print_nave(invincibility,w1,plarr[0],plarr[1]);
                 print_vita(life,w1);
-                //printpl_info(w1,plarr);
-                wrefresh(w1);
 
-                //mandando a 0 send invio a tutti i processi l'autokill,di norma pero serve per sincronizzare i processi con lo schermo
-                //(in modo da evitare lo sfarfallio di posizioni) potrebbe inviare anche altre info
+                /* altre info di debug
+                
+                //printpl_info(w1,plarr);
                 i = 0;
+                while (i < ENEM_TEST )
+                {
+                    mvwprintw(w1,i+1,32,"id:%d X:%d Y:%d direzione:%d ",arr[i][5],arr[i][0],arr[i][1],arr[i][6]);
+                    ++i;
+                }//
+                i = 0;
+                while (i < ENEM_TEST + 1 )
+                {
+                    mvwprintw(w1,i,21,"id:%d:%d ",i,jump[i]);
+                    ++i;
+                }*/
+                wrefresh(w1);
+                i = 0;
+                //sincronizzazione processi + invio info su rimbalzi
                 while (i < maxenemies){
-                    write(enemy_frame[1],&send,sizeof(int));
+                    write(enemy_frame[1],jump,(ENEM_TEST + 1)*sizeof(int));
+                    ++i;
+                }
+                i = 1;
+                //reset dei rimbalzi
+                while (i < ENEM_TEST + 1)
+                {
+                    jump[i] = 0;
                     ++i;
                 }
 
             }
     }
     game_over(w1,plarr[0], plarr[1]);
+    //chiusura lettore input
     kill(plarr[5],SIGKILL);
     i = 0;
     //chiusura pulita in caso di gameover per nemico che raggiunge il limite,necessita una revisione in modo che sia piu veloce
     while (i < maxenemies){
-        read(tmp[0], arr[i], 6 * sizeof(int));
+        read(tmp[0], arr[i], 7 * sizeof(int));
         ++i;
     }
 

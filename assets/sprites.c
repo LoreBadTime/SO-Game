@@ -13,6 +13,27 @@ void printnavetta(int x,int y,WINDOW *w){
 	mvwprintw(w,y+i,x-5,sprite.c[k]);
 	}
 }
+void printnemicolv2(int x,int y,WINDOW *w){
+	oggetto sprite;
+	int i,k;
+	sprite.c[0]="O O";
+	sprite.c[1]=" X ";
+	sprite.c[2]="O O";
+	mvwprintw(w,y-1,x-1,sprite.c[0]);
+	mvwprintw(w,y,x-1,sprite.c[1]);
+	mvwprintw(w,y+1,x-1,sprite.c[2]);
+}
+void printnemicolv1(int x,int y,WINDOW *w){
+	oggetto sprite;
+	int i,k;
+	sprite.c[0]=" /O";
+	sprite.c[1]="-X ";
+	sprite.c[2]=" \\O";
+	mvwprintw(w,y-1,x-1,sprite.c[0]);
+	mvwprintw(w,y,x-1,sprite.c[1]);
+	mvwprintw(w,y+1,x-1,sprite.c[2]);
+}
+
 void print_vita(int life,WINDOW *w1){
     int i = 0;
 	while (i < life)
