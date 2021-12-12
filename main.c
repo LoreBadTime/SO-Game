@@ -82,7 +82,7 @@ void menu(){
 					}
 					if(oggetto.y == ygov){ //Scelta menù = Animazione Game Over
 						wclear(w1); 
-						game_over(w1,1,11);
+						game_over(w1,maxx/2,maxy/2);
 						wclear(w1);
 						endwin();
 						exit(0);
