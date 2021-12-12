@@ -1,6 +1,7 @@
 
 #include "sprites.h"
 
+//stampa navetta in generale
 void printnavetta(int x,int y,WINDOW *w){
 	oggetto sprite;
 	int i,k;
@@ -13,27 +14,104 @@ void printnavetta(int x,int y,WINDOW *w){
 	mvwprintw(w,y+i,x-5,sprite.c[k]);
 	}
 }
-void printnemicolv2(int x,int y,WINDOW *w){
+//animazioni navetta gameover (frame 1)
+void printnavetta_distrutta_f1(int x,int y,WINDOW *w){
+	oggetto sprite;
+	int i,k;
+	sprite.c[0]="|X ";
+	sprite.c[1]="|X\\ ";
+	sprite.c[2]="X-O|X=";
+	sprite.c[3]="| X";
+	sprite.c[4]="X/";
+	for(i=(-2),k=0;k<5;i++,k++){
+	mvwprintw(w,y+i,x-5,sprite.c[k]);
+	}
+}
+//animazioni navetta gameover (frame 2)
+void printnavetta_distrutta_f2(int x,int y,WINDOW *w){
+	oggetto sprite;
+	int i,k;
+	sprite.c[0]="|\\ ";
+	sprite.c[1]="X X ";
+	sprite.c[2]="|-X|=X";
+	sprite.c[3]="|X/";
+	sprite.c[4]="X/";
+	for(i=(-2),k=0;k<5;i++,k++){
+	mvwprintw(w,y+i,x-5,sprite.c[k]);
+	}
+}
+//animazioni navetta gameover (frame 3)
+void printnavetta_distrutta_f3(int x,int y,WINDOW *w){
+	oggetto sprite;
+	int i,k;
+	sprite.c[0]="|\\ ";
+	sprite.c[1]="     ";
+	sprite.c[2]="|- |=   ";
+	sprite.c[3]="| /";
+	sprite.c[4]=" /";
+	for(i=(-2),k=0;k<5;i++,k++){
+	mvwprintw(w,y+i,x-5,sprite.c[k]);
+	}
+}
+//animazioni navetta gameover (frame 4)
+void printnavetta_distrutta_f4(int x,int y,WINDOW *w){
+	oggetto sprite;
+	int i,k;
+	sprite.c[0]="|   ";
+	sprite.c[1]="    ";
+	sprite.c[2]=" - |  ";
+	sprite.c[3]="|   ";
+	sprite.c[4]="   ";
+	for(i=(-2),k=0;k<5;i++,k++){
+	mvwprintw(w,y+i,x-5,sprite.c[k]);
+	}
+}
+//animazione nemico lv 2 di template per collisioni frame 1
+void printnemicolv2_f1(int x,int y,WINDOW *w){
 	oggetto sprite;
 	int i,k;
 	sprite.c[0]="O O";
 	sprite.c[1]=" X ";
 	sprite.c[2]="O O";
-	mvwprintw(w,y-1,x-1,sprite.c[0]);
-	mvwprintw(w,y,x-1,sprite.c[1]);
-	mvwprintw(w,y+1,x-1,sprite.c[2]);
+	mvwprintw(w,y-1,x,sprite.c[0]);
+	mvwprintw(w,y,x,sprite.c[1]);
+	mvwprintw(w,y+1,x,sprite.c[2]);
 }
-void printnemicolv1(int x,int y,WINDOW *w){
+//animazione nemico lv 2 di template per collisioni frame 2
+void printnemicolv2_f2(int x,int y,WINDOW *w){
+	oggetto sprite;
+	int i,k;
+	sprite.c[0]="O O";
+	sprite.c[1]="   ";
+	sprite.c[2]="O O";
+	mvwprintw(w,y-1,x,sprite.c[0]);
+	mvwprintw(w,y,x,sprite.c[1]);
+	mvwprintw(w,y+1,x,sprite.c[2]);
+}
+//animazione nemico lv 1 di template per collisioni frame 1
+void printnemicolv1_f1(int x,int y,WINDOW *w){
 	oggetto sprite;
 	int i,k;
 	sprite.c[0]=" /O";
-	sprite.c[1]="-X ";
+	sprite.c[1]="-O ";
 	sprite.c[2]=" \\O";
-	mvwprintw(w,y-1,x-1,sprite.c[0]);
-	mvwprintw(w,y,x-1,sprite.c[1]);
-	mvwprintw(w,y+1,x-1,sprite.c[2]);
+	mvwprintw(w,y-1,x,sprite.c[0]);
+	mvwprintw(w,y,x,sprite.c[1]);
+	mvwprintw(w,y+1,x,sprite.c[2]);
+}
+//animazione nemico lv 1 di template per collisioni frame 2
+void printnemicolv1_f2(int x,int y,WINDOW *w){
+	oggetto sprite;
+	int i,k;
+	sprite.c[0]=" \\O";
+	sprite.c[1]="-O ";
+	sprite.c[2]=" /O";
+	mvwprintw(w,y-1,x,sprite.c[0]);
+	mvwprintw(w,y,x,sprite.c[1]);
+	mvwprintw(w,y+1,x,sprite.c[2]);
 }
 
+//stampa numero di vite a schermo
 void print_vita(int life,WINDOW *w1){
     int i = 0;
 	while (i < life)
@@ -43,6 +121,7 @@ void print_vita(int life,WINDOW *w1){
 	}
 }
 
+//algoritmo di stampa navetta con invincibilita
 int print_nave(int invincibility,WINDOW *w1,int x,int y){
 	if(invincibility){
 		--invincibility;
@@ -55,6 +134,7 @@ int print_nave(int invincibility,WINDOW *w1,int x,int y){
 	}
 	return invincibility;
 }
+// test sprites
 void main_test(){
 	initscr();
 	noecho();
