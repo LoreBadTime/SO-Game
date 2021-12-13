@@ -18,6 +18,11 @@
 #define SU 65 /* Freccia su */
 #define GIU 66 /* Freccia giu */
 #define DIM 5
+#define PRONTO 1 // Segnala se il proiettile è pronto ad essere sparato
+#define LARGHEZZA 3 // Larghezza dello sprite dal suo centro (nel player grande 5 -> 2+(centro)=3)
+#define DIAGONALE 4 // Ogni quante x l'ordinata del proiettile viene incrementata
+#define VIVA 1 // Stato navicella nemica
+#define UCCISA 0 
 
 typedef struct {
   int x;        // Coordinata x
@@ -33,7 +38,6 @@ typedef struct {
 typedef struct {
 	int x;
 	int y;
-	//char* c[DIM-1];
 	int ready;
 } Bullet;
 
@@ -41,6 +45,13 @@ typedef struct {
   Posizione navnemica;
   Bullet proiettile;
 } Navetta_Nemica;
+
+typedef struct {
+	Posizione coordinata;
+	Bullet proiettile;
+	int angolo;
+	int id;
+} Player;
 
 void menu();
 
