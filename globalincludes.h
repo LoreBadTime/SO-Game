@@ -32,7 +32,7 @@ typedef struct {
 typedef struct {
 	int x;
 	int y;
-	char* c[DIM-1];
+	char* c[DIM];
 } oggetto;
 
 typedef struct {
