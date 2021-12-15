@@ -2,7 +2,7 @@ game: exec.out
 	echo "#!/bin/bash" > game.sh && echo "export TERM=xterm-256color" >> game.sh && echo "./exec.out" >> game.sh 
 	chmod +x ./game.sh
 exec.out: main.o animations.o sprites.o process.o
-	gcc main.o animations.o sprites.o process.o -o exec.out -lncurses -pthread
+	gcc main.o animations.o sprites.o process.o -o exec.out -lncurses -pthread -lpthread -lrt
 main.o: main.c
 	gcc -c main.c 
 process.o: ./versione_processi/process.c ./versione_processi/process.h
