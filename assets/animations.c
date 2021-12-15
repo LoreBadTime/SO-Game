@@ -100,13 +100,13 @@ void victory(WINDOW *w1,int x,int y){
 	char tmp[2] = {' ', '\0'};
 	int i = 0;
 
-	/*Definizione colori
+	//Definizione colori
 	init_color(COLOR_BLACK,0, 0, 0);
 	init_color(GM_LESS_DARKER_RED,125, 0, 0);
 	init_color(GM_MORE_DARKER_RED,46, 9, 8);
 	//Definizione coppie di colori
-	init_pair(1,COLOR_RED,COLOR_YELLOW);
-	init_pair(2,COLOR_WHITE,COLOR_RED);
+	init_pair(1,COLOR_GREEN,COLOR_BLUE);
+	init_pair(2,COLOR_WHITE,COLOR_BLUE);
 	init_pair(3,COLOR_WHITE,GM_LESS_DARKER_RED);
 	init_pair(4,COLOR_WHITE,GM_MORE_DARKER_RED);
 	init_pair(5,COLOR_WHITE,COLOR_BLACK);
@@ -175,5 +175,4 @@ void victory(WINDOW *w1,int x,int y){
     //Fine dell'esecuzione
 	wclear(w1); 
 	wrefresh(w1);
-	*/
 }
