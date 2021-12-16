@@ -71,7 +71,7 @@ void game_over(WINDOW *w1,int x,int y){
 	sleep(3);	
 
 	// Stampa scritta GAME OVER.
-	for(i=0;i < GM_CYCLES2-1;i++){
+	for(i=0;i < GM_CYCLES_L-1;i++){
 		mvwaddch(w1,LINES/2,(COLS/2+i)-5,string[i]);
 		wrefresh(w1);
 		napms(3*GM_SPEED);
@@ -102,11 +102,11 @@ void victory(WINDOW *w1,int x,int y){
 
 	//Definizione colori
 	init_color(COLOR_BLACK,0, 0, 0);
-	init_color(GM_LESS_DARKER_RED,125, 0, 0);
-	init_color(GM_MORE_DARKER_RED,46, 9, 8);
+	init_color(GM_LESS_DARKER_RED,0, 120, 0);
+	init_color(GM_MORE_DARKER_RED,0, 80, 0);
 	//Definizione coppie di colori
-	init_pair(1,COLOR_GREEN,COLOR_BLUE);
-	init_pair(2,COLOR_WHITE,COLOR_BLUE);
+	init_pair(1,COLOR_WHITE,COLOR_BLUE);
+	init_pair(2,COLOR_WHITE,COLOR_GREEN);
 	init_pair(3,COLOR_WHITE,GM_LESS_DARKER_RED);
 	init_pair(4,COLOR_WHITE,GM_MORE_DARKER_RED);
 	init_pair(5,COLOR_WHITE,COLOR_BLACK);
@@ -115,7 +115,7 @@ void victory(WINDOW *w1,int x,int y){
 	for(i=0;i < GM_CYCLES;i++){
 		//Inizio frame sfondo giallo
 		printnavetta_distrutta_f1(x,y,w1);
-		wbkgd(w1,COLOR_PAIR(1));
+        wbkgd(w1,COLOR_PAIR(1));
         refresh();
 		wrefresh(w1);
 		//Fine frame sfondo giallo
@@ -157,7 +157,7 @@ void victory(WINDOW *w1,int x,int y){
 
 	// Stampa scritta GAME OVER.
 
-	for(i=0;i < GM_CYCLES2-1;i++){
+	for(i=0;i < GM_CYCLES_W-1;i++){
 		mvwaddch(w1,LINES/2,(COLS/2+i)-5,string[i]);
 		wrefresh(w1);
 		napms(3*GM_SPEED);
