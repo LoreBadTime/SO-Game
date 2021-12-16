@@ -5,7 +5,8 @@
 
 #define GM_SPEED 150
 #define GM_CYCLES 5
-#define GM_CYCLES2 10
+#define GM_CYCLES_L 10
+#define GM_CYCLES_W 8
 #define GM_DEATH 1000
 //colori aggiuntivi
 #define GM_LESS_DARKER_RED 9
