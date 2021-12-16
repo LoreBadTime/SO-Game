@@ -33,14 +33,15 @@ int enemyLV1(int x, int y, int id, int direzione, int *sender, int *receiver) {
     close(receiver[1]);
     getmaxyx(stdscr, maxy, maxx);
 
-    //Ciclo che gesitisce il nemico
-    while (nemico.coordinata.x > 0 && alive) {
-        //Ciclo che gestisce il rimbalzo
-        while ((nemico.coordinata.y >= 0 && nemico.coordinata.y <= maxy - 2)) {
-            //Creazione processo: (P)schermo - (C)navicella/proiettile
-            enemy = fork();
-            switch (enemy) {
-                case 0:
+    enemy = fork();
+    switch (enemy) {
+
+        case 0:
+            //Ciclo che gesitisce il nemico
+            while (nemico.coordinata.x > 0 && alive) {
+                //Ciclo che gestisce il rimbalzo
+                while (nemico.coordinata.y >= 0 && nemico.coordinata.y <= maxy) {
+                    //Creazione processo: (P)schermo - (C)navicella/proiettile
                     //eliminato processo inutile del proiettile
                     //possibile eliminazione secondaria dato che anche qui non si fa altro che decrementare
                     --nemico.proiettile.x;
@@ -54,64 +55,62 @@ int enemyLV1(int x, int y, int id, int direzione, int *sender, int *receiver) {
                         mvprintw(maxy / 2, maxx / 2, "Error writing enemy");
                         refresh();
                     }
-                    close(p_enemy[1]);
-                    exit(0);
-                    break;
-                    //In caso di errore della fork()
-                case -1:
-                    refresh();
-                    exit(-1);
-                    break;
-
-                    //Comunicazione delle info tramite pipe
-                default:
-                    if (read(p_enemy[0], &nemico, sizeof(Player)) <= 0) {
-                        mvprintw(maxy / 2, maxx / 2, "Error reading enemy");
-                        refresh();
+                    if (nemico.coordinata.y == maxy || nemico.coordinata.y == 0){
+                        --nemico.coordinata.x; //La navicella nemica avanza finchè non arriva alla x del player
+                        --nemico.coordinata.x;
+                        --nemico.coordinata.x;
+                        direzione = !direzione; //Cambio direzione navicella nemica (per il rimbalzo)
                     }
-
-                    /*send_info[0] = nemico.coordinata.x;
-                    send_info[1] = nemico.coordinata.y;
-                    send_info[2] = nemico.proiettile.x;
-                    send_info[3] = nemico.proiettile.y;
-                    send_info[4] = nemico.proiettile.ready;//getpid();
-                    send_info[5] = id;
-                    send_info[6] = direzione;*/
-                    write(sender[1], &nemico, sizeof(Player));
-                    read(receiver[0], rec, (ENEM_TEST + 1) * sizeof(int));
-                    //la read serve per mettere il processo in waiting per il prossimo frame,altrimenti puo esserci un
-                    //processo veloce che invia info piu velocemente rispetto ad altri
-
-                    //killa navicella nemica
-                    if (rec[0] == 0 || rec[id + 1] == -1) {
-                        nemico.coordinata.y = -1;
-                        alive = UCCISA;
-                    }
-                    //dall'array estrae il suo id,serve per il rimbalzo in caso di collisioni con le navette nemiche
-                    if (rec[id + 1]) {
-                        direzione = !direzione;
-                        rec[id + 1] = 0;
-                    }
-                    //Ottenimento info per lanciare il processo proiettile,+ randomizzazione lancio proiettile(altrimenti diventa un bullet hell)
-                    if (nemico.proiettile.x <= -1 && (rand() % 101 == 0)) {
-                        nemico.proiettile.x = nemico.coordinata.x;
-                        nemico.proiettile.y = nemico.coordinata.y;
-                    }
-                    break;
+                }
             }
-        }
+            break;
+            //In caso di errore della fork()
+        case -1:
+            refresh();
+            exit(-1);
+            break;
 
-        --nemico.coordinata.x; //La navicella nemica avanza finchè non arriva alla x del player
-        --nemico.coordinata.x;
-        --nemico.coordinata.x;
-        direzione = !direzione; //Cambio direzione navicella nemica (per il rimbalzo)
+            //Comunicazione delle info tramite pipe
+        default:
+            //Ciclo che gesitisce il nemico
+            do{
+                close(p_enemy[1]);
+                if (read(p_enemy[0], &nemico, sizeof(Player)) <= 0) {
+                    mvprintw(maxy / 2, maxx / 2, "Error reading enemy");
+                    refresh();
+                }
+                close(sender[0]);
+                close(receiver[1]);
+                write(sender[1], &nemico, sizeof(Player));
+                read(receiver[0], rec, (ENEM_TEST + 1) * sizeof(int));
+                //la read serve per mettere il processo in waiting per il prossimo frame,altrimenti puo esserci un
+                //processo veloce che invia info piu velocemente rispetto ad altri
 
-        //Incrementi delle coordinate.y per rientrare nel ciclo
-        if (nemico.coordinata.y <= 0) {
-            nemico.coordinata.y++;
-        } else {
-            nemico.coordinata.y--;
-        }
+                //killa navicella nemica
+                if (rec[0] == 0 || rec[id + 1] == -1) {
+                    nemico.coordinata.y = -1;
+                    alive = UCCISA;
+                }
+                //dall'array estrae il suo id,serve per il rimbalzo in caso di collisioni con le navette nemiche
+                if (rec[id + 1]) {
+                    direzione = !direzione;
+                    rec[id + 1] = 0;
+                }
+                //Ottenimento info per lanciare il processo proiettile,+ randomizzazione lancio proiettile(altrimenti diventa un bullet hell)
+                if (nemico.proiettile.x <= -1 && (rand() % 101 == 0)) {
+                    nemico.proiettile.x = nemico.coordinata.x;
+                    nemico.proiettile.y = nemico.coordinata.y;
+                }
+            }
+            while (alive);
+            break;
+    }
+
+    //Incrementi delle coordinate.y per rientrare nel ciclo
+    if (nemico.coordinata.y <= 0) {
+        nemico.coordinata.y++;
+    } else {
+        nemico.coordinata.y--;
     }
 
     //Nel caso in cui arrivi alla fine,per non bloccare le pipes
@@ -242,24 +241,25 @@ void screen(WINDOW *w1) {
     int coordinata;
     int w = 0;
     int k = 0;
+        int p=0;
     int invincibility = 0;
     int life = 3;
     int killed = 0;
     int jumpbox = 6; //>2
     int hitbox = 2;
-    //processo input    
+    //processo input
     giocatore = fork();
     switch (giocatore) {
         case 0:
             //  attenzione a non diminuire troppo il terzo valore,altrimenti ci potrebbero essere
             //  problemi di lettura input
-            gestore_input(player, playerpipe, 75);
+            gestore_input(player, playerpipe, 70);
             exit(0);
             break;
         default:
             break;
     }
-    wclear(w1);
+    werase(w1);
     proc = fork();
     //creazione processo schermo-nemici
     switch (proc) {
@@ -285,7 +285,7 @@ void screen(WINDOW *w1) {
             wait((int *) 0);
             // finche non raggiungo il gameover,scrivo lo schermo
             while (player_started) {
-                wclear(w1);//prossimo frame,la clear in compenso all'erase non cancella lo schermo ma solo il buffer dello schermo
+                werase(w1);//prossimo frame,la clear in compenso all'erase non cancella lo schermo ma solo il buffer dello schermo
                 read(playerpipe[0], &player, sizeof(Player));
                 //helper ci fornisce una specie di angolo per sparare diagonalmente i proietili
                 helper = player.angolo;
@@ -334,8 +334,12 @@ void screen(WINDOW *w1) {
                         player_started = 0;
                     }
                     //stampa nemici
-                    printnemicolv1_f1(arr[i].coordinata.x, arr[i].coordinata.y, w1);
-                    
+                    if(arr[i].coordinata.y%2==0) {
+                        printnemicolv1_f1(arr[i].coordinata.x, arr[i].coordinata.y, w1);
+                    } else {
+                        printnemicolv1_f2(arr[i].coordinata.x, arr[i].coordinata.y, w1);
+                    }
+
 
                     mvwaddch(w1, arr[i].proiettile.y, arr[i].proiettile.x, '-');
                     //collisione navetta-proiettile_nemico
@@ -368,7 +372,7 @@ void screen(WINDOW *w1) {
                 print_vita(life, w1);
 
                 /* altre info di debug
-                
+
                 //printpl_info(w1,plarr);
                 i = 0;
                 while (i < ENEM_TEST)
@@ -414,7 +418,7 @@ void screen(WINDOW *w1) {
     //chiusura lettore input
     kill(player.id, SIGKILL);
     /*
-    i = 0;
+    i = 0;p
     //chiusura pulita in caso di gameover per nemico che raggiunge il limite,necessita una revisione in modo che sia piu veloce
     while (i < maxenemies){
         read(tmp[0], arr[i], 7 * sizeof(int));
@@ -425,5 +429,5 @@ void screen(WINDOW *w1) {
 }
 
 /*
-//collisione fine_schermo-nemici/nemico-navetta,gameover                 
+//collisione fine_schermo-nemici/nemico-navetta,gameover
 */
