@@ -27,7 +27,7 @@ int enemyLV1_old(int x,int y,int id,int direzione,int *sender,int *receiver){
     while (nemico.navnemica.x > 0 && alive)
     {
         //Ciclo che gestisce il rimbalzo
-        while ((nemico.navnemica.y >= 0 && nemico.navnemica.y <= maxy))
+        while (nemico.navnemica.y >= 2 && nemico.navnemica.y <= maxy-3)
         {
             //Creazione processo: (P)schermo - (C)navicella/proiettile
             enemy = fork();
@@ -90,7 +90,7 @@ int enemyLV1_old(int x,int y,int id,int direzione,int *sender,int *receiver){
                         rec[id + 1] = 0;
                     }
                     //Ottenimento info per lanciare il processo proiettile,+ randomizzazione lancio proiettile(altrimenti diventa un bullet hell)
-                    if(nemico.proiettile.x <= -1 && (rand() % 101 == 0)){
+                    if(nemico.proiettile.x <= -1 && (rand() % 2 == 0)){
                         nemico.proiettile.x = nemico.navnemica.x;
                         nemico.proiettile.y = nemico.navnemica.y;
                     }
@@ -104,10 +104,10 @@ int enemyLV1_old(int x,int y,int id,int direzione,int *sender,int *receiver){
         direzione = !direzione; //Cambio direzione navicella nemica (per il rimbalzo)
 
         //Incrementi delle coordinate.y per rientrare nel ciclo
-        if (nemico.navnemica.y <= -1){
+        if (nemico.navnemica.y <= 1){
             nemico.navnemica.y++;
         }
-        else{
+        if (nemico.navnemica.y >= maxy-2){
             nemico.navnemica.y--;
         }
     }
@@ -356,11 +356,13 @@ void screen(WINDOW *w1) {
     int maxenemies = ENEM_TEST;
     int i = 0;
     int j = -1;
+    int hit;
     int player_started = 1;
     int c;
     int coordinata;
     int w = 0;
     int k = 0;
+    int delta = 0;
         int p=0;
     int invincibility = 0;
     int life = 3;
@@ -385,17 +387,14 @@ void screen(WINDOW *w1) {
     switch (proc) {
         //spawn dei nemici,diventeranno tutti proccessi separati
         case 0:   //k mi serve per decidere quando spawnarli
-            for (coordinata=0;coordinata<maxenemies;coordinata++){
+            for (coordinata=1;coordinata<maxenemies+1;coordinata++){
                 spawn = fork();
                 switch (spawn) {
                     case 0:        //variabili di spawn nemici
-
                         // per testare le due versioni commenta e decommenta
 
-                        enemyLV1_old(70, coordinata * 3 * 2, coordinata, coordinata % 2, tmp, enemy_frame);
+                        enemyLV1_old(70, coordinata * 3 * 2, k,0, tmp, enemy_frame);
                         //enemyLV1_new(70, coordinata * 3 * 2, k, 0, tmp, enemy_frame);
-
-
 
                         //se si chiudono bene non passano da questo exit,di norma si auto-terminano appena raggiungono la fine dello schermo
                         exit(-1);
@@ -485,13 +484,31 @@ void screen(WINDOW *w1) {
 
 
                     mvwaddch(w1, arr[i].proiettile.y, arr[i].proiettile.x, '-');
+
                     //collisione navetta-proiettile_nemico
+                    //Se la navetta non è nello stato di invincibilita
                     if (invincibility == 0) {
-                        if (arr[i].proiettile.y == player.coordinata.y && arr[i].proiettile.x == player.coordinata.x) {
-                            mvwaddch(w1, player.coordinata.y, player.coordinata.x, 'X');
-                            --life;
-                            invincibility = 120;
+                        /* La prima condizione dell'if copre la parte sinistra e destra del cannone
+                         * La seconda condizione copre il cannone della navicella principale
+                         * Se un proiettile nemico colpisce una di queste 5 coordinate, viene
+                         * Abilitata la flag "hit" con valore true e reso il player invincibile */
+                        for(delta=-2;delta<DIM-2;delta++) {
+                            if (  ( arr[i].proiettile.y == player.coordinata.y+delta &&
+                                    arr[i].proiettile.x == player.coordinata.x-4) ||
+                                  ( arr[i].proiettile.y == player.coordinata.y &&
+                                    arr[i].proiettile.x == player.coordinata.x) ){
+                                mvwaddch(w1, player.coordinata.y, player.coordinata.x, 'X');
+                                hit=1;
+                                invincibility = 60;
+                            }
                         }
+                    }
+
+                    /* Se la navetta principale è stata colpita, la flag hit e impostata a 1
+                     * Questo fa sì che il giocatore principale perda una vita e venga resettata la flag a 0. */
+                    if(hit==1){
+                        life--;
+                        hit = 0;
                     }
 
                     //collisione proiettile-navetta_nemica //
@@ -501,7 +518,7 @@ void screen(WINDOW *w1) {
                                                               hitbox > player.proiettile.y + helper - arr[i].coordinata.y))) {
                         //possiamo sfruttare questo meccanismo per spawnare nemici da lv 1 a lv 2,e in generale per togliere la vita ai nemici
                         jump[arr[i].id + 1] = -1;
-                        mvwaddch(w1, arr[i].coordinata.y, arr[i].coordinata.x, 'X');
+                        mvwaddch(w1, arr[i].coordinata.y, arr[i].coordinata.x, '#');
                         //serve per ridurre i nemici nei vari counter
                         ++killed;
                     }
@@ -574,3 +591,4 @@ void screen(WINDOW *w1) {
 /*
 //collisione fine_schermo-nemici/nemico-navetta,gameover
 */
+
