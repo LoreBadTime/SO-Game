@@ -393,7 +393,9 @@ void screen(WINDOW *w1) {
                         switch (spawn) {
                             case 0:        //variabili di spawn nemici
                                 // per testare le due versioni commenta e decommenta
-
+                                // test rimbalzi tra navicelle
+                                // enemyLV1_old(70, coordinata * 3 * 2, k,k%2, tmp, enemy_frame);
+                                
                                 enemyLV1_old(70, coordinata * 3 * 2, k,0, tmp, enemy_frame);
                                 //enemyLV1_new(70, coordinata * 3 * 2, k, 0, tmp, enemy_frame);
 
