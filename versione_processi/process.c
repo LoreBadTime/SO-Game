@@ -379,7 +379,7 @@ void screen(WINDOW *w1) {
         case 0:
             //  attenzione a non diminuire troppo il terzo valore,altrimenti ci potrebbero essere
             //  problemi di lettura input
-            gestore_input(player_input, playerpipe, 50);
+            gestore_input(player_input, playerpipe, 30);
             exit(0);
             break;
         default:
