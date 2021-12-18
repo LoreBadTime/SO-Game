@@ -6,6 +6,8 @@ int enemyLV1_old(int x,int y,int id,int direzione,int *sender,int *receiver){
     pid_t enemy;
     int p_enemy[2];
     pipe(p_enemy);
+    int decremento = 0;
+    int skipframe = 7;
     int alive = 1; //Stato navicella nemica
     //int direzione = 1; //Direzione navicella nemica, 1 = Da alto in basso, 0 = Da basso in alto
 
@@ -16,7 +18,7 @@ int enemyLV1_old(int x,int y,int id,int direzione,int *sender,int *receiver){
     nemico.proiettile.ready=0;
     nemico.navnemica.x=x;
     nemico.navnemica.y=y;
-    int decremento = 0;
+    
     //Risoluzione e pipe per inviare le coordinate
     int maxy,maxx;
     int send_info[7] = {};
@@ -46,7 +48,7 @@ int enemyLV1_old(int x,int y,int id,int direzione,int *sender,int *receiver){
                         nemico.navnemica.y++;
                     }
                     //bisogna trovare i valori ideali di decremento(il 9)
-                    if (decremento < 9)
+                    if (decremento < skipframe-1)
                     {
                         if (direzione)
                         {
@@ -77,9 +79,12 @@ int enemyLV1_old(int x,int y,int id,int direzione,int *sender,int *receiver){
                     // rallentatore di movimento,modificando la condizione possiamo decidere di quanto rallentare i nemici
                     // permettendci di impostare velocita maggiori di fps 
                     ++decremento;
-                    if(decremento == 10){
+                    if(decremento == skipframe){
                         decremento = 0;
                     }
+                    send_info[4] = getpid();
+                    send_info[5] = id;
+                    send_info[6] = direzione;
 
                     if (read(p_enemy[0], &nemico, sizeof(Navetta_Nemica)) <= 0)
                     {
@@ -93,9 +98,6 @@ int enemyLV1_old(int x,int y,int id,int direzione,int *sender,int *receiver){
                     send_info[1] = nemico.navnemica.y;
                     send_info[2] = nemico.proiettile.x;
                     send_info[3] = nemico.proiettile.y;
-                    send_info[4] = getpid();
-                    send_info[5] = id;
-                    send_info[6] = direzione;
                     write(sender[1],send_info,7*sizeof(int));
                     read(receiver[0],rec,(ENEM_TEST + 1)*sizeof(int));
                     //la read serve per mettere il processo in waiting per il prossimo frame,altrimenti puo esserci un
