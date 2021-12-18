@@ -16,7 +16,7 @@ int enemyLV1_old(int x,int y,int id,int direzione,int *sender,int *receiver){
     nemico.proiettile.ready=0;
     nemico.navnemica.x=x;
     nemico.navnemica.y=y;
-
+    int decremento = 0;
     //Risoluzione e pipe per inviare le coordinate
     int maxy,maxx;
     int send_info[7] = {};
@@ -45,6 +45,19 @@ int enemyLV1_old(int x,int y,int id,int direzione,int *sender,int *receiver){
                     {
                         nemico.navnemica.y++;
                     }
+                    //bisogna trovare i valori ideali di decremento(il 9)
+                    if (decremento < 9)
+                    {
+                        if (direzione)
+                        {
+                            nemico.navnemica.y++;
+                        }
+                        else
+                        {
+                            nemico.navnemica.y--;
+                        }
+                        
+                    }
                     if (write(p_enemy[1], &nemico, sizeof(Navetta_Nemica)) <= 0)
                     {
                         mvprintw(maxy / 2, maxx / 2, "Error writing enemy");
@@ -61,11 +74,20 @@ int enemyLV1_old(int x,int y,int id,int direzione,int *sender,int *receiver){
 
                     //Comunicazione delle info tramite pipe
                 default:
+                    // rallentatore di movimento,modificando la condizione possiamo decidere di quanto rallentare i nemici
+                    // permettendci di impostare velocita maggiori di fps 
+                    ++decremento;
+                    if(decremento == 10){
+                        decremento = 0;
+                    }
+
                     if (read(p_enemy[0], &nemico, sizeof(Navetta_Nemica)) <= 0)
                     {
                         mvprintw( maxy/2 , maxx/2 , "Error reading enemy");
                         refresh();
                     }
+                    //algoritmo per rallent
+                    
                     
                     send_info[0] = nemico.navnemica.x;
                     send_info[1] = nemico.navnemica.y;
@@ -97,7 +119,6 @@ int enemyLV1_old(int x,int y,int id,int direzione,int *sender,int *receiver){
                     break;
             }
         }
-
         --nemico.navnemica.x; //La navicella nemica avanza finchè non arriva alla x del player
         --nemico.navnemica.x;
         --nemico.navnemica.x;
@@ -200,6 +221,7 @@ int enemyLV1_new(int x, int y, int id, int direzione, int *sender, int *receiver
                 }
                 close(sender[0]);
                 close(receiver[1]);
+
                 write(sender[1], &nemico, sizeof(Player));
                 read(receiver[0], rec, (ENEM_TEST + 1) * sizeof(int));
                 //la read serve per mettere il processo in waiting per il prossimo frame,altrimenti puo esserci un
@@ -243,7 +265,7 @@ int enemyLV1_new(int x, int y, int id, int direzione, int *sender, int *receiver
 
 //Player contiene tutte le info del player
 //sys_slownes e la velocita di gioco
-void gestore_input(Player player, int *pipe, int sys_slownes) {
+void gestore_input(Bullet player, int *pipe, int sys_slownes) {
     int c;
     int maxy, maxx;
     getmaxyx(stdscr, maxy, maxx);
@@ -253,55 +275,30 @@ void gestore_input(Player player, int *pipe, int sys_slownes) {
     while (true) {
         //meglio usare la getch, cosi non fa refresh allo schermo principale
         c = getch();
-        // se arriva l'input di lancio del proiettile ed esso si trova(per comodita implementativa) dietro la navetta
-        if (player.proiettile.ready == PRONTO && player.proiettile.x < player.coordinata.x) {
-            // lo lancio
-            // prendo le x e le y della navetta e le assegno al proiettile
-            player.proiettile.y = player.coordinata.y;
-            player.proiettile.x = player.coordinata.x;
-            // poi sparo
-            ++player.proiettile.x;
-        }
-        // una volta sparato lui avanza finche possibile
-        if (player.proiettile.x > 1 && player.proiettile.ready == PRONTO) {
-            // questi servono per regolare la velocita del proiettile della navicella + incrementi = + veloce
-            ++player.proiettile.x;
-        }
-        // raggiunto un limite e se ancora attivo lo termino(si puo modificare il limite per velocizzare il tempo di spawn)
-        if (player.proiettile.x > maxx && player.proiettile.ready == PRONTO) {
-            player.proiettile.ready = 0;
-            player.proiettile.x = 0;
-            player.proiettile.y = 0;
-            player.angolo = 0;
-        }
-        // questo meccanismo permette di bloccare anche al lancio di un proiettile per volta,ma e comunque modificabile
-
-        // modifica di come il proiettile ha la sua traiettoria diagonale
-        if (player.proiettile.x % DIAGONALE == 1) {
-            ++player.angolo;
-        }
         // ottenimento dati da keyboard
         if (c != ERR) {
             switch (c) {
+                //aggiungendo gli altri due casi e possibile muoversi anche nell'asse x
                 case KEY_UP:
-                    if (player.coordinata.y > LARGHEZZA) {
-                        player.coordinata.y--;
+                    if (player.y > LARGHEZZA) {
+                        player.y--;
                     }
                     break;
                 case KEY_DOWN:
-                    if (player.coordinata.y < maxy - LARGHEZZA) {
-                        player.coordinata.y++;
+                    if (player.y < maxy - LARGHEZZA) {
+                        player.y++;
                     }
                     break;
                     // lancio proiettile
                 case (int) ' ':
-                    player.proiettile.ready = PRONTO;
+                    player.ready = PRONTO;
                 default:
                     break;
             }
             while (c == getch()) { ; }
         }
-        write(pipe[1], &player, sizeof(Player));
+        write(pipe[1], &player, sizeof(Bullet));
+        player.ready = UCCISA;
         napms(sys_slownes);
     }
 }
@@ -338,6 +335,11 @@ void screen(WINDOW *w1) {
     player.id = 0;
     player.angolo = 0;
 
+    Bullet player_input;
+    player_input.x = player.coordinata.x;
+    player_input.y = player.coordinata.y;
+    player_input.ready = 0;
+
     pid_t proc, spawn, giocatore;
     int tmp[2];
     int enemy_frame[2];
@@ -346,6 +348,8 @@ void screen(WINDOW *w1) {
     Player arr[ENEM_TEST] = {};
     int arrint[ENEM_TEST][7] = {};
     //array che contiene alcune info da inviare ai nemici(tra cui il salto e l'uccisione)
+    int maxy, maxx;
+    getmaxyx(stdscr, maxy, maxx);
 
     int jump[ENEM_TEST + 1] = {1};
     int kill_pr[ENEM_TEST] = {};
@@ -363,7 +367,7 @@ void screen(WINDOW *w1) {
     int w = 0;
     int k = 0;
     int delta = 0;
-        int p=0;
+    int p=0;
     int invincibility = 0;
     int life = 3;
     int killed = 0;
@@ -375,7 +379,7 @@ void screen(WINDOW *w1) {
         case 0:
             //  attenzione a non diminuire troppo il terzo valore,altrimenti ci potrebbero essere
             //  problemi di lettura input
-            gestore_input(player, playerpipe, 70);
+            gestore_input(player_input, playerpipe, 50);
             exit(0);
             break;
         default:
@@ -411,11 +415,44 @@ void screen(WINDOW *w1) {
             wait((int *) 0);
             // finche non raggiungo il gameover,scrivo lo schermo
             while (player_started) {
-                werase(w1);//prossimo frame,la clear in compenso all'erase non cancella lo schermo ma solo il buffer dello schermo
-                read(playerpipe[0], &player, sizeof(Player));
+                wclear(w1);//prossimo frame,la clear in compenso all'erase non cancella lo schermo ma solo il buffer dello schermo
+                read(playerpipe[0], &player_input, sizeof(Bullet));
+                player.coordinata.x = player_input.x;
+                player.coordinata.y = player_input.y;
+                player.proiettile.ready = player_input.ready;
+
                 //helper ci fornisce una specie di angolo per sparare diagonalmente i proietili
+                if (player.proiettile.ready == PRONTO && player.proiettile.x < player.coordinata.x)
+                {
+                    // lo lancio
+                    // prendo le x e le y della navetta e le assegno al proiettile
+                    player.proiettile.y = player.coordinata.y;
+                    player.proiettile.x = player.coordinata.x;
+                    // poi sparo
+                    ++player.proiettile.x;
+                }
+                // una volta sparato lui avanza finche possibile
+                if (player.proiettile.x > 1)
+                {
+                    // questi servono per regolare la velocita del proiettile della navicella + incrementi = + veloce
+                    ++player.proiettile.x;
+                }
+                // raggiunto un limite e se ancora attivo lo termino(si puo modificare il limite per velocizzare il tempo di spawn)
+                if (player.proiettile.x > maxx)
+                {
+                    player.proiettile.x = 0;
+                    player.proiettile.y = 0;
+                    player.angolo = 0;
+                }
+                // questo meccanismo permette di bloccare anche al lancio di un proiettile per volta,ma e comunque modificabile
+
+                // modifica di come il proiettile ha la sua traiettoria diagonale
+                if (player.proiettile.x % DIAGONALE == 1)
+                {
+                    ++player.angolo;
+                }
                 helper = player.angolo;
-                //lettura pipes per mettere tutto in una matrice
+                // lettura pipes per mettere tutto in una matrice
                 for (i = 0; i < maxenemies; i++) {
                     // per testare le versioni commenta e decommenta
 
@@ -441,8 +478,7 @@ void screen(WINDOW *w1) {
 
                 // debug
                 /*
-                mvwprintw(w1,1,26,"id:%d X:%d Y:%d ",arr[0][5],arr[0][0],arr[0][1]);
-                mvwprintw(w1,2,26,"id:%d X:%d Y:%d ",arr[1][5],arr[1][0],arr[1][1]);
+                mvwprintw(w1,1,26,"id:%d X:%d Y:%d ",arrint[0][5],arrint[0][0],arrint[0][1]);
                 //*/
                 w = 0;
                 //controllo collisioni
@@ -576,7 +612,7 @@ void screen(WINDOW *w1) {
         game_over(w1, player.coordinata.x, player.coordinata.y);
     }
     //chiusura lettore input
-    kill(player.id, SIGKILL);
+    kill(player_input.id, SIGKILL);
     /*
     i = 0;p
     //chiusura pulita in caso di gameover per nemico che raggiunge il limite,necessita una revisione in modo che sia piu veloce

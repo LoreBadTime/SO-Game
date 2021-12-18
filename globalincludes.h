@@ -39,6 +39,7 @@ typedef struct {
 	int x;
 	int y;
 	int ready;
+	int id;
 } Bullet;
 
 typedef struct {
