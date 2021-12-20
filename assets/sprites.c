@@ -1,4 +1,3 @@
-
 #include "sprites.h"
 
 //stampa navetta in generale
@@ -113,11 +112,10 @@ void printnemicolv1_f2(int x,int y,WINDOW *w){
 
 //stampa numero di vite a schermo
 void print_vita(int life,WINDOW *w1){
-    int i = 0;
-	while (i < life)
-	{
-		mvwaddch(w1, 0, 3 + i, '>');
-		++i;
+    int i;
+    mvwprintw(w1, 0 , 3, "Vite:");
+	for (i=0;i < life;i++){
+		mvwaddch(w1, 0, 9 + i, '#');
 	}
 }
 

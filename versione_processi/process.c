@@ -69,29 +69,20 @@ int enemyLV1_old(int x,int y,int id,int direzione,int *sender,int *receiver){
                     //possibile eliminazione secondaria dato che anche qui non si fa altro che decrementare
                     --nemico.proiettile.x;
                     close(p_enemy[0]);
-                    if (direzione)
-                    {
+                    if (direzione) {
                         nemico.navnemica.y--;
-                    }
-                    else
-                    {
+                    } else {
                         nemico.navnemica.y++;
                     }
                     //bisogna trovare i valori ideali di decremento(il 9)
-                    if (decremento < skipframe-1)
-                    {
-                        if (direzione)
-                        {
+                    if (decremento < skipframe-1) {
+                        if (direzione) {
                             nemico.navnemica.y++;
-                        }
-                        else
-                        {
+                        } else {
                             nemico.navnemica.y--;
                         }
-                        
                     }
-                    if (write(p_enemy[1], &nemico, sizeof(Navetta_Nemica)) <= 0)
-                    {
+                    if (write(p_enemy[1], &nemico, sizeof(Navetta_Nemica)) <= 0) {
                         mvprintw(maxy / 2, maxx / 2, "Error writing enemy");
                         refresh();
                     }
@@ -116,8 +107,7 @@ int enemyLV1_old(int x,int y,int id,int direzione,int *sender,int *receiver){
                     send_info[5] = id;
                     send_info[6] = direzione;
 
-                    if (read(p_enemy[0], &nemico, sizeof(Navetta_Nemica)) <= 0)
-                    {
+                    if (read(p_enemy[0], &nemico, sizeof(Navetta_Nemica)) <= 0) {
                         mvprintw( maxy/2 , maxx/2 , "Error reading enemy");
                         refresh();
                     }
@@ -134,17 +124,17 @@ int enemyLV1_old(int x,int y,int id,int direzione,int *sender,int *receiver){
                     //processo veloce che invia info piu velocemente rispetto ad altri
 
                     //killa navicella nemica
-                    if (rec[0] == 0 || rec[id + 1] == -1){
+                    if (rec[0] == 0 || rec[id + 1] == -1) {
                         nemico.navnemica.y = -1;
                         alive = 0;
                     }
                     //dall'array estrae il suo id,serve per il rimbalzo in caso di collisioni con le navette nemiche
-                    if(rec[id + 1]){
+                    if(rec[id + 1]) {
                         direzione = !direzione;
                         rec[id + 1] = 0;
                     }
                     //Ottenimento info per lanciare il processo proiettile,+ randomizzazione lancio proiettile(altrimenti diventa un bullet hell)
-                    if(nemico.proiettile.x <= -1 && (rand() % 2 == 0)){
+                    if(nemico.proiettile.x <= -1 && (rand() % 2 == 0)) {
                         nemico.proiettile.x = nemico.navnemica.x;
                         nemico.proiettile.y = nemico.navnemica.y;
                     }
@@ -157,10 +147,10 @@ int enemyLV1_old(int x,int y,int id,int direzione,int *sender,int *receiver){
         direzione = !direzione; //Cambio direzione navicella nemica (per il rimbalzo)
 
         //Incrementi delle coordinate.y per rientrare nel ciclo
-        if (nemico.navnemica.y <= 1){
+        if (nemico.navnemica.y <= 1) {
             nemico.navnemica.y++;
         }
-        if (nemico.navnemica.y >= maxy-2){
+        if (nemico.navnemica.y >= maxy-2) {
             nemico.navnemica.y--;
         }
     }
@@ -399,7 +389,8 @@ void screen(WINDOW *w1) {
     Player arr[ENEM_TEST] = {}; //Contiene le info di tutti in nemici, controllare enemyLV1 per piu info
 
     /* Flag, contatori e distanze */
-    int i, coordinata, w = 0, k = 0, delta; //Contatori
+    int i, coordinata, decremento, w = 0, k = 0, delta; //Contatori
+    int y_spawner; //Indica in che ordinata andrà a spawnare il nemico
     int hit; // Flag se la navetta principale è stata colpita
     int player_started = 1; // Game-Start
     int invincibility = 0; // Flag e durata di invincibilità
@@ -431,11 +422,13 @@ void screen(WINDOW *w1) {
                         switch (spawn) {
                             case 0:        //variabili di spawn nemici
                                 // per testare le due versioni commenta e decommenta
-                                // test rimbalzi tra navicelle
-                                // enemyLV1_old(70, coordinata * 3 * 2, k,k%2, tmp, enemy_frame);
-                                
-                                enemyLV1_old(70, coordinata * 3 * 2, k,0, tmp, enemy_frame);
+                                coordinata = (coordinata * 3 * 2); //In modo da avere almeno uno sprite di stacco tra i nemici (Asse y)
+                                decremento = coordinata / (maxy-2); //Ogni volta che si supera il maxy viene decrementata la x
+                                y_spawner = coordinata % (maxy-2); //Si prende il modulo per scegliere la coordinata dello sprite
+                                decremento = (decremento * 3 * 2); //In modo da avere almeno uno sprite di stacco tra i nemici (Asse x)
+                                enemyLV1_old(70-decremento, y_spawner, k,0, tmp, enemy_frame);
                                 //enemyLV1_new(70, coordinata * 3 * 2, k, 0, tmp, enemy_frame);
+                                //Per i rimbalzi possiamo far gestire all'utente: 0 i nemici non collidono tra loro, 1 movimenti casuali
 
                                 //se si chiudono bene non passano da questo exit,di norma si auto-terminano appena raggiungono la fine dello schermo
                                 exit(-1);
