@@ -37,8 +37,8 @@ int enemyLV1_old(int x,int y,int id,int direzione,int *sender,int *receiver){
     int p_enemy[2];
     pipe(p_enemy);
     int decremento = 0;
-    int skipframe = 7;
-    int alive = 1; //Stato navicella nemica
+    int skipframe = 10;
+    int alive = 3; //Stato navicella nemica
     //int direzione = 1; //Direzione navicella nemica, 1 = Da alto in basso, 0 = Da basso in alto
 
     //Inizializzazione nemico,info del nemico
@@ -103,7 +103,7 @@ int enemyLV1_old(int x,int y,int id,int direzione,int *sender,int *receiver){
                     if(decremento == skipframe){
                         decremento = 0;
                     }
-                    send_info[4] = getpid();
+                    send_info[4] = alive;
                     send_info[5] = id;
                     send_info[6] = direzione;
 
@@ -124,9 +124,14 @@ int enemyLV1_old(int x,int y,int id,int direzione,int *sender,int *receiver){
                     //processo veloce che invia info piu velocemente rispetto ad altri
 
                     //killa navicella nemica
-                    if (rec[0] == 0 || rec[id + 1] == -1) {
+                    if (rec[0] == 0) {
+                        alive == 0;
+                    }
+                    if(rec[id + 1] == -1){
+                        --alive;
+                    }
+                    if(alive == 0){
                         nemico.navnemica.y = -1;
-                        alive = 0;
                     }
                     //dall'array estrae il suo id,serve per il rimbalzo in caso di collisioni con le navette nemiche
                     if(rec[id + 1]) {
@@ -483,7 +488,8 @@ void screen(WINDOW *w1) {
                             arr[i].coordinata.y = arrint[1];
                             arr[i].proiettile.x = arrint[2];
                             arr[i].proiettile.y = arrint[3];
-                            //send_info[4] = getpid();
+
+                            arr[i].proiettile.id = arrint[4];
 
                             arr[i].id = arrint[5];
                             arr[i].angolo = arrint[6];
@@ -535,10 +541,18 @@ void screen(WINDOW *w1) {
                                 player_started = 0;
                             }
                             //stampa nemici
-                            if(arr[i].coordinata.y%2==0) {
-                                printnemicolv1_f1(arr[i].coordinata.x, arr[i].coordinata.y, w1);
+                            if(arr[i].coordinata.y%2==0 && arr[i].coordinata.y) {
+                                if (arr[i].proiettile.id == 3){
+                                    printnemicolv1_f1(arr[i].coordinata.x, arr[i].coordinata.y, w1);
+                                }else{
+                                    printnemicolv2_f1(arr[i].coordinata.x, arr[i].coordinata.y, w1);
+                                }
                             } else {
-                                printnemicolv1_f2(arr[i].coordinata.x, arr[i].coordinata.y, w1);
+                                if (arr[i].proiettile.id == 3){
+                                    printnemicolv1_f2(arr[i].coordinata.x, arr[i].coordinata.y, w1);
+                                }else{
+                                    printnemicolv2_f2(arr[i].coordinata.x, arr[i].coordinata.y, w1);
+                                }
                             }
 
 
@@ -580,8 +594,10 @@ void screen(WINDOW *w1) {
                                 jump[arr[i].id + 1] = -1;
                                 mvwaddch(w1, arr[i].coordinata.y, arr[i].coordinata.x, '#');
                                 //serve per ridurre i nemici nei vari counter
-                                ++killed;
-                            }
+                                if(arr[i].proiettile.id == 1){
+                                    ++killed;
+                                } 
+                                }
                             }
                         }
                         //stampa a schermo
