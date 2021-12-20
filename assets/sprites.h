@@ -11,7 +11,7 @@ void printnemicolv2_f1(int x,int y,WINDOW *w);
 void printnemicolv2_f2(int x,int y,WINDOW *w);
 void printnemicolv1_f1(int x,int y,WINDOW *w);
 void printnemicolv1_f2(int x,int y,WINDOW *w);
-void print_vita(int life,WINDOW *w1);
+void print_info(int proiettile_pronto, int life,WINDOW *w1,int maxx);
 int print_nave(int invincibility,WINDOW *w1,int x,int y);
 void main_test();
 #endif
