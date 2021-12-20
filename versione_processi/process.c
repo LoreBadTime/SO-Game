@@ -58,13 +58,18 @@ int enemyLV1_old(int x,int y,int id,int direzione,int *sender,int *receiver){
         while (nemico.navnemica.y >= 2 && nemico.navnemica.y <= maxy - 3) {
 
             --nemico.proiettile.x;
-                    if(decremento == 0){
-                       if (direzione) {
-                            nemico.navnemica.y--;
-                       } else {
-                            nemico.navnemica.y++;
-                       }
-                    }
+            //adesso aggiorniamo i dati solo una volta
+            if (decremento == 0){
+                if (direzione)
+                {
+                    nemico.navnemica.y--;
+                }
+                else
+                {
+                    nemico.navnemica.y++;
+                }
+            }
+            //invio dati,tra poco provo a ripristinare il send di struttura
             send_info[4] = alive;
             send_info[5] = id;
             send_info[6] = direzione;
@@ -72,31 +77,35 @@ int enemyLV1_old(int x,int y,int id,int direzione,int *sender,int *receiver){
             send_info[1] = nemico.navnemica.y;
             send_info[2] = nemico.proiettile.x;
             send_info[3] = nemico.proiettile.y;
+
+            //sincronizzazione + scambio di info
+
             write(sender[1], send_info, 7 * sizeof(int));
             read(receiver[0], rec, (ENEM_TEST + 1) * sizeof(int));
-                    ++decremento;
-                    if (decremento == skipframe){
-                        decremento = 0;
-                    }
-                    if (rec[0] == 0) {
-                    //killa navicella nemica
-                    }
-                        alive == 0;
-                    if(rec[id + 1] == -1){
-                        --alive;
-                    }
-                    if(alive == 0){
-                        nemico.navnemica.y = -1;
-                    }
-                    //dall'array estrae il suo id,serve per il rimbalzo in caso di collisioni con le navette nemiche
-                    if(rec[id + 1]) {
-                        direzione = !direzione;
-                        rec[id + 1] = 0;
-                    }
-                    //Ottenimento info per lanciare il processo proiettile,+ randomizzazione lancio proiettile(altrimenti diventa un bullet hell)
-                    if(nemico.proiettile.x <= -1 && (rand() % 2 == 0)) {
-                        nemico.proiettile.x = nemico.navnemica.x;
-                        nemico.proiettile.y = nemico.navnemica.y;
+            //impostazione skip dei frame
+            ++decremento;
+            if (decremento == skipframe){
+                decremento = 0;
+            }
+            if (rec[0] == 0){
+                // killa navicella nemica
+            }
+            alive == 0;
+            if (rec[id + 1] == -1){
+                --alive;
+            }
+            if (alive == 0){
+                nemico.navnemica.y = -1;
+            }
+            // dall'array estrae il suo id,serve per il rimbalzo in caso di collisioni con le navette nemiche
+            if (rec[id + 1]){
+                direzione = !direzione;
+                rec[id + 1] = 0;
+            }
+            // Ottenimento info per lanciare il processo proiettile,+ randomizzazione lancio proiettile(altrimenti diventa un bullet hell)
+            if (nemico.proiettile.x <= -1 && (rand() % 2 == 0)){
+                nemico.proiettile.x = nemico.navnemica.x;
+                nemico.proiettile.y = nemico.navnemica.y;
             }
         }
 
