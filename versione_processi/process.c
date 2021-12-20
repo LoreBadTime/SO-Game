@@ -55,7 +55,7 @@ int enemyLV1_old(int x,int y,int id,int direzione,int *sender,int *receiver){
     //Ciclo che gesitisce il nemico
     while (nemico.navnemica.x > 0 && alive) {
         //Ciclo che gestisce il rimbalzo
-        while (nemico.navnemica.y >= 2 && nemico.navnemica.y <= maxy - 3) {
+        while (nemico.navnemica.y >= 4 && nemico.navnemica.y <= maxy - 3) {
 
             --nemico.proiettile.x;
             //adesso aggiorniamo i dati solo una volta
@@ -115,7 +115,7 @@ int enemyLV1_old(int x,int y,int id,int direzione,int *sender,int *receiver){
         direzione = !direzione; //Cambio direzione navicella nemica (per il rimbalzo)
 
         //Incrementi delle coordinate.y per rientrare nel ciclo
-        if (nemico.navnemica.y <= 1) {
+        if (nemico.navnemica.y <= 3) {
             nemico.navnemica.y++;
         }
         if (nemico.navnemica.y >= maxy - 2) {
@@ -270,7 +270,7 @@ void gestore_input(Bullet player, int *pipe, int sys_slownes) {
             switch (c) {
                 //aggiungendo gli altri due casi e possibile muoversi anche nell'asse x
                 case KEY_UP:
-                    if (player.y > LARGHEZZA) {
+                    if (player.y > LARGHEZZA + 1) {
                         player.y--;
                     }
                     break;
@@ -583,7 +583,7 @@ void screen(WINDOW *w1) {
                         //stampa proiettili navetta
                         //stampa navetta
                         invincibility = print_nave(invincibility, w1, player.coordinata.x, player.coordinata.y);
-                        print_vita(life, w1);
+                        print_info(player.proiettile.ready,life, w1,maxx);
                         for(i = 0;i < num_proiettili;i++)
                         {   if (proiettili[i].x == -1 && proiettili[i].y == -1)
                             {

@@ -110,13 +110,23 @@ void printnemicolv1_f2(int x,int y,WINDOW *w){
 	mvwprintw(w,y+1,x,sprite.c[2]);
 }
 
-//stampa numero di vite a schermo
-void print_vita(int life,WINDOW *w1){
+//Stampa numero di vite e disponibilita proiettili a schermo
+void print_info(int proiettile_pronto,int life,WINDOW *w1,int maxx){
     int i;
-    mvwprintw(w1, 0 , 3, "Vite:");
+    mvwprintw(w1, 0, 1, "Proiettile:" );
+    if(proiettile_pronto == PRONTO)
+        mvwaddch(w1, 0, 13, ' ');
+    else
+        mvwaddch(w1,0,13,'O');
+
+    mvwprintw(w1, 0 , 16, "Vite:");
 	for (i=0;i < life;i++){
-		mvwaddch(w1, 0, 9 + i, '#');
+		mvwaddch(w1, 0, 22 + i, '#');
 	}
+
+    for(i=0;i<maxx;i++){
+        mvwaddch(w1,1,i,'_');
+    }
 }
 
 //algoritmo di stampa navetta con invincibilita
