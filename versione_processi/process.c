@@ -115,7 +115,7 @@ int enemyLV1_old(int x,int y,int id,int direzione,int *sender,int *receiver){
         direzione = !direzione; //Cambio direzione navicella nemica (per il rimbalzo)
 
         //Incrementi delle coordinate.y per rientrare nel ciclo
-        if (nemico.navnemica.y <= 1) {
+        if (nemico.navnemica.y <= 3) {
             nemico.navnemica.y++;
         }
         if (nemico.navnemica.y >= maxy - 2) {
@@ -125,8 +125,8 @@ int enemyLV1_old(int x,int y,int id,int direzione,int *sender,int *receiver){
 
     //Nel caso in cui arrivi alla fine,per non bloccare le pipes
 
-    close(p_enemy[0]);
-    close(p_enemy[1]);
+    //close(p_enemy[0]);
+    //close(p_enemy[1]);
     close(sender[1]);
     close(receiver[0]);
     exit(0);
