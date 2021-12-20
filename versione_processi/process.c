@@ -271,7 +271,7 @@ void gestore_input(Bullet player, int *pipe, int sys_slownes) {
             switch (c) {
                 //aggiungendo gli altri due casi e possibile muoversi anche nell'asse x
                 case KEY_UP:
-                    if (player.y > LARGHEZZA) {
+                    if (player.y > LARGHEZZA + 1) {
                         player.y--;
                     }
                     break;
