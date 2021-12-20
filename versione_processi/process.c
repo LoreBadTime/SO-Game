@@ -125,8 +125,7 @@ int enemyLV1_old(int x,int y,int id,int direzione,int *sender,int *receiver){
 
     //Nel caso in cui arrivi alla fine,per non bloccare le pipes
 
-    close(p_enemy[0]);
-    close(p_enemy[1]);
+
     close(sender[1]);
     close(receiver[0]);
     exit(0);
