@@ -29,7 +29,6 @@ void proiettile(int x,int y,int *pipe,int *reciv){
 }
 
 
-
 int enemyLV1_old(int x,int y,int id,int direzione,int *sender,int *receiver){
     
     close(sender[0]);
@@ -38,7 +37,6 @@ int enemyLV1_old(int x,int y,int id,int direzione,int *sender,int *receiver){
     int decremento = 0;
     int skipframe = 20;
     int alive = 3; //Stato navicella nemica
-    //int direzione = 1; //Direzione navicella nemica, 1 = Da alto in basso, 0 = Da basso in alto
 
     //Inizializzazione nemico,info del nemico
     Navetta_Nemica nemico;
@@ -53,16 +51,13 @@ int enemyLV1_old(int x,int y,int id,int direzione,int *sender,int *receiver){
     int send_info[7] = {};
     int rec[ENEM_TEST + 1] = {};
     getmaxyx(stdscr, maxy, maxx);
+
     //Ciclo che gesitisce il nemico
-    while (nemico.navnemica.x > 0 && alive)
-    {
+    while (nemico.navnemica.x > 0 && alive) {
         //Ciclo che gestisce il rimbalzo
-        while (nemico.navnemica.y >= 2 && nemico.navnemica.y <= maxy-3)
-        {
-            
-                    //eliminato processo inutile del proiettile
-                    //possibile eliminazione secondaria dato che anche qui non si fa altro che decrementare
-                    --nemico.proiettile.x;
+        while (nemico.navnemica.y >= 2 && nemico.navnemica.y <= maxy - 3) {
+
+            --nemico.proiettile.x;
                     if(decremento == 0){
                        if (direzione) {
                             nemico.navnemica.y--;
@@ -70,30 +65,23 @@ int enemyLV1_old(int x,int y,int id,int direzione,int *sender,int *receiver){
                             nemico.navnemica.y++;
                        }
                     }
-                    
-                    //bisogna trovare i valori ideali di decremento(il 9)
-                    
-                    
-                    send_info[0] = nemico.navnemica.x;
-                    send_info[1] = nemico.navnemica.y;
-                    send_info[2] = nemico.proiettile.x;
-                    send_info[3] = nemico.proiettile.y;
-                    send_info[4] = alive;
-                    send_info[5] = id;
-                    send_info[6] = direzione;
-                    write(sender[1],send_info,7*sizeof(int));
-
-                    read(receiver[0],rec,(ENEM_TEST + 1)*sizeof(int));
-                    //la read serve per mettere il processo in waiting per il prossimo frame,altrimenti puo esserci un
-                    //processo veloce che invia info piu velocemente rispetto ad altri
+            send_info[4] = alive;
+            send_info[5] = id;
+            send_info[6] = direzione;
+            send_info[0] = nemico.navnemica.x;
+            send_info[1] = nemico.navnemica.y;
+            send_info[2] = nemico.proiettile.x;
+            send_info[3] = nemico.proiettile.y;
+            write(sender[1], send_info, 7 * sizeof(int));
+            read(receiver[0], rec, (ENEM_TEST + 1) * sizeof(int));
                     ++decremento;
                     if (decremento == skipframe){
                         decremento = 0;
                     }
-                    //killa navicella nemica
                     if (rec[0] == 0) {
-                        alive == 0;
+                    //killa navicella nemica
                     }
+                        alive == 0;
                     if(rec[id + 1] == -1){
                         --alive;
                     }
@@ -109,8 +97,9 @@ int enemyLV1_old(int x,int y,int id,int direzione,int *sender,int *receiver){
                     if(nemico.proiettile.x <= -1 && (rand() % 2 == 0)) {
                         nemico.proiettile.x = nemico.navnemica.x;
                         nemico.proiettile.y = nemico.navnemica.y;
-                    }
+            }
         }
+
         --nemico.navnemica.x; //La navicella nemica avanza finchè non arriva alla x del player
         --nemico.navnemica.x;
         --nemico.navnemica.x;
@@ -120,7 +109,7 @@ int enemyLV1_old(int x,int y,int id,int direzione,int *sender,int *receiver){
         if (nemico.navnemica.y <= 1) {
             nemico.navnemica.y++;
         }
-        if (nemico.navnemica.y >= maxy-2) {
+        if (nemico.navnemica.y >= maxy - 2) {
             nemico.navnemica.y--;
         }
     }
@@ -596,7 +585,7 @@ void screen(WINDOW *w1) {
                             }
                         }
 
-                        // altre info di debug
+                        /* altre info di debug
 
                         //printpl_info(w1,plarr);
                         /*
@@ -605,7 +594,7 @@ void screen(WINDOW *w1) {
                         {
                             mvwprintw(w1,i,21,"id:%d:%d ",i,jump[i]);
                             ++i;
-                        }*/
+                        }//*/
 
                         //sincronizzazione processi + invio info su rimbalzi/uccisioni
                         for (i = 0; i < maxenemies; i++) {
