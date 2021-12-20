@@ -29,17 +29,12 @@ void proiettile(int x,int y,int *pipe,int *reciv){
 }
 
 
-
 int enemyLV1_old(int x,int y,int id,int direzione,int *sender,int *receiver){
 
     //Inizializzazione navicella nemica
-    pid_t enemy;
-    int p_enemy[2];
-    pipe(p_enemy);
     int decremento = 0;
     int skipframe = 10;
     int alive = 3; //Stato navicella nemica
-    //int direzione = 1; //Direzione navicella nemica, 1 = Da alto in basso, 0 = Da basso in alto
 
     //Inizializzazione nemico,info del nemico
     Navetta_Nemica nemico;
@@ -53,99 +48,73 @@ int enemyLV1_old(int x,int y,int id,int direzione,int *sender,int *receiver){
     int maxy,maxx;
     int send_info[7] = {};
     int rec[ENEM_TEST + 1] = {};
-    close(receiver[1]);
     getmaxyx(stdscr, maxy, maxx);
+
     //Ciclo che gesitisce il nemico
-    while (nemico.navnemica.x > 0 && alive)
-    {
+    while (nemico.navnemica.x > 0 && alive) {
         //Ciclo che gestisce il rimbalzo
-        while (nemico.navnemica.y >= 2 && nemico.navnemica.y <= maxy-3)
-        {
-            //Creazione processo: (P)schermo - (C)navicella/proiettile
-            enemy = fork();
-            switch (enemy){
-                case 0:
-                    //eliminato processo inutile del proiettile
-                    //possibile eliminazione secondaria dato che anche qui non si fa altro che decrementare
-                    --nemico.proiettile.x;
-                    close(p_enemy[0]);
-                    if (direzione) {
-                        nemico.navnemica.y--;
-                    } else {
-                        nemico.navnemica.y++;
-                    }
-                    //bisogna trovare i valori ideali di decremento(il 9)
-                    if (decremento < skipframe-1) {
-                        if (direzione) {
-                            nemico.navnemica.y++;
-                        } else {
-                            nemico.navnemica.y--;
-                        }
-                    }
-                    if (write(p_enemy[1], &nemico, sizeof(Navetta_Nemica)) <= 0) {
-                        mvprintw(maxy / 2, maxx / 2, "Error writing enemy");
-                        refresh();
-                    }
-                    close(p_enemy[1]);
-                    exit(0);
-                    break;
-                    //In caso di errore della fork()
-                case -1:
-                    refresh();
-                    exit(-1);
-                    break;
+        while (nemico.navnemica.y >= 2 && nemico.navnemica.y <= maxy - 3) {
 
-                    //Comunicazione delle info tramite pipe
-                default:
-                    // rallentatore di movimento,modificando la condizione possiamo decidere di quanto rallentare i nemici
-                    // permettendci di impostare velocita maggiori di fps 
-                    ++decremento;
-                    if(decremento == skipframe){
-                        decremento = 0;
-                    }
-                    send_info[4] = alive;
-                    send_info[5] = id;
-                    send_info[6] = direzione;
+            --nemico.proiettile.x;
+            if (direzione) {
+                nemico.navnemica.y--;
+            } else {
+                nemico.navnemica.y++;
+            }
+            //bisogna trovare i valori ideali di decremento(il 9)
+            if (decremento < skipframe - 1) {
+                if (direzione) {
+                    nemico.navnemica.y++;
+                } else {
+                    nemico.navnemica.y--;
+                }
+            }
 
-                    if (read(p_enemy[0], &nemico, sizeof(Navetta_Nemica)) <= 0) {
-                        mvprintw( maxy/2 , maxx/2 , "Error reading enemy");
-                        refresh();
-                    }
-                    //algoritmo per rallent
-                    
-                    
-                    send_info[0] = nemico.navnemica.x;
-                    send_info[1] = nemico.navnemica.y;
-                    send_info[2] = nemico.proiettile.x;
-                    send_info[3] = nemico.proiettile.y;
-                    write(sender[1],send_info,7*sizeof(int));
-                    read(receiver[0],rec,(ENEM_TEST + 1)*sizeof(int));
-                    //la read serve per mettere il processo in waiting per il prossimo frame,altrimenti puo esserci un
-                    //processo veloce che invia info piu velocemente rispetto ad altri
+            // rallentatore di movimento,modificando la condizione possiamo decidere di quanto rallentare i nemici
+            // permettendci di impostare velocita maggiori di fps
+            ++decremento;
+            if (decremento == skipframe) {
+                decremento = 0;
+            }
+            send_info[4] = alive;
+            send_info[5] = id;
+            send_info[6] = direzione;
+            //algoritmo per rallent
 
-                    //killa navicella nemica
-                    if (rec[0] == 0) {
-                        alive == 0;
-                    }
-                    if(rec[id + 1] == -1){
-                        --alive;
-                    }
-                    if(alive == 0){
-                        nemico.navnemica.y = -1;
-                    }
-                    //dall'array estrae il suo id,serve per il rimbalzo in caso di collisioni con le navette nemiche
-                    if(rec[id + 1]) {
-                        direzione = !direzione;
-                        rec[id + 1] = 0;
-                    }
-                    //Ottenimento info per lanciare il processo proiettile,+ randomizzazione lancio proiettile(altrimenti diventa un bullet hell)
-                    if(nemico.proiettile.x <= -1 && (rand() % 2 == 0)) {
-                        nemico.proiettile.x = nemico.navnemica.x;
-                        nemico.proiettile.y = nemico.navnemica.y;
-                    }
-                    break;
+            send_info[0] = nemico.navnemica.x;
+            send_info[1] = nemico.navnemica.y;
+            send_info[2] = nemico.proiettile.x;
+            send_info[3] = nemico.proiettile.y;
+
+            close(sender[0]);
+            write(sender[1], send_info, 7 * sizeof(int));
+            close(receiver[1]);
+            read(receiver[0], rec, (ENEM_TEST + 1) * sizeof(int));
+            //la read serve per mettere il processo in waiting per il prossimo frame,altrimenti puo esserci un
+            //processo veloce che invia info piu velocemente rispetto ad altri
+
+            //killa navicella nemica
+            if (rec[0] == 0) {
+                alive == 0;
+            }
+            if (rec[id + 1] == -1) {
+                --alive;
+            }
+            if (alive == 0) {
+                nemico.navnemica.y = -1;
+            }
+            //dall'array estrae il suo id,serve per il rimbalzo in caso di collisioni con le navette nemiche
+            if (rec[id + 1]) {
+                direzione = !direzione;
+                rec[id + 1] = 0;
+            }
+            //Ottenimento info per lanciare il processo proiettile,+ randomizzazione lancio proiettile(altrimenti diventa un bullet hell)
+            if (nemico.proiettile.x <= -1 && (rand() % 2 == 0)) {
+                nemico.proiettile.x = nemico.navnemica.x;
+                nemico.proiettile.y = nemico.navnemica.y;
             }
         }
+
         --nemico.navnemica.x; //La navicella nemica avanza finchè non arriva alla x del player
         --nemico.navnemica.x;
         --nemico.navnemica.x;
@@ -155,15 +124,12 @@ int enemyLV1_old(int x,int y,int id,int direzione,int *sender,int *receiver){
         if (nemico.navnemica.y <= 1) {
             nemico.navnemica.y++;
         }
-        if (nemico.navnemica.y >= maxy-2) {
+        if (nemico.navnemica.y >= maxy - 2) {
             nemico.navnemica.y--;
         }
     }
 
     //Nel caso in cui arrivi alla fine,per non bloccare le pipes
-
-    close(p_enemy[0]);
-    close(p_enemy[1]);
     close(sender[1]);
     exit(0);
 }
@@ -617,7 +583,7 @@ void screen(WINDOW *w1) {
                             }
                         }
 
-                        /* altre info di debug
+                         /*altre info di debug
 
                         //printpl_info(w1,plarr);
                         i = 0;
@@ -631,7 +597,7 @@ void screen(WINDOW *w1) {
                         {
                             mvwprintw(w1,i,21,"id:%d:%d ",i,jump[i]);
                             ++i;
-                        }*/
+                        }//*/
 
                         //sincronizzazione processi + invio info su rimbalzi/uccisioni
                         for (i = 0; i < maxenemies; i++) {
