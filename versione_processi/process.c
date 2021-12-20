@@ -31,13 +31,12 @@ void proiettile(int x,int y,int *pipe,int *reciv){
 
 
 int enemyLV1_old(int x,int y,int id,int direzione,int *sender,int *receiver){
-
+    
+    close(sender[0]);
+    close(receiver[1]);
     //Inizializzazione navicella nemica
-    pid_t enemy;
-    int p_enemy[2];
-    pipe(p_enemy);
     int decremento = 0;
-    int skipframe = 10;
+    int skipframe = 20;
     int alive = 3; //Stato navicella nemica
     //int direzione = 1; //Direzione navicella nemica, 1 = Da alto in basso, 0 = Da basso in alto
 
@@ -53,7 +52,6 @@ int enemyLV1_old(int x,int y,int id,int direzione,int *sender,int *receiver){
     int maxy,maxx;
     int send_info[7] = {};
     int rec[ENEM_TEST + 1] = {};
-    close(receiver[1]);
     getmaxyx(stdscr, maxy, maxx);
     //Ciclo che gesitisce il nemico
     while (nemico.navnemica.x > 0 && alive)
@@ -61,68 +59,37 @@ int enemyLV1_old(int x,int y,int id,int direzione,int *sender,int *receiver){
         //Ciclo che gestisce il rimbalzo
         while (nemico.navnemica.y >= 2 && nemico.navnemica.y <= maxy-3)
         {
-            //Creazione processo: (P)schermo - (C)navicella/proiettile
-            enemy = fork();
-            switch (enemy){
-                case 0:
+            
                     //eliminato processo inutile del proiettile
                     //possibile eliminazione secondaria dato che anche qui non si fa altro che decrementare
                     --nemico.proiettile.x;
-                    close(p_enemy[0]);
-                    if (direzione) {
-                        nemico.navnemica.y--;
-                    } else {
-                        nemico.navnemica.y++;
-                    }
-                    //bisogna trovare i valori ideali di decremento(il 9)
-                    if (decremento < skipframe-1) {
-                        if (direzione) {
-                            nemico.navnemica.y++;
-                        } else {
+                    if(decremento == 0){
+                       if (direzione) {
                             nemico.navnemica.y--;
-                        }
+                       } else {
+                            nemico.navnemica.y++;
+                       }
                     }
-                    if (write(p_enemy[1], &nemico, sizeof(Navetta_Nemica)) <= 0) {
-                        mvprintw(maxy / 2, maxx / 2, "Error writing enemy");
-                        refresh();
-                    }
-                    close(p_enemy[1]);
-                    exit(0);
-                    break;
-                    //In caso di errore della fork()
-                case -1:
-                    refresh();
-                    exit(-1);
-                    break;
-
-                    //Comunicazione delle info tramite pipe
-                default:
-                    // rallentatore di movimento,modificando la condizione possiamo decidere di quanto rallentare i nemici
-                    // permettendci di impostare velocita maggiori di fps 
-                    ++decremento;
-                    if(decremento == skipframe){
-                        decremento = 0;
-                    }
-                    send_info[4] = alive;
-                    send_info[5] = id;
-                    send_info[6] = direzione;
-
-                    if (read(p_enemy[0], &nemico, sizeof(Navetta_Nemica)) <= 0) {
-                        mvprintw( maxy/2 , maxx/2 , "Error reading enemy");
-                        refresh();
-                    }
-                    //algoritmo per rallent
+                    
+                    //bisogna trovare i valori ideali di decremento(il 9)
                     
                     
                     send_info[0] = nemico.navnemica.x;
                     send_info[1] = nemico.navnemica.y;
                     send_info[2] = nemico.proiettile.x;
                     send_info[3] = nemico.proiettile.y;
+                    send_info[4] = alive;
+                    send_info[5] = id;
+                    send_info[6] = direzione;
                     write(sender[1],send_info,7*sizeof(int));
+
                     read(receiver[0],rec,(ENEM_TEST + 1)*sizeof(int));
                     //la read serve per mettere il processo in waiting per il prossimo frame,altrimenti puo esserci un
                     //processo veloce che invia info piu velocemente rispetto ad altri
-
+                    ++decremento;
+                    if (decremento == skipframe){
+                        decremento = 0;
+                    }
                     //killa navicella nemica
                     if (rec[0] == 0) {
                         alive == 0;
@@ -143,8 +110,6 @@ int enemyLV1_old(int x,int y,int id,int direzione,int *sender,int *receiver){
                         nemico.proiettile.x = nemico.navnemica.x;
                         nemico.proiettile.y = nemico.navnemica.y;
                     }
-                    break;
-            }
         }
         --nemico.navnemica.x; //La navicella nemica avanza finchè non arriva alla x del player
         --nemico.navnemica.x;
@@ -162,9 +127,8 @@ int enemyLV1_old(int x,int y,int id,int direzione,int *sender,int *receiver){
 
     //Nel caso in cui arrivi alla fine,per non bloccare le pipes
 
-    close(p_enemy[0]);
-    close(p_enemy[1]);
     close(sender[1]);
+    close(receiver[0]);
     exit(0);
 }
 
@@ -372,14 +336,12 @@ void screen(WINDOW *w1) {
     Bullet proiettili[MAX_PROIETTILI] = {};
     
     /* Inizializzazione pipes e processi */
-    int tmp[2];
+    int tmp[ENEM_TEST][2];
     int bullet_p[2];
     int bullet_ps[2];
-    int enemy_frame[2];
+    int enemy_frame[ENEM_TEST][2];
     int playerpipe[2];
-    pipe(tmp);
     pipe(bullet_p);
-    pipe(enemy_frame);
     pipe(playerpipe);
     pipe(bullet_ps);
     pid_t proc, spawn, giocatore,proiett;
@@ -390,7 +352,7 @@ void screen(WINDOW *w1) {
     int kill_pr[ENEM_TEST] = {};
     int helper = 0;
     int maxenemies = ENEM_TEST;
-    int arrint[7] = {}; //Contiene alcune info da inviare ai nemici(tra cui il salto e l'uccisione)
+    int arrint[ENEM_TEST][7] = {}; //Contiene alcune info da inviare ai nemici(tra cui il salto e l'uccisione)
     Player arr[ENEM_TEST] = {}; //Contiene le info di tutti in nemici, controllare enemyLV1 per piu info
 
     /* Flag, contatori e distanze */
@@ -405,6 +367,14 @@ void screen(WINDOW *w1) {
     int num_proiettili = 0;
     int maxy, maxx;
     getmaxyx(stdscr, maxy, maxx);
+    for (i = 0; i < ENEM_TEST; i++)
+    {
+        pipe(tmp[i]);
+        pipe(enemy_frame[i]);
+    }
+    
+    
+    
 
 
     giocatore = fork();
@@ -412,7 +382,7 @@ void screen(WINDOW *w1) {
         case 0:
             //  attenzione a non diminuire troppo il terzo valore,altrimenti ci potrebbero essere
             //  problemi di lettura input
-            gestore_input(player_input, playerpipe, 30);
+            gestore_input(player_input, playerpipe, 25);
             exit(0);
             break;
         default:
@@ -431,7 +401,7 @@ void screen(WINDOW *w1) {
                                 decremento = coordinata / (maxy-2); //Ogni volta che si supera il maxy viene decrementata la x
                                 y_spawner = coordinata % (maxy-2); //Si prende il modulo per scegliere la coordinata dello sprite
                                 decremento = (decremento * 3 * 2); //In modo da avere almeno uno sprite di stacco tra i nemici (Asse x)
-                                enemyLV1_old(70-decremento, y_spawner, k,0, tmp, enemy_frame);
+                                enemyLV1_old(70-decremento, y_spawner, k,0, tmp[k], enemy_frame[k]);
                                 //enemyLV1_new(70, coordinata * 3 * 2, k, 0, tmp, enemy_frame);
                                 //Per i rimbalzi possiamo far gestire all'utente: 0 i nemici non collidono tra loro, 1 movimenti casuali
 
@@ -448,9 +418,10 @@ void screen(WINDOW *w1) {
                 default:
                     //aspetto l'avvio dei nemici prima di iniziare la scrittura schermo
                     wait((int *) 0);
+
                     // finche non raggiungo il gameover,scrivo lo schermo
                     while (player_started) {
-                        wclear(w1);//prossimo frame,la clear in compenso all'erase non cancella lo schermo ma solo il buffer dello schermo
+                        //prossimo frame,la clear in compenso all'erase non cancella lo schermo ma solo il buffer dello schermo
                         read(playerpipe[0], &player_input, sizeof(Bullet));
                         player.coordinata.x = player_input.x;
                         player.coordinata.y = player_input.y;
@@ -483,16 +454,23 @@ void screen(WINDOW *w1) {
                             */
 
                             ///* old
-                            read(tmp[0], arrint,7*sizeof(int));
-                            arr[i].coordinata.x = arrint[0];
-                            arr[i].coordinata.y = arrint[1];
-                            arr[i].proiettile.x = arrint[2];
-                            arr[i].proiettile.y = arrint[3];
+                            if(read(tmp[i][0], &arrint[i][0],7*sizeof(int)) <= 0){
+                                mvwprintw(w1,maxy/2,maxx/2,"ERROR");
+                            }
+                            arr[i].coordinata.x = arrint[i][0];
+                            arr[i].coordinata.y = arrint[i][1];
+                            arr[i].proiettile.x = arrint[i][2];
+                            arr[i].proiettile.y = arrint[i][3];
 
-                            arr[i].proiettile.id = arrint[4];
+                            arr[i].proiettile.id = arrint[i][4];
 
-                            arr[i].id = arrint[5];
-                            arr[i].angolo = arrint[6];
+                            arr[i].id = arrint[i][5];
+                            arr[i].angolo = arrint[i][6];
+                            /*
+                            mvwprintw(w1,i+1,32,"id:%d X:%d Y:%d direzione:%d ",arrint[i][5],arrint[i][0],arrint[i][1],arrint[i][6]);
+                            wrefresh(w1);
+                            sleep(2);
+                            ++i;
                             //*/
                         }
                         for(i=0;i < num_proiettili;i++){
@@ -509,6 +487,7 @@ void screen(WINDOW *w1) {
 
                         mvwprintw(w1,1,26,"id:%d X:%d Y:%d ",arrint[0][5],arrint[0][0],arrint[0][1]);
                         //*/
+                        wclear(w1);
                         w = 0;
                         //controllo collisioni/rimbalzi
                         for (i = 0; i < maxenemies; i++) {
@@ -617,15 +596,10 @@ void screen(WINDOW *w1) {
                             }
                         }
 
-                        /* altre info di debug
+                        // altre info di debug
 
                         //printpl_info(w1,plarr);
-                        i = 0;
-                        while (i < ENEM_TEST)
-                        {
-                            mvwprintw(w1,i+1,32,"id:%d X:%d Y:%d direzione:%d ",arr[i].id,arr[i].coordinata.x,arr[i].coordinata.y,arr[i].angolo);
-                            ++i;
-                        }//
+                        /*
                         i = 0;
                         while (i < ENEM_TEST + 1 )
                         {
@@ -635,7 +609,7 @@ void screen(WINDOW *w1) {
 
                         //sincronizzazione processi + invio info su rimbalzi/uccisioni
                         for (i = 0; i < maxenemies; i++) {
-                            write(enemy_frame[1], jump, (ENEM_TEST + 1) * sizeof(int));
+                            write(enemy_frame[i][1], jump, (ENEM_TEST + 1) * sizeof(int));
                         }
                         
                         //reset dei rimbalzi,necessario
