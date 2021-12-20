@@ -453,23 +453,18 @@ void screen(WINDOW *w1) {
                             */
 
                             ///* old
-                            if(read(tmp[i][0], &arrint[i][0],7*sizeof(int)) <= 0){
-                                mvwprintw(w1,maxy/2,maxx/2,"ERROR");
+
+                            if(arr[i].coordinata.y > -1){
+                                read(tmp[i][0], &arrint[i][0],7*sizeof(int));
+                                arr[i].coordinata.x = arrint[i][0];
+                                arr[i].coordinata.y = arrint[i][1];
+                                arr[i].proiettile.x = arrint[i][2];
+                                arr[i].proiettile.y = arrint[i][3];
+                                arr[i].proiettile.id = arrint[i][4];
+                                arr[i].id = arrint[i][5];
+                                arr[i].angolo = arrint[i][6];
                             }
-                            arr[i].coordinata.x = arrint[i][0];
-                            arr[i].coordinata.y = arrint[i][1];
-                            arr[i].proiettile.x = arrint[i][2];
-                            arr[i].proiettile.y = arrint[i][3];
-
-                            arr[i].proiettile.id = arrint[i][4];
-
-                            arr[i].id = arrint[i][5];
-                            arr[i].angolo = arrint[i][6];
-                            /*
-                            mvwprintw(w1,i+1,32,"id:%d X:%d Y:%d direzione:%d ",arrint[i][5],arrint[i][0],arrint[i][1],arrint[i][6]);
-                            wrefresh(w1);
-                            sleep(2);
-                            ++i;
+                            //++i;
                             //*/
                         }
                         for(i=0;i < num_proiettili;i++){
@@ -489,13 +484,15 @@ void screen(WINDOW *w1) {
                         wclear(w1);
                         w = 0;
                         //controllo collisioni/rimbalzi
-                        for (i = 0; i < maxenemies; i++) {
+                        for (i = 0; i < ENEM_TEST; i++) {
+                            if(arr[i].coordinata.y > -1){
                             ///*pseudo selectionsort per controllare il rimbalzo in caso di collisioni
-                            for (w = i + 1; w < maxenemies; w++) {
+                            for (w = i + 1; w < ENEM_TEST; w++) {
                                 // modificando jumpbox si puo modificare il rilevamento di caselle prima di fare il salto
                                 // attenzione a non ridurla troppo altrimenti ci potrbbero essere conflitti di sprite
 
                                 // controllo distanza tra i due nemici                  controllo se sono nella stessa x e che abbiano direzione diversa
+                                if(kill_pr[i] == 0 && kill_pr[w] == 0){
                                 if ((abs(abs(arr[i].coordinata.y) - abs(arr[w].coordinata.y)) < jumpbox) && arr[i].coordinata.x == arr[w].coordinata.x && arr[i].angolo !=
                                                                                                                                                           arr[w].angolo) {   // ulteriore controllo di direzione,attenzione quando si modifica qui
 
@@ -505,9 +502,10 @@ void screen(WINDOW *w1) {
                                         jump[arr[w].id + 1] = 1;
                                         jump[arr[i].id + 1] = 1;
                                         // info di debug
-                                        //mvwprintw(w1, arr[i].id + 3, 30, "Hit");
+                                        mvwprintw(w1, arr[i].id + 3, 30, "Hit");
                                         break;
                                     }
+                                }
                                 }
                             }
                             //collisione navetta/limite con nemico
@@ -574,8 +572,11 @@ void screen(WINDOW *w1) {
                                 //serve per ridurre i nemici nei vari counter
                                 if(arr[i].proiettile.id == 1){
                                     ++killed;
+                                    kill_pr[arr[i].id] = 1;
+                                    arr[i].coordinata.y = -5;
                                 } 
                                 }
+                            }
                             }
                         }
                         //stampa a schermo
@@ -607,8 +608,11 @@ void screen(WINDOW *w1) {
                         }//*/
 
                         //sincronizzazione processi + invio info su rimbalzi/uccisioni
-                        for (i = 0; i < maxenemies; i++) {
-                            write(enemy_frame[i][1], jump, (ENEM_TEST + 1) * sizeof(int));
+                        for (i = 0; i < ENEM_TEST; i++) {
+                            if(arr[i].coordinata.y > -1){
+                            write(enemy_frame[i][1], jump, (ENEM_TEST + 1) * sizeof(int));}
+                            mvwprintw(w1,i+1,32,"id:%d X:%d Y:%d vita:%d ",arr[i].id,arr[i].coordinata.x,arr[i].coordinata.y,arr[i].proiettile.id);
+                            
                         }
                         
                         //reset dei rimbalzi,necessario
