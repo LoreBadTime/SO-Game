@@ -71,9 +71,9 @@ void printnavetta_distrutta_f4(int x,int y,WINDOW *w){
 void printnemicolv2_f1(int x,int y,WINDOW *w){
 	oggetto sprite;
 	int i,k;
-	sprite.c[0]="O O";
-	sprite.c[1]=" X ";
-	sprite.c[2]="O O";
+	sprite.c[0]="O-O";
+	sprite.c[1]="/V\\";
+	sprite.c[2]="O-O";
 	mvwprintw(w,y-1,x,sprite.c[0]);
 	mvwprintw(w,y,x,sprite.c[1]);
 	mvwprintw(w,y+1,x,sprite.c[2]);
@@ -82,13 +82,39 @@ void printnemicolv2_f1(int x,int y,WINDOW *w){
 void printnemicolv2_f2(int x,int y,WINDOW *w){
 	oggetto sprite;
 	int i,k;
-	sprite.c[0]="O O";
-	sprite.c[1]="   ";
-	sprite.c[2]="O O";
+	sprite.c[0]="O-O";
+	sprite.c[1]="|X| ";
+	sprite.c[2]="O-O";
 	mvwprintw(w,y-1,x,sprite.c[0]);
 	mvwprintw(w,y,x,sprite.c[1]);
 	mvwprintw(w,y+1,x,sprite.c[2]);
 }
+
+//animazione nemico lv 2 di template per collisioni frame 3
+void printnemicolv2_f3(int x,int y,WINDOW *w){
+    oggetto sprite;
+    int i,k;
+    sprite.c[0]="O X";
+    sprite.c[1]=" X ";
+    sprite.c[2]="X O";
+    mvwprintw(w,y-1,x,sprite.c[0]);
+    mvwprintw(w,y,x,sprite.c[1]);
+    mvwprintw(w,y+1,x,sprite.c[2]);
+}
+
+//animazione nemico lv 2 di template per collisioni frame 4
+void printnemicolv2_f4(int x,int y,WINDOW *w){
+    oggetto sprite;
+    int i,k;
+    sprite.c[0]="X O";
+    sprite.c[1]=" X ";
+    sprite.c[2]="O X";
+    mvwprintw(w,y-1,x,sprite.c[0]);
+    mvwprintw(w,y,x,sprite.c[1]);
+    mvwprintw(w,y+1,x,sprite.c[2]);
+}
+
+
 //animazione nemico lv 1 di template per collisioni frame 1
 void printnemicolv1_f1(int x,int y,WINDOW *w){
 	oggetto sprite;
