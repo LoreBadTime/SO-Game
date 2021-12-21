@@ -519,31 +519,40 @@ void screen(WINDOW *w1) {
                                 jump[0] = 0;
                                 player_started = 0;
                             }
+                                
                             //stampa nemici
                             if(arr[i].coordinata.y%2==0 && arr[i].coordinata.y) {
-                                
-                                if (arr[i].proiettile.id == 3){
+                                if (arr[i].proiettile.id == 3){ //Se al nemico rimangono tre vite
                                     wattron(w1,COLOR_PAIR(GRE_BL));
                                     printnemicolv1_f1(arr[i].coordinata.x, arr[i].coordinata.y, w1);
                                     wattroff(w1,COLOR_PAIR(GRE_BL));
-                                }else{
-                                    wattron(w1,COLOR_PAIR(RED_BL));
+                                }
+                                if (arr[i].proiettile.id == 2){ //Se al nemico rimangono due vite
+                                    wattron(w1,COLOR_PAIR(YEL_BL));
                                     printnemicolv2_f1(arr[i].coordinata.x, arr[i].coordinata.y, w1);
+                                    wattroff(w1,COLOR_PAIR(YEL_BL));
+                                }
+                                if (arr[i].proiettile.id == 1){ //Se al nemico rimane una vita
+                                    wattron(w1,COLOR_PAIR(RED_BL));
+                                    printnemicolv2_f3(arr[i].coordinata.x, arr[i].coordinata.y, w1);
                                     wattroff(w1,COLOR_PAIR(RED_BL));
                                 }
-                                
                             } else {
-                                
-                                if (arr[i].proiettile.id == 3){
+                                if (arr[i].proiettile.id == 3){ //Se al nemico rimangono tre vite
                                     wattron(w1,COLOR_PAIR(GRE_BL));
                                     printnemicolv1_f2(arr[i].coordinata.x, arr[i].coordinata.y, w1);
                                     wattroff(w1,COLOR_PAIR(GRE_BL));
-                                }else{
-                                    wattron(w1,COLOR_PAIR(RED_BL));
+                                }
+                                if (arr[i].proiettile.id == 2){ //Se al nemico rimangono due vite
+                                    wattron(w1,COLOR_PAIR(YEL_BL));
                                     printnemicolv2_f2(arr[i].coordinata.x, arr[i].coordinata.y, w1);
+                                    wattroff(w1,COLOR_PAIR(YEL_BL));
+                                }
+                                if (arr[i].proiettile.id == 1){ //Se al nemico rimane una vita
+                                    wattron(w1,COLOR_PAIR(RED_BL));
+                                    printnemicolv2_f4(arr[i].coordinata.x, arr[i].coordinata.y, w1);
                                     wattroff(w1,COLOR_PAIR(RED_BL));
                                 }
-                                
                             }
 
                             wattron(w1,COLOR_PAIR(RED_BL));
