@@ -1,7 +1,8 @@
 #include "sprites.h"
-
 //stampa navetta in generale
 void printnavetta(int x,int y,WINDOW *w){
+
+	wattron(w,COLOR_PAIR(CY_BL));
 	oggetto sprite;
 	int i,k;
 	sprite.c[0]="|\\ ";
@@ -12,6 +13,7 @@ void printnavetta(int x,int y,WINDOW *w){
 	for(i=(-2),k=0;k<5;i++,k++){
 	mvwprintw(w,y+i,x-5,sprite.c[k]);
 	}
+	wattroff(w,COLOR_PAIR(CY_BL));
 }
 //animazioni navetta gameover (frame 1)
 void printnavetta_distrutta_f1(int x,int y,WINDOW *w){

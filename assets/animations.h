@@ -8,11 +8,7 @@
 #define GM_CYCLES_L 10
 #define GM_CYCLES_W 8
 #define GM_DEATH 1000
-//colori aggiuntivi
-#define GM_LESS_DARKER_RED 9
-#define GM_MORE_DARKER_RED 10
-#define GM_LESS_DARKER_GREEN 11
-#define GM_MORE_DARKER_GREEN 12
+
 //Sprite per la navetta (da creare)
 #define NAVE_OK "O"
 #define NAVE_ESPLOSA "X"

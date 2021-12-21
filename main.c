@@ -1,8 +1,9 @@
 #include "./globalincludes.h"
 
 void main(){
-	srand(time(NULL));
-    menu();
+	
+
+	menu();
 }
 
 void menu(){
@@ -20,11 +21,34 @@ void menu(){
 
 	
 	/* Personalizzazione colori e dimensioni dello schermo */
+	
+	//
 	getmaxyx(stdscr, maxy, maxx);
 	w1 = newwin (maxy,maxx,0,0);
 	start_color();
-	init_pair(1,COLOR_YELLOW,COLOR_BLACK);
-	wbkgd(w1,COLOR_PAIR(1));
+	// definizione colori
+	init_color(COLOR_BLACK, 0, 0, 0);
+	init_color(GM_LESS_DARKER_RED, 125, 0, 0);
+	init_color(GM_MORE_DARKER_RED, 46, 9, 8);
+	init_color(GM_LESS_DARKER_GREEN, 0, 120, 0);
+	init_color(GM_MORE_DARKER_GREEN, 0, 80, 0);
+
+	init_pair(WHITE_BLACK, COLOR_WHITE, COLOR_BLACK);
+	init_pair(RED_YEL, COLOR_RED, COLOR_YELLOW);
+	init_pair(WHI_RED, COLOR_WHITE, COLOR_RED);
+	init_pair(WHI_LRED, COLOR_WHITE, GM_LESS_DARKER_RED);
+	init_pair(WHI_DRED, COLOR_WHITE, GM_MORE_DARKER_RED);
+
+	init_pair(WHI_BL, COLOR_WHITE, COLOR_BLUE);
+	init_pair(WHI_GR, COLOR_WHITE, COLOR_GREEN);
+	init_pair(GRE_BL, COLOR_GREEN, COLOR_BLACK);
+	init_pair(RED_BL, COLOR_RED, COLOR_BLACK);
+	init_pair(WHI_LGR, COLOR_WHITE, GM_LESS_DARKER_GREEN);
+	init_pair(WHI_DGR, COLOR_WHITE, GM_MORE_DARKER_GREEN);
+	init_color(CYAN, 0, 174, 177);
+	init_pair(CY_BL, CYAN, COLOR_BLACK);
+	init_pair(YEL_BL, COLOR_YELLOW, COLOR_BLACK);
+	wbkgd(w1,COLOR_PAIR(YEL_BL));
 
 	/* Creazione indicatore e coordinate per il menù */
 	Posizione oggetto = { (maxx/2)-12,(maxy/2)+1 };

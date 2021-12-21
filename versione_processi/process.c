@@ -30,7 +30,7 @@ void proiettile(int x,int y,int *pipe,int *reciv){
 
 
 int enemyLV1_old(int x,int y,int id,int direzione,int *sender,int *receiver){
-    
+    srand(time(NULL) * getpid());
     close(sender[0]);
     close(receiver[1]);
     //Inizializzazione navicella nemica
@@ -56,8 +56,10 @@ int enemyLV1_old(int x,int y,int id,int direzione,int *sender,int *receiver){
     while (nemico.navnemica.x > 0 && alive) {
         //Ciclo che gestisce il rimbalzo
         while (nemico.navnemica.y >= 4 && nemico.navnemica.y <= maxy - 3) {
-
-            --nemico.proiettile.x;
+            
+            if(decremento % 2 == 1){
+               --nemico.proiettile.x;
+            }
             //adesso aggiorniamo i dati solo una volta
             if (decremento == 0){
                 if (direzione)
@@ -88,9 +90,8 @@ int enemyLV1_old(int x,int y,int id,int direzione,int *sender,int *receiver){
                 decremento = 0;
             }
             if (rec[0] == 0){
-                // killa navicella nemica
+                alive = 0;
             }
-            alive == 0;
             if (rec[id + 1] == -1){
                 --alive;
             }
@@ -103,7 +104,7 @@ int enemyLV1_old(int x,int y,int id,int direzione,int *sender,int *receiver){
                 rec[id + 1] = 0;
             }
             // Ottenimento info per lanciare il processo proiettile,+ randomizzazione lancio proiettile(altrimenti diventa un bullet hell)
-            if (nemico.proiettile.x <= -1 && (rand() % 2 == 0)){
+            if (nemico.proiettile.x <= -1 && (rand() % 1250 == 1)){
                 nemico.proiettile.x = nemico.navnemica.x;
                 nemico.proiettile.y = nemico.navnemica.y;
             }
@@ -313,8 +314,10 @@ void clear_matrix(Player arr[ENEM_TEST]) {
 // Funzione principale
 // Gestisce l'output a video
 // Il parametro è la finestra di riferimento
+
 void screen(WINDOW *w1) {
 
+    wbkgd(w1,COLOR_PAIR(WHITE_BLACK));
     /* Inizializzazione giocatore */
     int life = 3; //Vite del giocatore
     Player player;
@@ -381,7 +384,7 @@ void screen(WINDOW *w1) {
         case 0:
             //  attenzione a non diminuire troppo il terzo valore,altrimenti ci potrebbero essere
             //  problemi di lettura input
-            gestore_input(player_input, playerpipe, 25);
+            gestore_input(player_input, playerpipe, 10);
             exit(0);
             break;
         default:
@@ -502,7 +505,7 @@ void screen(WINDOW *w1) {
                                         jump[arr[w].id + 1] = 1;
                                         jump[arr[i].id + 1] = 1;
                                         // info di debug
-                                        mvwprintw(w1, arr[i].id + 3, 30, "Hit");
+                                        // mvwprintw(w1, arr[i].id + 3, 30, "Hit");
                                         break;
                                     }
                                 }
@@ -518,22 +521,34 @@ void screen(WINDOW *w1) {
                             }
                             //stampa nemici
                             if(arr[i].coordinata.y%2==0 && arr[i].coordinata.y) {
+                                
                                 if (arr[i].proiettile.id == 3){
+                                    wattron(w1,COLOR_PAIR(GRE_BL));
                                     printnemicolv1_f1(arr[i].coordinata.x, arr[i].coordinata.y, w1);
+                                    wattroff(w1,COLOR_PAIR(GRE_BL));
                                 }else{
+                                    wattron(w1,COLOR_PAIR(RED_BL));
                                     printnemicolv2_f1(arr[i].coordinata.x, arr[i].coordinata.y, w1);
+                                    wattroff(w1,COLOR_PAIR(RED_BL));
                                 }
+                                
                             } else {
+                                
                                 if (arr[i].proiettile.id == 3){
+                                    wattron(w1,COLOR_PAIR(GRE_BL));
                                     printnemicolv1_f2(arr[i].coordinata.x, arr[i].coordinata.y, w1);
+                                    wattroff(w1,COLOR_PAIR(GRE_BL));
                                 }else{
+                                    wattron(w1,COLOR_PAIR(RED_BL));
                                     printnemicolv2_f2(arr[i].coordinata.x, arr[i].coordinata.y, w1);
+                                    wattroff(w1,COLOR_PAIR(RED_BL));
                                 }
+                                
                             }
 
-
-                            mvwaddch(w1, arr[i].proiettile.y, arr[i].proiettile.x, '-');
-
+                            wattron(w1,COLOR_PAIR(RED_BL));
+                            mvwaddch(w1, arr[i].proiettile.y, arr[i].proiettile.x, 'O');
+                            wattroff(w1,COLOR_PAIR(RED_BL));
                             //collisione navetta-proiettile_nemico
                             //Se la navetta non è nello stato di invincibilita
                             if (invincibility == 0) {
@@ -590,8 +605,8 @@ void screen(WINDOW *w1) {
                                --num_proiettili;
                                --i;
                             }else{
-                            mvwprintw(w1, proiettili[i].y + proiettili[i].ready, proiettili[i].x, " o");
-                            mvwprintw(w1, proiettili[i].y - proiettili[i].ready, proiettili[i].x, " o");
+                            mvwprintw(w1, proiettili[i].y + proiettili[i].ready, proiettili[i].x, ">-");
+                            mvwprintw(w1, proiettili[i].y - proiettili[i].ready, proiettili[i].x, ">-");
                             write(bullet_ps[1],&helper,sizeof(int));
                             }
                         }

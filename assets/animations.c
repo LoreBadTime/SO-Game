@@ -17,21 +17,13 @@ void game_over(WINDOW *w1,int x,int y){
 	int i = 0;
 
 	//Definizione di colori
-	init_color(COLOR_BLACK,0, 0, 0);
-	init_color(GM_LESS_DARKER_RED,125, 0, 0);
-	init_color(GM_MORE_DARKER_RED,46, 9, 8);
-	//Definizione coppie di colori
-	init_pair(1,COLOR_RED,COLOR_YELLOW);
-	init_pair(2,COLOR_WHITE,COLOR_RED);
-	init_pair(3,COLOR_WHITE,GM_LESS_DARKER_RED);
-	init_pair(4,COLOR_WHITE,GM_MORE_DARKER_RED);
-	init_pair(5,COLOR_WHITE,COLOR_BLACK);
+
 
 	//Animazione schermo che flasha
 	for(i=0;i < GM_CYCLES;i++){
 		//Inizio frame sfondo giallo
 		printnavetta_distrutta_f1(x,y,w1);
-		wbkgd(w1,COLOR_PAIR(1));
+		wbkgd(w1,COLOR_PAIR(WHI_RED));
         refresh();
 		wrefresh(w1);
 		//Fine frame sfondo giallo
@@ -39,7 +31,7 @@ void game_over(WINDOW *w1,int x,int y){
 
 		//Inizio frame sfondo rosso
 		printnavetta_distrutta_f2(x,y,w1);
-		wbkgd(w1,COLOR_PAIR(2));
+		wbkgd(w1,COLOR_PAIR(RED_YEL));
         refresh();
 		wrefresh(w1);
 		//Fine frame sfondo rosso
@@ -49,17 +41,17 @@ void game_over(WINDOW *w1,int x,int y){
 	//Inizio animazione morte lenta - Rosso chiaro
 	napms(GM_DEATH);
 	printnavetta_distrutta_f3(x,y,w1);
-	wbkgd(w1,COLOR_PAIR(3));
+	wbkgd(w1,COLOR_PAIR(WHI_LRED));
 	wrefresh(w1);
 	napms(GM_DEATH-GM_SPEED);
      //Fine
 
 	//Inizio animazione morte lenta - Rosso scuro
 	printnavetta_distrutta_f4(x,y,w1);
-	wbkgd(w1,COLOR_PAIR(4));
+	wbkgd(w1,COLOR_PAIR(WHI_DRED));
 	wrefresh(w1);
 	napms(GM_DEATH-GM_SPEED);
-	wbkgd(w1,COLOR_PAIR(5));
+	wbkgd(w1,COLOR_PAIR(WHITE_BLACK));
     wclear(w1);
 	wrefresh(w1);
 	napms(7*GM_SPEED);
@@ -97,31 +89,19 @@ void victory(WINDOW *w1,int x,int y){
     int maxx, maxy;
     getmaxyx(w1,maxy,maxx);
 
-	//Definizione colori
-	init_color(COLOR_BLACK,0, 0, 0);
-	init_color(GM_LESS_DARKER_GREEN,0, 120, 0);
-	init_color(GM_MORE_DARKER_GREEN,0, 80, 0);
-
-	//Definizione coppie di colori
-	init_pair(1,COLOR_WHITE,COLOR_BLUE);
-	init_pair(2,COLOR_WHITE,COLOR_GREEN);
-	init_pair(3,COLOR_WHITE,GM_LESS_DARKER_GREEN);
-	init_pair(4,COLOR_WHITE,GM_MORE_DARKER_GREEN);
-	init_pair(5,COLOR_WHITE,COLOR_BLACK);
-
     wclear(w1); //Avvio tutto pulendo lo schermo
 
 	//Animazione schermo che flasha
 	for(i=0,j=2;j < maxx + 5;i++,j+=1){
 		//Inizio frame sfondo Verde
         printnavetta(x+j,y,w1);
-        wbkgd(w1,COLOR_PAIR(1));
+        wbkgd(w1,COLOR_PAIR(WHI_GR));
 		wrefresh(w1);
 		//Fine frame sfondo Verde
 		napms(GM_SPEED/20);
 
 		//Inizio frame sfondo Blu
-		wbkgd(w1,COLOR_PAIR(2));
+		wbkgd(w1,COLOR_PAIR(WHI_BL));
 		wrefresh(w1);
 		//Fine frame sfondo Blu
 		napms(GM_SPEED/20);
@@ -130,22 +110,22 @@ void victory(WINDOW *w1,int x,int y){
 	}
 
     x+=j-5; //Riprende le ultime coordinate
-	//Inizio animazione morte lenta - Verde chiaro
+	//Inizio animazione lenta - Verde chiaro
 	napms(GM_DEATH);
-	wbkgd(w1,COLOR_PAIR(3));
+	wbkgd(w1,COLOR_PAIR(WHI_LGR));
 	wrefresh(w1);
     //Fine
 
-	//Inizio animazione morte lenta - Verde scuro
+	//Inizio animazione lenta - Verde scuro
     napms(GM_DEATH-GM_SPEED);
-	wbkgd(w1,COLOR_PAIR(4));
+	wbkgd(w1,COLOR_PAIR(WHI_DGR));
 	wrefresh(w1);
     //Fine
 
-    //Inizio animazione morte lenta - Sfondo nero
+    //Inizio animazione lenta - Sfondo nero
 	napms(GM_DEATH-GM_SPEED);
-    wclear(w1); //Rimuove la navetta distrutta
-	wbkgd(w1,COLOR_PAIR(5));
+    wclear(w1); 
+	wbkgd(w1,COLOR_PAIR(WHITE_BLACK));
     wrefresh(w1);
 	sleep(2);
     wclear(w1);

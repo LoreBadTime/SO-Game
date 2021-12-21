@@ -24,6 +24,26 @@
 #define VIVA 1 // Stato navicella nemica
 #define UCCISA 0 
 
+#define GM_LESS_DARKER_RED 9
+#define GM_MORE_DARKER_RED 10
+#define GM_LESS_DARKER_GREEN 11
+#define GM_MORE_DARKER_GREEN 12
+#define CYAN 13
+
+#define WHITE_BLACK 1  
+#define RED_YEL 2
+#define WHI_RED 3
+#define WHI_LRED 4
+#define WHI_DRED 5
+#define WHI_BL 6
+#define WHI_GR 7
+#define WHI_LGR 8
+#define WHI_DGR 9 
+#define CY_BL 10
+#define YEL_BL 11
+#define GRE_BL 12
+#define RED_BL 13
+
 typedef struct {
   int x;        // Coordinata x
   int y;        // Coordinata y
