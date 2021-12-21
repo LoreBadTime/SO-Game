@@ -613,9 +613,11 @@ void screen(WINDOW *w1) {
                             {
                                --num_proiettili;
                                --i;
-                            }else{
-                            mvwprintw(w1, proiettili[i].y + proiettili[i].ready, proiettili[i].x, ">-");
-                            mvwprintw(w1, proiettili[i].y - proiettili[i].ready, proiettili[i].x, ">-");
+                            }else {
+                            if (proiettili[i].y - proiettili[i].ready >= 2) { //In modo da non collidere con la linea separatrice
+                                mvwaddch(w1, proiettili[i].y - proiettili[i].ready, proiettili[i].x, '=');
+                            }
+                            mvwaddch(w1, proiettili[i].y + proiettili[i].ready, proiettili[i].x, '=');
                             write(bullet_ps[1],&helper,sizeof(int));
                             }
                         }
