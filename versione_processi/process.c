@@ -484,7 +484,7 @@ void screen(WINDOW *w1) {
 
                         mvwprintw(w1,1,26,"id:%d X:%d Y:%d ",arrint[0][5],arrint[0][0],arrint[0][1]);
                         //*/
-                        wclear(w1);
+                        werase(w1);
                         w = 0;
                         //controllo collisioni/rimbalzi
                         for (i = 0; i < ENEM_TEST; i++) {

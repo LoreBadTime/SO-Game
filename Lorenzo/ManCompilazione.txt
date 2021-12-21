@@ -54,19 +54,18 @@ Target: source
 
 $@ nome del target corrente;
 
- $< Il nome del file per il quale è stato scelto il target per deduzione.
- $* Il nome del target senza suffisso.
- $? lista dei file sorgente (prerequisiti) della regola corrente che hanno una
-data più recente del target;
- $^ lista dei file sorgente (prerequisiti) della regola corrente.
- CC specifica il compilatore C da utilizzare (default: gcc);
- CFLAGS: opzioni di default da passare al compilatore;
- CXX compilatore (default: gcc);
- FC compilatore fortran
- CXXFLAGS: opzioni di default da passare al compilatore;
- MAKE programma che fa il make
- AR comando per creare librerie statiche
- ARFLAGS
- LEX
-progr. Lex per pattern matching
+$< Il nome del file per il quale è stato scelto il target per deduzione.
+$* Il nome del target senza suffisso.
+$? lista dei file sorgente (prerequisiti) della regola corrente che hanno una data più recente del target;
+$^ lista dei file sorgente (prerequisiti) della regola corrente.
+CC specifica il compilatore C da utilizzare (default: gcc);
+CFLAGS: opzioni di default da passare al compilatore;
+CXX compilatore (default: gcc);
+FC compilatore fortran
+CXXFLAGS: opzioni di default da passare al compilatore;
+MAKE programma che fa il make
+AR comando per creare librerie statiche
+ARFLAGS
+LEX progr. Lex per pattern matching
+
 ___________________________________________________
