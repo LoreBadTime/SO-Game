@@ -445,7 +445,7 @@ void screen(WINDOW *w1) {
 
 
                         // lettura pipes
-                        for (i = 0; i < maxenemies; i++) {
+                        for (i = 0; i < ENEM_TEST; i++) {
                             // per testare le versioni commenta e decommenta
 
                             /* new
@@ -599,7 +599,7 @@ void screen(WINDOW *w1) {
                         /* altre info di debug
 
                         //printpl_info(w1,plarr);
-                        /*
+                        ///*
                         i = 0;
                         while (i < ENEM_TEST + 1 )
                         {
@@ -611,7 +611,7 @@ void screen(WINDOW *w1) {
                         for (i = 0; i < ENEM_TEST; i++) {
                             if(arr[i].coordinata.y > -1){
                             write(enemy_frame[i][1], jump, (ENEM_TEST + 1) * sizeof(int));}
-                            mvwprintw(w1,i+1,32,"id:%d X:%d Y:%d vita:%d ",arr[i].id,arr[i].coordinata.x,arr[i].coordinata.y,arr[i].proiettile.id);
+                            //mvwprintw(w1,i+1,32,"id:%d X:%d Y:%d vita:%d ",arr[i].id,arr[i].coordinata.x,arr[i].coordinata.y,arr[i].proiettile.id);
                             
                         }
                         

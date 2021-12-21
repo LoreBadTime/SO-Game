@@ -35,7 +35,7 @@ void game_over(WINDOW *w1,int x,int y){
         refresh();
 		wrefresh(w1);
 		//Fine frame sfondo giallo
-		napms(GM_SPEED);
+		napms(GM_SPEED-50);
 
 		//Inizio frame sfondo rosso
 		printnavetta_distrutta_f2(x,y,w1);
@@ -43,7 +43,7 @@ void game_over(WINDOW *w1,int x,int y){
         refresh();
 		wrefresh(w1);
 		//Fine frame sfondo rosso
-		napms(GM_SPEED);
+		napms(GM_SPEED-50);
 	}
 	
 	//Inizio animazione morte lenta - Rosso chiaro
@@ -112,19 +112,19 @@ void victory(WINDOW *w1,int x,int y){
     wclear(w1); //Avvio tutto pulendo lo schermo
 
 	//Animazione schermo che flasha
-	for(i=0,j=2;j < maxx/2;i++,j+=5){
+	for(i=0,j=2;j < maxx + 5;i++,j+=1){
 		//Inizio frame sfondo Verde
         printnavetta(x+j,y,w1);
         wbkgd(w1,COLOR_PAIR(1));
 		wrefresh(w1);
 		//Fine frame sfondo Verde
-		napms(GM_SPEED);
+		napms(GM_SPEED/20);
 
 		//Inizio frame sfondo Blu
 		wbkgd(w1,COLOR_PAIR(2));
 		wrefresh(w1);
 		//Fine frame sfondo Blu
-		napms(GM_SPEED);
+		napms(GM_SPEED/20);
 
         wclear(w1); //Rinizia il ciclo e la navetta si sposta
 	}
@@ -132,14 +132,12 @@ void victory(WINDOW *w1,int x,int y){
     x+=j-5; //Riprende le ultime coordinate
 	//Inizio animazione morte lenta - Verde chiaro
 	napms(GM_DEATH);
-	printnavetta_distrutta_f3(x,y,w1);
 	wbkgd(w1,COLOR_PAIR(3));
 	wrefresh(w1);
     //Fine
 
 	//Inizio animazione morte lenta - Verde scuro
     napms(GM_DEATH-GM_SPEED);
-	printnavetta_distrutta_f4(x,y,w1);
 	wbkgd(w1,COLOR_PAIR(4));
 	wrefresh(w1);
     //Fine
