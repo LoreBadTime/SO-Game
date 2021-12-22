@@ -141,13 +141,13 @@ int enemyLV1_old(int x,int y,int id,int direzione,int *sender,int *receiver) {
     int alive = 3; //Stato navicella nemica
 
     //Inizializzazione nemico,info del nemico
-    Navetta_Nemica nemico;
+    Player nemico;
     nemico.proiettile.x = 0;
     nemico.proiettile.y = 0;
     nemico.proiettile.ready = 0;
-    nemico.navnemica.x = x;
-    nemico.navnemica.y = y;
-
+    nemico.coordinata.x = x;
+    nemico.coordinata.y = y;
+    nemico.id = id;
     //Risoluzione e pipe per inviare le coordinate
     int maxy, maxx;
     int send_info[7] = {};
@@ -155,9 +155,9 @@ int enemyLV1_old(int x,int y,int id,int direzione,int *sender,int *receiver) {
     getmaxyx(stdscr, maxy, maxx);
 
     //Ciclo che gesitisce il nemico
-    while (nemico.navnemica.x > 0 && alive) {
+    while (nemico.coordinata.x > 0 && alive) {
         //Ciclo che gestisce il rimbalzo
-        while (nemico.navnemica.y >= 4 && nemico.navnemica.y <= maxy - 3) {
+        while (nemico.coordinata.y >= 4 && nemico.coordinata.y <= maxy - 3) {
 
             if (decremento % 2 == 1) {
                 --nemico.proiettile.x;
@@ -165,23 +165,19 @@ int enemyLV1_old(int x,int y,int id,int direzione,int *sender,int *receiver) {
             //adesso aggiorniamo i dati solo una volta
             if (decremento == 0) {
                 if (direzione) {
-                    nemico.navnemica.y--;
+                    nemico.coordinata.y--;
                 } else {
-                    nemico.navnemica.y++;
+                    nemico.coordinata.y++;
                 }
             }
             //invio dati,tra poco provo a ripristinare il send di struttura
-            send_info[4] = alive;
-            send_info[5] = id;
-            send_info[6] = direzione;
-            send_info[0] = nemico.navnemica.x;
-            send_info[1] = nemico.navnemica.y;
-            send_info[2] = nemico.proiettile.x;
-            send_info[3] = nemico.proiettile.y;
+            nemico.proiettile.id = alive;
+            nemico.angolo = direzione;
+
 
             //sincronizzazione + scambio di info
 
-            write(sender[1], send_info, 7 * sizeof(int));
+            write(sender[1], &nemico,sizeof(Player));
             read(receiver[0], rec, (ENEM_TEST + 1) * sizeof(int));
             //impostazione skip dei frame
             ++decremento;
@@ -195,7 +191,7 @@ int enemyLV1_old(int x,int y,int id,int direzione,int *sender,int *receiver) {
                 --alive;
             }
             if (alive == 0) {
-                nemico.navnemica.y = -1;
+                nemico.coordinata.y = -1;
             }
             // dall'array estrae il suo id,serve per il rimbalzo in caso di collisioni con le navette nemiche
             if (rec[id + 1]) {
@@ -204,22 +200,22 @@ int enemyLV1_old(int x,int y,int id,int direzione,int *sender,int *receiver) {
             }
             // Ottenimento info per lanciare il processo proiettile,+ randomizzazione lancio proiettile(altrimenti diventa un bullet hell)
             if (nemico.proiettile.x <= -1 && (rand() % 1250 == 1)) {
-                nemico.proiettile.x = nemico.navnemica.x;
-                nemico.proiettile.y = nemico.navnemica.y;
+                nemico.proiettile.x = nemico.coordinata.x;
+                nemico.proiettile.y = nemico.coordinata.y;
             }
         }
 
-        --nemico.navnemica.x; //La navicella nemica avanza finchè non arriva alla x del player
-        --nemico.navnemica.x;
-        --nemico.navnemica.x;
+        --nemico.coordinata.x; //La navicella nemica avanza finchè non arriva alla x del player
+        --nemico.coordinata.x;
+        --nemico.coordinata.x;
         direzione = !direzione; //Cambio direzione navicella nemica (per il rimbalzo)
 
         //Incrementi delle coordinate.y per rientrare nel ciclo
-        if (nemico.navnemica.y <= 3) {
-            nemico.navnemica.y++;
+        if (nemico.coordinata.y <= 3) {
+            nemico.coordinata.y++;
         }
-        if (nemico.navnemica.y >= maxy - 2) {
-            nemico.navnemica.y--;
+        if (nemico.coordinata.y >= maxy - 2) {
+            nemico.coordinata.y--;
         }
     }
 
@@ -367,7 +363,8 @@ void screen(WINDOW *w1) {
                             ///* old
 
                             if (arr[i].coordinata.y > -1) {
-                                read(tmp[i][0], &arrint[i][0], 7 * sizeof(int));
+                                read(tmp[i][0], &arr[i],sizeof(Player));
+                                /*
                                 arr[i].coordinata.x = arrint[i][0];
                                 arr[i].coordinata.y = arrint[i][1];
                                 arr[i].proiettile.x = arrint[i][2];
@@ -375,6 +372,7 @@ void screen(WINDOW *w1) {
                                 arr[i].proiettile.id = arrint[i][4];
                                 arr[i].id = arrint[i][5];
                                 arr[i].angolo = arrint[i][6];
+                                */
                             }
                             //++i;
                             //*/
