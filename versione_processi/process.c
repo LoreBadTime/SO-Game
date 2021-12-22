@@ -2,7 +2,7 @@
 
 /**
  * Stampa dei nemici in base alla quantità delle loro vite
- * 
+ *
  * WINDOW* w1 : Finestra di stampa.
  * Player arr : Array di nemici. */
 void stampanemici(WINDOW* w1, Player arr) {
@@ -49,7 +49,7 @@ void stampanemici(WINDOW* w1, Player arr) {
 
 /**
  * Generatore coordinate del proiettile principale
- * 
+ *
  * int x = Ascissa del proiettile.
  * int y = Ordinata del proiettile.
  * int* pipe,reciv = Pipes. */
@@ -81,11 +81,11 @@ void proiettile(int x,int y,int *pipe,int *reciv) {
 
 /**
  * Generatore coordinate della nave principale
- * 
- * Bullet player = Struttura del giocatore principale (DA CAMBIARE).
- * int* pipe = Pipe. 
+ *
+ * Player player = Struttura del giocatore principale.
+ * int* pipe = Pipe.
  * int sys_slownes = Velocità di gioco. */
-void gestore_input(Bullet player, int *pipe, int sys_slownes) {
+void gestore_input(Player player, int *pipe, int sys_slownes) {
     int c;
     int maxy, maxx;
     getmaxyx(stdscr, maxy, maxx);
@@ -100,32 +100,32 @@ void gestore_input(Bullet player, int *pipe, int sys_slownes) {
             switch (c) {
                 //aggiungendo gli altri due casi e possibile muoversi anche nell'asse x
                 case KEY_UP:
-                    if (player.y > LARGHEZZA + 1) {
-                        player.y--;
+                    if (player.coordinata.y > LARGHEZZA + 1) {
+                        player.coordinata.y--;
                     }
                     break;
                 case KEY_DOWN:
-                    if (player.y < maxy - LARGHEZZA) {
-                        player.y++;
+                    if (player.coordinata.y < maxy - LARGHEZZA) {
+                        player.coordinata.y++;
                     }
                     break;
                     // lancio proiettile
                 case (int) ' ':
-                    player.ready = PRONTO;
+                    player.proiettile.ready = PRONTO;
                 default:
                     break;
             }
             while (c == getch()) { ; }
         }
-        write(pipe[1], &player, sizeof(Bullet));
-        player.ready = UCCISA;
+        write(pipe[1], &player, sizeof(Player));
+        player.proiettile.ready = UCCISA;
         napms(sys_slownes);
     }
 }
 
 /**
  * Spawner dei nemici di livello 1
- * 
+ *
  * int x = Ascissa del nemico.
  * int y = Ordinata del nemico.
  * int id = Identificativo del nemico (per organizzazione).
@@ -233,7 +233,7 @@ int enemyLV1_old(int x,int y,int id,int direzione,int *sender,int *receiver) {
 
 /**
  * Area di gioco dove verranno gestite stampa e collisioni
- * 
+ *
  * WINDOW* w1 : Finestra di stampa. */
 void screen(WINDOW *w1) {
 
@@ -248,12 +248,6 @@ void screen(WINDOW *w1) {
     player.proiettile.ready = 0;
     player.id = 0;
     player.angolo = 0;
-
-    /* Inizializzazione proiettile */
-    Bullet player_input;
-    player_input.x = player.coordinata.x;
-    player_input.y = player.coordinata.y;
-    player_input.ready = 0;
 
     Bullet proiettili[MAX_PROIETTILI] = {};
 
@@ -300,7 +294,7 @@ void screen(WINDOW *w1) {
         case 0:
             //  attenzione a non diminuire troppo il terzo valore,altrimenti ci potrebbero essere
             //  problemi di lettura input
-            gestore_input(player_input, playerpipe, 10);
+            gestore_input(player, playerpipe, 10);
             exit(0);
             break;
         default:
@@ -344,10 +338,7 @@ void screen(WINDOW *w1) {
                     // finche non raggiungo il gameover,scrivo lo schermo
                     while (player_started) {
                         //prossimo frame,la clear in compenso all'erase non cancella lo schermo ma solo il buffer dello schermo
-                        read(playerpipe[0], &player_input, sizeof(Bullet));
-                        player.coordinata.x = player_input.x;
-                        player.coordinata.y = player_input.y;
-                        player.proiettile.ready = player_input.ready;
+                        read(playerpipe[0], &player, sizeof(Player));
 
                         //helper ci fornisce una specie di angolo per sparare diagonalmente i proietili
                         if (player.proiettile.ready == PRONTO && num_proiettili < MAX_PROIETTILI) {
@@ -556,7 +547,7 @@ void screen(WINDOW *w1) {
         game_over(w1, player.coordinata.x, player.coordinata.y);
     }
     //chiusura lettore input
-    kill(player_input.id, SIGKILL);
+    kill(player.id, SIGKILL);
     /*
     i = 0;p
     //chiusura pulita in caso di gameover per nemico che raggiunge il limite,necessita una revisione in modo che sia piu veloce
