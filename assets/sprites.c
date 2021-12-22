@@ -83,7 +83,7 @@ void printnemicolv2_f2(int x,int y,WINDOW *w){
 	oggetto sprite;
 	int i,k;
 	sprite.c[0]="O-O";
-	sprite.c[1]="|X| ";
+	sprite.c[1]="|X|";
 	sprite.c[2]="O-O";
 	mvwprintw(w,y-1,x,sprite.c[0]);
 	mvwprintw(w,y,x,sprite.c[1]);
