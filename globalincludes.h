@@ -44,8 +44,6 @@
 #define GRE_BL 12
 #define RED_BL 13
 
-void stampanemici(WINDOW* w1,Player arr);
-
 typedef struct {
   int x;        // Coordinata x
   int y;        // Coordinata y
@@ -76,6 +74,8 @@ typedef struct {
 	int id;
 } Player;
 
+
+void stampanemici(WINDOW* w1,Player arr);
 void menu();
 
 #endif
