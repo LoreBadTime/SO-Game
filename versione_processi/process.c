@@ -311,7 +311,7 @@ void screen(WINDOW *w1) {
                         }
 
 
-                        // Lettura pipe del player
+                        // Lettura pipe dei nemici
                         for (i = 0; i < ENEM_TEST; i++) {
                             if (arr[i].coordinata.y > -1) {
                                 close(tmp[i][1]);
@@ -321,7 +321,7 @@ void screen(WINDOW *w1) {
 
                         // Lettura pipe del proiettile
                         for(i=0;i<num_proiettili;i++) {
-                            close(bullet_p[1]);
+                            //close(bullet_p[1]);
                             read(bullet_p[0], &proiettil, sizeof(Bullet));
                             if (proiettil.id == 0) proiettili[0] = proiettil;
                             if (proiettil.id == 1) proiettili[1] = proiettil;
