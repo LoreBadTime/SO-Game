@@ -58,8 +58,9 @@ typedef struct {
 typedef struct {
 	int x;
 	int y;
-	int ready;
-	int id;
+	int diagonale;
+    	int ready;
+    	int id;
 } Bullet;
 
 typedef struct {

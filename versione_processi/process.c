@@ -12,24 +12,26 @@ void proiettile(int x,int y,int *pipe,int *reciv) {
     getmaxyx(stdscr, maxy, maxx);
     close(pipe[0]);
     close(reciv[1]);
-    int ready = 0;
+    int diagonale = 0;
     int tmp = 0;
-    int sender[3] = {};
-    while (x < maxx) {
+    Bullet proiettile;
+    proiettile.id=0;
+    proiettile.ready=0;
+    do {
         ++x;
         if (x % DIAGONALE == 1) {
-            ++ready;
+            ++diagonale;
         }
-        sender[0] = x;
-        sender[1] = y;
-        sender[2] = ready;
+        proiettile.x = x;
+        proiettile.y = y + diagonale;
 
-        write(pipe[1], sender, 3 * sizeof(int));
+        write(pipe[1], &proiettile, sizeof(Bullet));
         read(reciv[0], &tmp, sizeof(int));
-    }
-    sender[0] = -1;
-    sender[1] = -1;
-    write(pipe[1], sender, 3 * sizeof(int));
+    } while (x <= maxx || (y+diagonale) <= maxy);
+
+    proiettile.x=-1;
+    proiettile.y=-1;
+    write(pipe[1], &proiettile, sizeof(Bullet));
     // questo meccanismo permette di bloccare anche al lancio di un proiettile per volta,ma e comunque modificabile
 }
 
@@ -39,11 +41,20 @@ void proiettile(int x,int y,int *pipe,int *reciv) {
  * Player player = Struttura del giocatore principale.
  * int* pipe = Pipe.
  * int sys_slownes = Velocità di gioco. */
-void gestore_input(Player player, int *pipe, int sys_slownes) {
+void gestore_input(int *pipe, int sys_slownes) {
     int c;
     int maxy, maxx;
     getmaxyx(stdscr, maxy, maxx);
+
+    Player player;
+    player.coordinata.x = 5;
+    player.coordinata.y = 10;
+    player.proiettile.x = 0;
+    player.proiettile.y = 0;
+    player.proiettile.ready = 0;
     player.id = getpid();
+    player.angolo = 0;
+
     timeout(0);
 
     while (true) {
@@ -162,6 +173,9 @@ int enemyLV1_old(int x,int y,int id,int direzione,int *sender,int *receiver) {
         --nemico.coordinata.x; //La navicella nemica avanza finchè non arriva alla x del player
         --nemico.coordinata.x;
         --nemico.coordinata.x;
+        --nemico.coordinata.x;
+        --nemico.coordinata.x;
+        --nemico.coordinata.x;
         direzione = !direzione; //Cambio direzione navicella nemica (per il rimbalzo)
 
         //Incrementi delle coordinate.y per rientrare nel ciclo
@@ -187,19 +201,9 @@ int enemyLV1_old(int x,int y,int id,int direzione,int *sender,int *receiver) {
  * WINDOW* w1 : Finestra di stampa. */
 void screen(WINDOW *w1) {
 
-    wbkgd(w1, COLOR_PAIR(WHITE_BLACK));
-    /* Inizializzazione giocatore */
+    wbkgd(w1, COLOR_PAIR(WHITE_BLACK)); //Inizializzazione schermo nero con caratteri bianchi
     int life = 3; //Vite del giocatore
     Player player;
-    player.coordinata.x = 5;
-    player.coordinata.y = 10;
-    player.proiettile.x = 0;
-    player.proiettile.y = 0;
-    player.proiettile.ready = 0;
-    player.id = 0;
-    player.angolo = 0;
-
-    Bullet proiettili[MAX_PROIETTILI] = {};
 
     /* Inizializzazione pipes e processi */
     int tmp[ENEM_TEST][2];
@@ -210,7 +214,8 @@ void screen(WINDOW *w1) {
     pipe(bullet_p);
     pipe(playerpipe);
     pipe(bullet_ps);
-    pid_t proc, spawn, giocatore, proiett;
+    pid_t nemici, spawn, giocatore, proiett;
+    Bullet proiettili[MAX_PROIETTILI] = {};
 
     /* Strutture per la gestione dei nemici */
     int pr_rec[MAX_PROIETTILI][3] = {};
@@ -220,9 +225,10 @@ void screen(WINDOW *w1) {
     int maxenemies = ENEM_TEST;
     int arrint[ENEM_TEST][7] = {}; //Contiene alcune info da inviare ai nemici(tra cui il salto e l'uccisione)
     Player arr[ENEM_TEST] = {}; //Contiene le info di tutti in nemici, controllare enemyLV1 per piu info
+    Bullet proiettil;
 
     /* Flag, contatori e distanze */
-    int i, coordinata, decremento, w = 0, k = 0, delta; //Contatori
+    int i, coordinata, decremento, w = 0, k = 0, delta, direzione; //Contatori
     int y_spawner; //Indica in che ordinata andrà a spawnare il nemico
     int hit; // Flag se la navetta principale è stata colpita
     int player_started = 1; // Game-Start
@@ -241,47 +247,36 @@ void screen(WINDOW *w1) {
 
     giocatore = fork();
     switch (giocatore) {
-        case 0:
-            //  attenzione a non diminuire troppo il terzo valore,altrimenti ci potrebbero essere
-            //  problemi di lettura input
-            gestore_input(player, playerpipe, 10);
+        case 0: // 1) Processo navicella principale
+            gestore_input( playerpipe, 10);
             exit(0);
             break;
+            ///* Ulteriore fork per razzi navicella principale
         default:
-            werase(w1);
-            proc = fork();
-            //creazione processo schermo-nemici
-            switch (proc) {
-                //spawn dei nemici,diventeranno tutti proccessi separati
-                case 0:   //k mi serve per decidere quando spawnarli
+            nemici = fork();
+            switch (nemici) {
+                case 0:
                     for (coordinata = 1; coordinata < maxenemies + 1; coordinata++) {
                         spawn = fork();
                         switch (spawn) {
-                            case 0:        //variabili di spawn nemici
-                                // per testare le due versioni commenta e decommenta
-                                coordinata = (coordinata * 3 *
-                                              2); //In modo da avere almeno uno sprite di stacco tra i nemici (Asse y)
-                                decremento = coordinata /
-                                             (maxy - 2); //Ogni volta che si supera il maxy viene decrementata la x
-                                y_spawner = coordinata %
-                                            (maxy - 2); //Si prende il modulo per scegliere la coordinata dello sprite
-                                decremento = (decremento * 3 *
-                                              2); //In modo da avere almeno uno sprite di stacco tra i nemici (Asse x)
-                                enemyLV1_old(70 - decremento, y_spawner, k, 0, tmp[k], enemy_frame[k]);
+                            case 0: // 3) Spawner di processi nemici
+                                coordinata = (coordinata * 3 * 2); //In modo da avere almeno uno sprite di stacco tra i nemici (Asse y)
+                                decremento = coordinata / (maxy - 2); //Ogni volta che si supera il maxy viene decrementata la x
+                                if(decremento % 2 == 0) direzione = !direzione;
+                                y_spawner = coordinata % (maxy - 2); //Si prende il modulo per scegliere la coordinata dello sprite
+                                decremento = (decremento * 3 * 2); //In modo da avere almeno uno sprite di stacco tra i nemici (Asse x)
+                                enemyLV1_old(maxx - decremento - 3, y_spawner, k, 0, tmp[k], enemy_frame[k]);
                                 //enemyLV1_new(70, coordinata * 3 * 2, k, 0, tmp, enemy_frame);
-                                //Per i rimbalzi possiamo far gestire all'utente: 0 i nemici non collidono tra loro, 1 movimenti casuali
-
-                                //se si chiudono bene non passano da questo exit,di norma si auto-terminano appena raggiungono la fine dello schermo
                                 exit(-1);
                                 break;
-                            default:
+                            default: // 4) Processo bombe nemiche
                                 k++;
                                 break;
                         }
                     }
                     exit(0);
                     break;
-                default:
+                default: // 5) Processo Area di Gioco
                     //aspetto l'avvio dei nemici prima di iniziare la scrittura schermo
                     wait((int *) 0);
 
@@ -331,11 +326,12 @@ void screen(WINDOW *w1) {
                             //++i;
                             //*/
                         }
+
                         for (i = 0; i < num_proiettili; i++) {
-                            read(bullet_p[0], pr_rec[i], 3 * sizeof(int));
-                            proiettili[i].x = pr_rec[i][0];
-                            proiettili[i].y = pr_rec[i][1];
-                            proiettili[i].ready = pr_rec[i][2];
+                            read(bullet_p[0], &proiettil, sizeof(Bullet));
+                            proiettili[i].x = proiettil.x;
+                            proiettili[i].y = proiettil.y;
+                            proiettili[i].diagonale = proiettil.diagonale;
                         }
 
                         // debug
@@ -376,8 +372,7 @@ void screen(WINDOW *w1) {
                                     }
                                 }
                                 //collisione navetta/limite con nemico
-                                if ((arr[i].coordinata.x <= 1) || (arr[i].coordinata.y == player.coordinata.y &&
-                                                                   arr[i].coordinata.x == player.coordinata.x) ||
+                                if ((arr[i].coordinata.x <= 6) || ( arr[i].coordinata.x == player.coordinata.x) ||
                                     life == 0) {
                                     //questo killa definitivamente tutti i nemici,ma serve principalmente in caso di gameover
                                     //jump e usata per inviare info ai processi,in questo caso li killa tutti
@@ -417,10 +412,10 @@ void screen(WINDOW *w1) {
                                 //collisione proiettile-navetta_nemica //
                                 for (w = 0; w < num_proiettili; ++w) {
                                     if (proiettili[w].x == arr[i].coordinata.x &&
-                                        ((hitbox > proiettili[w].y - proiettili[w].ready - arr[i].coordinata.y &&
-                                          -hitbox < proiettili[w].y - proiettili[w].ready - arr[i].coordinata.y) ||
-                                         (-hitbox < proiettili[w].y + proiettili[w].ready - arr[i].coordinata.y &&
-                                          hitbox > proiettili[w].y + proiettili[w].ready - arr[i].coordinata.y))) {
+                                        ((hitbox > proiettili[w].y - arr[i].coordinata.y &&
+                                          -hitbox < proiettili[w].y - arr[i].coordinata.y) ||
+                                         (-hitbox < proiettili[w].y - arr[i].coordinata.y &&
+                                          hitbox > proiettili[w].y - arr[i].coordinata.y))) {
                                         //possiamo sfruttare questo meccanismo per spawnare nemici da lv 1 a lv 2,e in generale per togliere la vita ai nemici
                                         jump[arr[i].id + 1] = -1;
                                         mvwaddch(w1, arr[i].coordinata.y, arr[i].coordinata.x, '#');
@@ -444,11 +439,11 @@ void screen(WINDOW *w1) {
                                 --num_proiettili;
                                 --i;
                             } else {
-                                if (proiettili[i].y - proiettili[i].ready >=
+                                if (proiettili[i].y >=
                                     2) { //In modo da non collidere con la linea separatrice
-                                    mvwaddch(w1, proiettili[i].y - proiettili[i].ready, proiettili[i].x, '=');
+                                    mvwaddch(w1, proiettili[i].y, proiettili[i].x, '=');
                                 }
-                                mvwaddch(w1, proiettili[i].y + proiettili[i].ready, proiettili[i].x, '=');
+                                mvwaddch(w1, proiettili[i].y, proiettili[i].x, '=');
                                 write(bullet_ps[1], &helper, sizeof(int));
                             }
                         }
