@@ -1,142 +1,134 @@
 #include "sprites.h"
 //stampa navetta in generale
 void printnavetta(int x,int y,WINDOW *w){
-
 	wattron(w,COLOR_PAIR(CY_BL));
-	oggetto sprite;
-	int i,k;
-	sprite.c[0]="|\\ ";
-	sprite.c[1]="| \\ ";
-	sprite.c[2]="|-O|==";
-	sprite.c[3]="| /";
-	sprite.c[4]="|/";
-	for(i=(-2),k=0;k<5;i++,k++){
-	mvwprintw(w,y+i,x-5,sprite.c[k]);
-	}
+	mvwprintw(w,y-2,x-5,"|\\");
+	mvwprintw(w,y-1,x-5,"| \\");
+	mvwprintw(w,y,x-5,"|-O|==");
+	mvwprintw(w,y+1,x-5,"| /");
+	mvwprintw(w,y+2,x-5,"|/");
 	wattroff(w,COLOR_PAIR(CY_BL));
 }
 //animazioni navetta gameover (frame 1)
 void printnavetta_distrutta_f1(int x,int y,WINDOW *w){
-	oggetto sprite;
-	int i,k;
-	sprite.c[0]="|X ";
-	sprite.c[1]="|X\\ ";
-	sprite.c[2]="X-O|X=";
-	sprite.c[3]="| X";
-	sprite.c[4]="X/";
-	for(i=(-2),k=0;k<5;i++,k++){
-	mvwprintw(w,y+i,x-5,sprite.c[k]);
-	}
+	mvwprintw(w,y-2,x-5,"|X");
+	mvwprintw(w,y-1,x-5,"|X\\");
+	mvwprintw(w,y,x-5,"X-O|X=");
+	mvwprintw(w,y+1,x-5,"| X");
+	mvwprintw(w,y+2,x-5,"X/");
 }
 //animazioni navetta gameover (frame 2)
-void printnavetta_distrutta_f2(int x,int y,WINDOW *w){
-	oggetto sprite;
-	int i,k;
-	sprite.c[0]="|\\ ";
-	sprite.c[1]="X X ";
-	sprite.c[2]="|-X|=X";
-	sprite.c[3]="|X/";
-	sprite.c[4]="X/";
-	for(i=(-2),k=0;k<5;i++,k++){
-	mvwprintw(w,y+i,x-5,sprite.c[k]);
-	}
+void printnavetta_distrutta_f2(int x,int y,WINDOW *w){	
+	mvwprintw(w,y-2,x-5,"|\\ ");
+	mvwprintw(w,y-1,x-5,"X X ");
+	mvwprintw(w,y,x-5,  "|-X|=X");
+	mvwprintw(w,y+1,x-5,"|X/");
+	mvwprintw(w,y+2,x-5,"X/");
 }
 //animazioni navetta gameover (frame 3)
 void printnavetta_distrutta_f3(int x,int y,WINDOW *w){
-	oggetto sprite;
-	int i,k;
-	sprite.c[0]="|\\ ";
-	sprite.c[1]="     ";
-	sprite.c[2]="|- |=   ";
-	sprite.c[3]="| /";
-	sprite.c[4]=" /";
-	for(i=(-2),k=0;k<5;i++,k++){
-	mvwprintw(w,y+i,x-5,sprite.c[k]);
-	}
+	mvwprintw(w,y-2,x-5,"|\\ ");
+	mvwprintw(w,y-1,x-5,"     ");
+	mvwprintw(w,y,x-5,  "|- |=   ");
+	mvwprintw(w,y+1,x-5,"| /");
+	mvwprintw(w,y+2,x-5," /");
 }
 //animazioni navetta gameover (frame 4)
 void printnavetta_distrutta_f4(int x,int y,WINDOW *w){
-	oggetto sprite;
-	int i,k;
-	sprite.c[0]="|   ";
-	sprite.c[1]="    ";
-	sprite.c[2]=" - |  ";
-	sprite.c[3]="|   ";
-	sprite.c[4]="   ";
-	for(i=(-2),k=0;k<5;i++,k++){
-	mvwprintw(w,y+i,x-5,sprite.c[k]);
-	}
+	mvwprintw(w,y-2,x-5,"|   ");
+	mvwprintw(w,y-1,x-5,"    ");
+	mvwprintw(w,y,x-5,  " - |  ");
+	mvwprintw(w,y+1,x-5,"|   ");
+	mvwprintw(w,y+2,x-5,"   ");
 }
 //animazione nemico lv 2 di template per collisioni frame 1
 void printnemicolv2_f1(int x,int y,WINDOW *w){
-	oggetto sprite;
-	int i,k;
-	sprite.c[0]="O-O";
-	sprite.c[1]="/V\\";
-	sprite.c[2]="O-O";
-	mvwprintw(w,y-1,x,sprite.c[0]);
-	mvwprintw(w,y,x,sprite.c[1]);
-	mvwprintw(w,y+1,x,sprite.c[2]);
+	mvwprintw(w,y-1,x,"O-O");
+	mvwprintw(w,y,x,  "/V\\");
+	mvwprintw(w,y+1,x,"O-O");
 }
 //animazione nemico lv 2 di template per collisioni frame 2
 void printnemicolv2_f2(int x,int y,WINDOW *w){
-	oggetto sprite;
-	int i,k;
-	sprite.c[0]="O-O";
-	sprite.c[1]="|X|";
-	sprite.c[2]="O-O";
-	mvwprintw(w,y-1,x,sprite.c[0]);
-	mvwprintw(w,y,x,sprite.c[1]);
-	mvwprintw(w,y+1,x,sprite.c[2]);
+	mvwprintw(w,y-1,x,"O-O");
+	mvwprintw(w,y,x,  "|X|");
+	mvwprintw(w,y+1,x,"O-O");
 }
 
 //animazione nemico lv 2 di template per collisioni frame 3
 void printnemicolv2_f3(int x,int y,WINDOW *w){
-    oggetto sprite;
-    int i,k;
-    sprite.c[0]="O X";
-    sprite.c[1]=" X ";
-    sprite.c[2]="X O";
-    mvwprintw(w,y-1,x,sprite.c[0]);
-    mvwprintw(w,y,x,sprite.c[1]);
-    mvwprintw(w,y+1,x,sprite.c[2]);
+    mvwprintw(w,y-1,x,"O X");
+    mvwprintw(w,y,x,  " X ");
+    mvwprintw(w,y+1,x,"X O");
 }
 
 //animazione nemico lv 2 di template per collisioni frame 4
 void printnemicolv2_f4(int x,int y,WINDOW *w){
-    oggetto sprite;
-    int i,k;
-    sprite.c[0]="X O";
-    sprite.c[1]=" X ";
-    sprite.c[2]="O X";
-    mvwprintw(w,y-1,x,sprite.c[0]);
-    mvwprintw(w,y,x,sprite.c[1]);
-    mvwprintw(w,y+1,x,sprite.c[2]);
+    mvwprintw(w,y-1,x,"X O");
+    mvwprintw(w,y,x,  " X ");
+    mvwprintw(w,y+1,x,"O X");
 }
 
 
 //animazione nemico lv 1 di template per collisioni frame 1
 void printnemicolv1_f1(int x,int y,WINDOW *w){
-	oggetto sprite;
-	int i,k;
-	sprite.c[0]=" /O";
-	sprite.c[1]="-O ";
-	sprite.c[2]=" \\O";
-	mvwprintw(w,y-1,x,sprite.c[0]);
-	mvwprintw(w,y,x,sprite.c[1]);
-	mvwprintw(w,y+1,x,sprite.c[2]);
+	mvwprintw(w,y-1,x, " /O");
+	mvwprintw(w,y,x,   "-O ");
+	mvwprintw(w,y+1,x," \\O");
 }
 //animazione nemico lv 1 di template per collisioni frame 2
 void printnemicolv1_f2(int x,int y,WINDOW *w){
-	oggetto sprite;
-	int i,k;
-	sprite.c[0]=" \\O";
-	sprite.c[1]="-O ";
-	sprite.c[2]=" /O";
-	mvwprintw(w,y-1,x,sprite.c[0]);
-	mvwprintw(w,y,x,sprite.c[1]);
-	mvwprintw(w,y+1,x,sprite.c[2]);
+	mvwprintw(w,y-1,x," \\O");
+	mvwprintw(w,y,x,  "-O ");
+	mvwprintw(w,y+1,x," /O");
 }
+
+/**
+ * Stampa dei nemici in base alla quantità delle loro vite
+ *
+ * WINDOW* w1 : Finestra di stampa.
+ * Player arr : Array di nemici. */
+void stampanemici(WINDOW* w1, Player arr) {
+    /* Se il nemico è ancora vivo, avrà un frame diverso per ogni ordinata
+     * Per fare ciò si usa l'operatore di modulo */
+    if (arr.coordinata.y % 2 == 0 && arr.coordinata.y) {
+        if (arr.proiettile.id == 3) { //Se al nemico rimangono tre vite
+            wattron(w1, COLOR_PAIR(GRE_BL));
+            printnemicolv1_f1(arr.coordinata.x, arr.coordinata.y, w1);
+            wattroff(w1, COLOR_PAIR(GRE_BL));
+        }
+        if (arr.proiettile.id == 2) { //Se al nemico rimangono due vite
+            wattron(w1, COLOR_PAIR(YEL_BL));
+            printnemicolv2_f1(arr.coordinata.x, arr.coordinata.y, w1);
+            wattroff(w1, COLOR_PAIR(YEL_BL));
+        }
+        if (arr.proiettile.id == 1) { //Se al nemico rimane una vita
+            wattron(w1, COLOR_PAIR(RED_BL));
+            printnemicolv2_f3(arr.coordinata.x, arr.coordinata.y, w1);
+            wattroff(w1, COLOR_PAIR(RED_BL));
+        }
+    } else {
+        if (arr.proiettile.id == 3) { //Se al nemico rimangono tre vite
+            wattron(w1, COLOR_PAIR(GRE_BL));
+            printnemicolv1_f2(arr.coordinata.x, arr.coordinata.y, w1);
+            wattroff(w1, COLOR_PAIR(GRE_BL));
+        }
+        if (arr.proiettile.id == 2) { //Se al nemico rimangono due vite
+            wattron(w1, COLOR_PAIR(YEL_BL));
+            printnemicolv2_f2(arr.coordinata.x, arr.coordinata.y, w1);
+            wattroff(w1, COLOR_PAIR(YEL_BL));
+        }
+        if (arr.proiettile.id == 1) { //Se al nemico rimane una vita
+            wattron(w1, COLOR_PAIR(RED_BL));
+            printnemicolv2_f4(arr.coordinata.x, arr.coordinata.y, w1);
+            wattroff(w1, COLOR_PAIR(RED_BL));
+        }
+    }
+
+    wattron(w1, COLOR_PAIR(RED_BL));
+    mvwaddch(w1, arr.proiettile.y, arr.proiettile.x, 'O');
+    wattroff(w1, COLOR_PAIR(RED_BL));
+}
+
 
 //Stampa numero di vite e disponibilita proiettili a schermo
 void print_info(int proiettile_pronto,int life,WINDOW *w1,int maxx){
