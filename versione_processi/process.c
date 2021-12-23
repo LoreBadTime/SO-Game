@@ -1,51 +1,5 @@
 #include "./process.h"
 
-/**
- * Stampa dei nemici in base alla quantità delle loro vite
- *
- * WINDOW* w1 : Finestra di stampa.
- * Player arr : Array di nemici. */
-void stampanemici(WINDOW* w1, Player arr) {
-    /* Se il nemico è ancora vivo, avrà un frame diverso per ogni ordinata
-     * Per fare ciò si usa l'operatore di modulo */
-    if (arr.coordinata.y % 2 == 0 && arr.coordinata.y) {
-        if (arr.proiettile.id == 3) { //Se al nemico rimangono tre vite
-            wattron(w1, COLOR_PAIR(GRE_BL));
-            printnemicolv1_f1(arr.coordinata.x, arr.coordinata.y, w1);
-            wattroff(w1, COLOR_PAIR(GRE_BL));
-        }
-        if (arr.proiettile.id == 2) { //Se al nemico rimangono due vite
-            wattron(w1, COLOR_PAIR(YEL_BL));
-            printnemicolv2_f1(arr.coordinata.x, arr.coordinata.y, w1);
-            wattroff(w1, COLOR_PAIR(YEL_BL));
-        }
-        if (arr.proiettile.id == 1) { //Se al nemico rimane una vita
-            wattron(w1, COLOR_PAIR(RED_BL));
-            printnemicolv2_f3(arr.coordinata.x, arr.coordinata.y, w1);
-            wattroff(w1, COLOR_PAIR(RED_BL));
-        }
-    } else {
-        if (arr.proiettile.id == 3) { //Se al nemico rimangono tre vite
-            wattron(w1, COLOR_PAIR(GRE_BL));
-            printnemicolv1_f2(arr.coordinata.x, arr.coordinata.y, w1);
-            wattroff(w1, COLOR_PAIR(GRE_BL));
-        }
-        if (arr.proiettile.id == 2) { //Se al nemico rimangono due vite
-            wattron(w1, COLOR_PAIR(YEL_BL));
-            printnemicolv2_f2(arr.coordinata.x, arr.coordinata.y, w1);
-            wattroff(w1, COLOR_PAIR(YEL_BL));
-        }
-        if (arr.proiettile.id == 1) { //Se al nemico rimane una vita
-            wattron(w1, COLOR_PAIR(RED_BL));
-            printnemicolv2_f4(arr.coordinata.x, arr.coordinata.y, w1);
-            wattroff(w1, COLOR_PAIR(RED_BL));
-        }
-    }
-
-    wattron(w1, COLOR_PAIR(RED_BL));
-    mvwaddch(w1, arr.proiettile.y, arr.proiettile.x, 'O');
-    wattroff(w1, COLOR_PAIR(RED_BL));
-}
 
 /**
  * Generatore coordinate del proiettile principale
