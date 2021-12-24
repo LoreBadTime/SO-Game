@@ -410,7 +410,6 @@ void screen(WINDOW *w1) {
                                         if (arr[i].proiettile.id == 1) {
                                             ++killed;
                                             kill_pr[arr[i].id] = 1;
-                                            arr[i].coordinata.y = -5;
                                         }
                                     }
                                 }
@@ -448,8 +447,14 @@ void screen(WINDOW *w1) {
 
                         //sincronizzazione processi + invio info su rimbalzi/uccisioni
                         for (i = 0; i < ENEM_TEST; i++) {
-                            if (arr[i].coordinata.y > -1) {
+                            // invio normale
+                            if (arr[i].coordinata.y > -1)
+                            {
                                 write(enemy_frame[i][1], jump, (ENEM_TEST + 1) * sizeof(int));
+                                if (kill_pr[arr[i].id] == 1)
+                                {
+                                    arr[i].coordinata.y = -5;
+                                }
                             }
                         }
 
