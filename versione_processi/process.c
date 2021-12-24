@@ -401,7 +401,8 @@ void screen(WINDOW *w1) {
 
                                 //collisione proiettile-navetta_nemica
                                 for (w = 0; w < num_proiettili; ++w) {
-                                    if (flag_pr[proiettili[w].id] == 0 && proiettili[w].x == arr[i].coordinata.x &&
+                                    if (flag_pr[proiettili[w].id] == 0 && 
+                                        (proiettili[w].x - arr[i].coordinata.x < hitbox && proiettili[w].x - arr[i].coordinata.x >= 0) &&
                                         ((hitbox > proiettili[w].y - arr[i].coordinata.y &&
                                           -hitbox < proiettili[w].y - arr[i].coordinata.y) ||
                                          (-hitbox < proiettili[w].y - arr[i].coordinata.y &&
