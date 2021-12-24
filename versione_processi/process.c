@@ -127,31 +127,19 @@ int enemyLV1_old(int x,int y,int id,int direzione,int *sender,int *receiver) {
         //Ciclo che gestisce il rimbalzo
         while (nemico.coordinata.y >= 4 && nemico.coordinata.y <= maxy - 3) {
 
-            if (decremento % 2 == 1) {
-                --nemico.proiettile.x;
-            }
-            //adesso aggiorniamo i dati solo una volta
-            if (decremento == 0) {
-                if (direzione) {
-                    nemico.coordinata.y--;
-                } else {
-                    nemico.coordinata.y++;
-                }
-            }
-            //invio dati,tra poco provo a ripristinare il send di struttura
+            //invio dati
             nemico.proiettile.id = alive;
             nemico.angolo = direzione;
 
-
             //sincronizzazione + scambio di info
-
             write(sender[1], &nemico,sizeof(Player));
-            read(receiver[0], rec, (ENEM_TEST + 1) * sizeof(int));
-            //impostazione skip dei frame
             ++decremento;
             if (decremento == skipframe) {
                 decremento = 0;
             }
+            read(receiver[0], rec, (ENEM_TEST + 1) * sizeof(int));
+            //impostazione skip dei frame
+            
             if (rec[0] == 0) {
                 alive = 0;
             }
@@ -162,7 +150,7 @@ int enemyLV1_old(int x,int y,int id,int direzione,int *sender,int *receiver) {
                 nemico.coordinata.y = -1;
             }
             // dall'array estrae il suo id,serve per il rimbalzo in caso di collisioni con le navette nemiche
-            if (rec[id + 1]) {
+            if (rec[id + 1] == 1) {
                 direzione = !direzione;
                 rec[id + 1] = 0;
             }
@@ -170,6 +158,18 @@ int enemyLV1_old(int x,int y,int id,int direzione,int *sender,int *receiver) {
             if (nemico.proiettile.x <= -1 && (rand() % 1250 == 1)) {
                 nemico.proiettile.x = nemico.coordinata.x;
                 nemico.proiettile.y = nemico.coordinata.y;
+            }
+            //avanzamento poiettile
+            if (decremento % 2 == 1) {
+                --nemico.proiettile.x;
+            }
+            //adesso aggiorniamo i dati solo una volta
+            if (decremento == 0) {
+                if (direzione) {
+                    nemico.coordinata.y--;
+                } else {
+                    nemico.coordinata.y++;
+                }
             }
         }
 
@@ -239,6 +239,7 @@ void screen(WINDOW *w1) {
     int hitbox = 2; //Distanza dei caratteri dal centro
     int num_proiettili = 0;
     int maxy, maxx;
+    int flag_pr[2] = {};
     getmaxyx(stdscr, maxy, maxx);
     for (i = 0; i < ENEM_TEST; i++) {
         pipe(tmp[i]);
@@ -286,6 +287,8 @@ void screen(WINDOW *w1) {
                         read(playerpipe[0], &player, sizeof(Player));
 
                         if (player.proiettile.ready == PRONTO && num_proiettili == 0) {
+                            flag_pr[0] = 0;
+                            flag_pr[1] = 0;
                             ++num_proiettili;
                             ++num_proiettili;
                             proiett = fork();
@@ -398,7 +401,7 @@ void screen(WINDOW *w1) {
 
                                 //collisione proiettile-navetta_nemica
                                 for (w = 0; w < num_proiettili; ++w) {
-                                    if (proiettili[w].x == arr[i].coordinata.x &&
+                                    if (flag_pr[proiettili[w].id] == 0 && proiettili[w].x == arr[i].coordinata.x &&
                                         ((hitbox > proiettili[w].y - arr[i].coordinata.y &&
                                           -hitbox < proiettili[w].y - arr[i].coordinata.y) ||
                                          (-hitbox < proiettili[w].y - arr[i].coordinata.y &&
@@ -406,6 +409,7 @@ void screen(WINDOW *w1) {
                                         //possiamo sfruttare questo meccanismo per spawnare nemici da lv 1 a lv 2,e in generale per togliere la vita ai nemici
                                         jump[arr[i].id + 1] = -1;
                                         mvwaddch(w1, arr[i].coordinata.y, arr[i].coordinata.x, '#');
+                                        flag_pr[proiettili[w].id] = 1;
                                         //serve per ridurre i nemici nei vari counter
                                         if (arr[i].proiettile.id == 1) {
                                             ++killed;
@@ -438,11 +442,12 @@ void screen(WINDOW *w1) {
                                 --num_proiettili;
                             }
 
-                            if (proiettili[1].y >= 2) { //In modo da non collidere con la linea separatrice
+                            if (proiettili[1].y >= 2 && flag_pr[1] == 0) { //In modo da non collidere con la linea separatrice
                                 mvwaddch(w1, proiettili[1].y, proiettili[1].x, '=');
                             }
-
-                            mvwaddch(w1, proiettili[0].y, proiettili[0].x, '=');
+                            if(flag_pr[0] == 0){
+                                mvwaddch(w1, proiettili[0].y, proiettili[0].x, '=');
+                            }
                         }
 
                         //sincronizzazione processi + invio info su rimbalzi/uccisioni
