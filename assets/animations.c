@@ -92,7 +92,7 @@ void victory(WINDOW *w1,int x,int y){
     wclear(w1); //Avvio tutto pulendo lo schermo
 
 	//Animazione schermo che flasha
-	for(i=0,j=2;j < maxx + 5;i++,j+=1){
+	for(i=0,j=2;j < maxx/2;i++,j+=1){
 		//Inizio frame sfondo Verde
         printnavetta(x+j,y,w1);
         wbkgd(w1,COLOR_PAIR(WHI_GR));
