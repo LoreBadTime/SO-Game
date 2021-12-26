@@ -472,7 +472,9 @@ void screen(WINDOW *w1) {
                             flag_proiettile_ready=1;
 
 
+                        wattron(w1,COLOR_PAIR(CY_BL));
                         invincibility = print_nave(invincibility, w1, player.coordinata.x, player.coordinata.y);
+                        wattroff(w1,COLOR_PAIR(CY_BL));
                         print_info(flag_proiettile_ready, life, w1, maxx);
 
                         // Stampa proiettili
