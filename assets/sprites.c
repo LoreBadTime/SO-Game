@@ -134,14 +134,20 @@ void stampanemici(WINDOW* w1, Player arr) {
 void print_info(int proiettile_pronto,int life,WINDOW *w1,int maxx){
     int i;
     mvwprintw(w1, 0, 1, "Proiettile:" );
-    if(proiettile_pronto == PRONTO)
+    if(proiettile_pronto != PRONTO) {
         mvwaddch(w1, 0, 13, ' ');
-    else
-        mvwaddch(w1,0,13,'O');
+    }
+    else {
+        wattron(w1, COLOR_PAIR(GRE_BL));
+        mvwaddch(w1, 0, 13, 'O');
+        wattroff(w1, COLOR_PAIR(GRE_BL));
+    }
 
     mvwprintw(w1, 0 , 16, "Vite:");
 	for (i=0;i < life;i++){
+        wattron(w1, COLOR_PAIR(RED_BL));
 		mvwaddch(w1, 0, 22 + i, '#');
+        wattroff(w1, COLOR_PAIR(RED_BL));
 	}
 
     for(i=0;i<maxx;i++){
