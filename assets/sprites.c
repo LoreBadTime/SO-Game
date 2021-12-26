@@ -1,13 +1,11 @@
 #include "sprites.h"
 //stampa navetta in generale
 void printnavetta(int x,int y,WINDOW *w){
-	wattron(w,COLOR_PAIR(CY_BL));
 	mvwprintw(w,y-2,x-5,"|\\");
 	mvwprintw(w,y-1,x-5,"| \\");
 	mvwprintw(w,y,x-5,"|-O|==");
 	mvwprintw(w,y+1,x-5,"| /");
 	mvwprintw(w,y+2,x-5,"|/");
-	wattroff(w,COLOR_PAIR(CY_BL));
 }
 //animazioni navetta gameover (frame 1)
 void printnavetta_distrutta_f1(int x,int y,WINDOW *w){
@@ -168,49 +166,18 @@ int print_nave(int invincibility,WINDOW *w1,int x,int y){
 	}
 	return invincibility;
 }
-// test sprites
-void main_test(){
-	initscr();
-	noecho();
-	curs_set(0);
-	int maxx =0, maxy = 0, i = 0;
-	oggetto sprite;
-	sprite.c[0]="|\\ ";
-	sprite.c[1]="| \\ ";
-	sprite.c[2]="|  |==";
-	sprite.c[3]="| /";
-	sprite.c[4]="|/";
-	char c;
 
-	getmaxyx(stdscr, maxy, maxx);
-	sprite.x = 1, sprite.y = (maxy/2);
-	
-	for(i=0;i<DIM;i++) mvprintw(sprite.y+i,sprite.x,sprite.c[i]);
-	refresh();
+void print_titolo(WINDOW* w,int x, int y) {
+    mvwprintw(w, y, x, " ____  ____   _    ____ _____");
+    mvwprintw(w, y + 1, x, "/ ___||  _ \\ / \\  / ___| ____|");
+    mvwprintw(w, y + 2, x, "\\___ \\| |_) / _ \\| |   |  _|");
+    mvwprintw(w, y + 3, x, " ___) |  __/ ___ \\ |___| |___");
+    mvwprintw(w, y + 4, x, "|____/|_| /_/   \\_\\____|_____|");
+    y+=5;
+    mvwprintw(w, y, x, " ____  _____ _____ _____ _   _ ____  _____ ____ ");
+    mvwprintw(w, y + 1, x, "|  _ \\| ____|  ___| ____| \\ | |  _ \\| ____|  _ \\ ");
+    mvwprintw(w, y + 2, x, "| | | |  _| | |_  |  _| |  \\| | | | |  _| | |_) |");
+    mvwprintw(w, y + 3, x, "| |_| | |___|  _| | |___| |\\  | |_| | |___|  _ < ");
+    mvwprintw(w, y + 4, x, "|____/|_____|_|   |_____|_| \\_|____/|_____|_| \\_\\");
 
-	do{
-		c=getch();
-		switch(c){
-			case SU:
-				if(sprite.y!=0){
-					sprite.y--;
-					clear();
-					for(i=0;i<DIM;i++)
-					mvprintw(sprite.y+i,sprite.x,sprite.c[i]);	
-					refresh();
-				}
-				break;
-			case GIU:
-				if(sprite.y+5!=maxy){
-					sprite.y++;
-					clear();
-					for(i=0;i<DIM;i++)
-					mvprintw(sprite.y+i,sprite.x,sprite.c[i]);	
-					refresh();
-				}
-				break;		
-		}
-	} while(!(c == 'q' || c=='Q'));
-	
-	endwin();
 }
