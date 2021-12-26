@@ -105,7 +105,7 @@ int enemyLV1_old(int x,int y,int id,int direzione,int *sender,int *receiver) {
     close(receiver[1]);
     //Inizializzazione navicella nemica
     int decremento = 0;
-    int skipframe = 10;
+    int skipframe = 10+ENEM_TEST;
     int alive = 3; //Stato navicella nemica
 
     //Inizializzazione nemico,info del nemico
@@ -123,7 +123,7 @@ int enemyLV1_old(int x,int y,int id,int direzione,int *sender,int *receiver) {
     getmaxyx(stdscr, maxy, maxx);
 
     //Ciclo che gesitisce il nemico
-    while (nemico.coordinata.x > 0 && alive) {
+    while (nemico.coordinata.x > -5 && alive) {
         //Ciclo che gestisce il rimbalzo
         while (nemico.coordinata.y >= 4 && nemico.coordinata.y <= maxy - 3) {
 
@@ -133,7 +133,7 @@ int enemyLV1_old(int x,int y,int id,int direzione,int *sender,int *receiver) {
 
             //sincronizzazione + scambio di info
             write(sender[1], &nemico,sizeof(Player));
-            napms(1);
+            napms(ENEM_TEST/10);
             ++decremento;
             if (decremento == skipframe) {
                 decremento = 0;
@@ -243,6 +243,7 @@ void screen(WINDOW *w1) {
     int num_proiettili = 0;
     int maxy, maxx;
     int flag_pr[2] = {};
+    int reset_bkg = 0;
     getmaxyx(stdscr, maxy, maxx);
     /*
     for (i = 0; i < ENEM_TEST; i++) {
@@ -254,7 +255,7 @@ void screen(WINDOW *w1) {
     giocatore = fork();
     switch (giocatore) {
         case 0: // 1) Processo navicella principale
-            gestore_input( playerpipe, 30);
+            gestore_input( playerpipe, ENEM_TEST);
             exit(0);
             break;
         default:
@@ -327,9 +328,7 @@ void screen(WINDOW *w1) {
                         // Lettura pipe dei nemici
                         for (i = 0; i < maxenemies; i++) {
                             //if (arr[i].coordinata.y > -1) {
-                                
                                 read(tmp[0], &arr[i],sizeof(Player));
-                                napms(1);
                             //}
                         }
 
@@ -345,18 +344,17 @@ void screen(WINDOW *w1) {
 
                         // CONTROLLO COLLISIONI
 
-                        for (i = 0; i < ENEM_TEST; i++) {
+                        for (i = 0; i < maxenemies; i++) {
                             //if (arr[i].coordinata.y > -1) {
                                 ///*pseudo selectionsort per controllare il rimbalzo in caso di collisioni
-                                for (w = i + 1; w < ENEM_TEST; w++) {
+                                for (w = i + 1; w < maxenemies; w++) {
                                     // modificando jumpbox si puo modificare il rilevamento di caselle prima di fare il salto
                                     // attenzione a non ridurla troppo altrimenti ci potrbbero essere conflitti di sprite
 
                                     // controllo distanza tra i due nemici                  controllo se sono nella stessa x e che abbiano direzione diversa
                                     if (kill_pr[i] == 0 && kill_pr[w] == 0) {
                                         if ((abs(abs(arr[i].coordinata.y) - abs(arr[w].coordinata.y)) < jumpbox) &&
-                                            arr[i].coordinata.x == arr[w].coordinata.x && arr[i].angolo !=
-                                                                                          arr[w].angolo) {   // ulteriore controllo di direzione,attenzione quando si modifica qui
+                                            arr[i].coordinata.x == arr[w].coordinata.x) {   // ulteriore controllo di direzione,attenzione quando si modifica qui
 
                                             if ((arr[i].coordinata.y < arr[w].coordinata.y && arr[i].angolo == 0 &&
                                                  arr[w].angolo == 1) ||
@@ -368,12 +366,29 @@ void screen(WINDOW *w1) {
                                                 // info di debug
                                                 // mvwprintw(w1, arr[i].id + 3, 30, "Hit");
                                                 break;
+                                            }else{
+
+                                                if ((abs(abs(arr[i].coordinata.y) - abs(arr[w].coordinata.y)) < jumpbox/2 + 1))
+                                                {
+                                                    if(arr[i].coordinata.y < arr[w].coordinata.y && arr[i].angolo && arr[w].angolo){
+                                                        jump[arr[i].id + 1] = 1;
+                                                        break;
+                                                    }else{
+                                                        if(arr[i].coordinata.y > arr[w].coordinata.y && !arr[i].angolo && !arr[w].angolo){
+                                                            jump[arr[w].id + 1] = 1;
+                                                            break;
+                                                        }
+                                                    }
+
+                                                }
+                                                
                                             }
+
                                         }
                                     }
                                 }
                                 //collisione navetta/limite con nemico
-                                if ((arr[i].coordinata.x <= 6) || ( arr[i].coordinata.x == player.coordinata.x) ||
+                                if ((arr[i].coordinata.x <= 0) || (arr[i].coordinata.x < player.coordinata.x) && abs(arr[i].coordinata.y - player.coordinata.y) < 2 ||
                                     life == 0) {
                                     //questo killa definitivamente tutti i nemici,ma serve principalmente in caso di gameover
                                     //jump e usata per inviare info ai processi,in questo caso li killa tutti
@@ -398,7 +413,7 @@ void screen(WINDOW *w1) {
                                              arr[i].proiettile.x == player.coordinata.x)) {
                                             mvwaddch(w1, player.coordinata.y, player.coordinata.x, 'X');
                                             hit = 1;
-                                            invincibility = 60;
+                                            invincibility = 120;
                                         }
                                     }
                                 }
@@ -406,6 +421,7 @@ void screen(WINDOW *w1) {
                                 /* Se la navetta principale è stata colpita, la flag hit e impostata a 1
                                  * Questo fa sì che il giocatore principale perda una vita e venga resettata la flag a 0. */
                                 if (hit == 1) {
+                                    reset_bkg = 3;
                                     life--;
                                     hit = 0;
                                 }
@@ -421,6 +437,8 @@ void screen(WINDOW *w1) {
                                         //possiamo sfruttare questo meccanismo per spawnare nemici da lv 1 a lv 2,e in generale per togliere la vita ai nemici
                                         jump[arr[i].id + 1] = -1;
                                         mvwaddch(w1, arr[i].coordinata.y, arr[i].coordinata.x, '#');
+
+                                        reset_bkg = 3;
                                         flag_pr[proiettili[w].id] = 1;
                                         //serve per ridurre i nemici nei vari counter
                                         if (arr[i].proiettile.id == 1) {
@@ -485,7 +503,17 @@ void screen(WINDOW *w1) {
                             --killed;
                             --maxenemies;
                         }
+                        
+                        
+
                         wrefresh(w1);
+                        if (reset_bkg)
+                        {
+                            --reset_bkg;
+                            wbkgd(w1, COLOR_PAIR(RED_YEL));
+                        }else{
+                            wbkgd(w1, COLOR_PAIR(WHITE_BLACK));
+                        }
 
                         if (maxenemies == 0) {
                             player_started = 0;
