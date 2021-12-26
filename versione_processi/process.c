@@ -31,7 +31,8 @@ void proiettile(int x, int y, int direzione, int *pipe) {
         write(pipe[1], &proiettile, sizeof(Bullet));
         usleep(20);
     } while ( (x <= maxx) || (((y+diagonale) <= maxy) && ((y+diagonale) >= 3)) );
-
+    
+    usleep(20);
     proiettile.x=-1;
     proiettile.y=-1;
     close(pipe[0]);
