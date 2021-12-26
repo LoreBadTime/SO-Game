@@ -234,6 +234,7 @@ void screen(WINDOW *w1) {
 
     /* Flag, contatori e distanze */
     int i, coordinata, decremento, w = 0, k = 0, delta, direzione, flag; //Contatori
+    int flag_proiettile_ready = 0;
     int y_spawner; //Indica in che ordinata andrà a spawnare il nemico
     int hit; // Flag se la navetta principale è stata colpita
     int player_started = 1; // Game-Start
@@ -299,6 +300,8 @@ void screen(WINDOW *w1) {
                         read(playerpipe[0], &player, sizeof(Player));
 
                         if (player.proiettile.ready == PRONTO && num_proiettili == 0) {
+                            beep();
+                            flag_proiettile_ready = 0;
                             flag_pr[0] = 0;
                             flag_pr[1] = 0;
                             ++num_proiettili;
@@ -453,15 +456,24 @@ void screen(WINDOW *w1) {
 
                         // STAMPE
 
+                        /*
                         // DEBUG -- Stampe debug proiettile
                         mvwprintw(w1,10,10,"x: %d",proiettili[0].x);
                         mvwprintw(w1,11,10,"y: %d",proiettili[1].x);
                         mvwprintw(w1,12,10,"proiettili: %d",num_proiettili);
+                         */
 
                         // Stampa navetta
+                        // Se il proiettile della navetta è stato resettato o non è ancora stato lanciato:
+                        if (((proiettili[0].x == (-1) && proiettili[0].y == (-1))
+                          && (proiettili[1].x == (-1) && proiettili[1].y == (-1))) ||
+                           ( (proiettili[0].x == (0) && proiettili[0].y == (0))
+                          && (proiettili[1].x == (0) && proiettili[1].y == (0))) )
+                            flag_proiettile_ready=1;
+
 
                         invincibility = print_nave(invincibility, w1, player.coordinata.x, player.coordinata.y);
-                        print_info(player.proiettile.ready, life, w1, maxx);
+                        print_info(flag_proiettile_ready, life, w1, maxx);
 
                         // Stampa proiettili
                         for (i = 0; i < num_proiettili; i++) {
