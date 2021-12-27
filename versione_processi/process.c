@@ -1,5 +1,4 @@
 #include "./process.h"
-
 /**
  * Generatore coordinate del proiettile principale
  *
@@ -16,6 +15,7 @@ void proiettile(int x, int y, int direzione, int *pipe) {
     if (direzione == 0) proiettile.id = 0 ;
     if (direzione == 1) proiettile.id = 1 ;
     proiettile.ready=0;
+    proiettile.diagonale = getpid();
     do {
         ++x;
         if ( (x % DIAGONALE == 1) && (direzione == 0) ) {
@@ -35,8 +35,8 @@ void proiettile(int x, int y, int direzione, int *pipe) {
     usleep(20);
     proiettile.x=-1;
     proiettile.y=-1;
-    close(pipe[0]);
     write(pipe[1], &proiettile, sizeof(Bullet));
+    close(pipe[1]);
 }
 
 /**
@@ -444,6 +444,7 @@ void screen(WINDOW *w1) {
 
                                         reset_bkg = 3;
                                         flag_pr[proiettili[w].id] = 1;
+                                        
                                         //serve per ridurre i nemici nei vari counter
                                         if (arr[i].proiettile.id == 1) {
                                             ++killed;
@@ -465,11 +466,38 @@ void screen(WINDOW *w1) {
 
                         // Stampa navetta
                         // Se il proiettile della navetta è stato resettato o non è ancora stato lanciato:
+                        if (flag_pr[0] == 1 && flag_pr[1] == 1)
+                        {   //clear della pipe finche i processi non finiscono
+                           if(proiettili[0].x != (-1) && proiettili[0].y != -1)
+                           {
+                            proiettil.x = 0;
+                            do{
+                                read(bullet_p[0], &proiettil, sizeof(Bullet));
+                            }while (proiettil.x != -1);
+                            proiettili[0].x = -1;
+                            proiettili[0].y = -1;                            
+                            }
+                            if(proiettili[1].x != (-1) && proiettili[1].y != -1)
+                            {
+                            proiettil.x = 0;
+                            do{
+                                read(bullet_p[0], &proiettil, sizeof(Bullet));
+                            }while (proiettil.x != -1);
+                            proiettili[1].x = -1;
+                            proiettili[1].y = -1;
+                            }
+
+
+                        }
                         if (((proiettili[0].x == (-1) && proiettili[0].y == (-1))
                           && (proiettili[1].x == (-1) && proiettili[1].y == (-1))) ||
                            ( (proiettili[0].x == (0) && proiettili[0].y == (0))
-                          && (proiettili[1].x == (0) && proiettili[1].y == (0))) )
+                          && (proiettili[1].x == (0) && proiettili[1].y == (0))) ){
                             flag_proiettile_ready=1;
+                            num_proiettili = 0;
+                            flag_pr[0] = 0;
+                            flag_pr[1] = 0;
+                          }
 
 
                         wattron(w1,COLOR_PAIR(CY_BL));
@@ -478,14 +506,6 @@ void screen(WINDOW *w1) {
                         print_info(flag_proiettile_ready, life, w1, maxx);
 
                         // Stampa proiettili
-                        for (i = 0; i < num_proiettili; i++) {
-
-                            if ( (proiettili[1].x == -1 && proiettili[1].y == -1) &&
-                                 (proiettili[0].x == -1 && proiettili[0].y == -1) &&
-                                 (num_proiettili != 0) ) {
-                                --num_proiettili;
-                                --num_proiettili;
-                            }
 
                             if (proiettili[1].y >= 2 && flag_pr[1] == 0) { //In modo da non collidere con la linea separatrice
                                 mvwaddch(w1, proiettili[1].y, proiettili[1].x, '=');
@@ -493,7 +513,6 @@ void screen(WINDOW *w1) {
                             if(flag_pr[0] == 0){
                                 mvwaddch(w1, proiettili[0].y, proiettili[0].x, '=');
                             }
-                        }
 
                         //sincronizzazione processi + invio info su rimbalzi/uccisioni
                         for (i = 0; i < maxenemies; i++) {

@@ -20,7 +20,7 @@
 #define DIM 5
 #define PRONTO 1 // Segnala se il proiettile è pronto ad essere sparato
 #define LARGHEZZA 3 // Larghezza dello sprite dal suo centro (nel player grande 5 -> 2+(centro)=3)
-#define DIAGONALE 6 // Ogni quante x l'ordinata del proiettile viene incrementata
+#define DIAGONALE 8 // Ogni quante x l'ordinata del proiettile viene incrementata
 #define VIVA 1 // Stato navicella nemica
 #define UCCISA 0 
 
