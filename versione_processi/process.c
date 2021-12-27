@@ -3,15 +3,15 @@
 /**
  * Generatore coordinate del proiettile principale
  *
+ * WINDOW* w = Finestra di gioco.
  * int x = Ascissa del proiettile.
  * int y = Ordinata del proiettile.
  * int direzione = Direzione del proiettile.
- * int* pipe,reciv = Pipes. */
+ * int* pipe = Pipe per la comunicazione. */
 void proiettile(WINDOW* w,int x, int y, int direzione, int *pipe) {
     int maxy, maxx;
     getmaxyx(w, maxy, maxx);
     int diagonale = 0;
-    int tmp = 0;
     Bullet proiettile;
     if (direzione == 0) proiettile.id = 0 ;
     if (direzione == 1) proiettile.id = 1 ;
@@ -40,31 +40,33 @@ void proiettile(WINDOW* w,int x, int y, int direzione, int *pipe) {
 }
 
 /**
- * Generatore coordinate del proiettile principale
+ * Generatore coordinate della bomba nemica
  *
+ * WINDOW* w = Finestra di gioco.
  * int x = Ascissa della bomba.
  * int y = Ordinata della bomba.
  * int id = Identificativo della bomba.
- * int* pipe = Pipes. */
+ * int* pipe = Pipe per la comunicazione. */
 void bomba(WINDOW* w,int x, int y, int id,int *pipe) {
-    Bullet bomba;
-    bomba.y = y;
-    bomba.diagonale = id;
-    bomba.ready = 1;
+    Bullet bomba; //Struttura per la bomba
+    bomba.y = y; //La bomba prende le y in entrata (della navicella nemica)
+    bomba.riconoscimento = id; //Si associa l'id della navicella nemica con quello del proiettile
+    bomba.ready = 1; //La bomba è pronta ad essere sparata
     do {
-        --x;
-        bomba.x = x;
+        --x; //Avanza verso il giocatore principale
+        bomba.x = x; //Si aggiorna la coordinata della bomba
 
-        close(pipe[0]);
-        write(pipe[1], &bomba, sizeof(Bullet));
-        napms(10);
-    } while ( (x >= 0) );
+        close(pipe[0]); //Chiusura lato lettura della pipe
+        write(pipe[1], &bomba, sizeof(Bullet)); //Scrittura della struttura sulla pipe
+        napms(10); //Ritardo per rallentare la bomba nemica
+    } while (x >= 0); //La bomba avanza finchè non raggiunge il bordo
 
-    usleep(20);
-    bomba.x=-1;
-    bomba.ready=2;
-    close(pipe[0]);
-    write(pipe[1], &bomba, sizeof(Bullet));
+    //Raggiunto il bordo
+    usleep(20); //Si crea un delay per la sincronizzazione
+    bomba.x = -1; //La bomba nemica ha ora una x fuori dallo schermo
+    bomba.ready = BORDO; //Si segnala allo schermo che la bomba ha raggiunto il bordo
+    close(pipe[0]); //Chiusura lato lettura della pipe
+    write(pipe[1], &bomba, sizeof(Bullet)); //Scrittura della struttura sulla pipe
 }
 
 /**
@@ -115,7 +117,7 @@ void gestore_input(int *pipe, int sys_slownes) {
             while (c == getch()) { ; }
         }
         write(pipe[1], &player, sizeof(Player));
-        player.proiettile.ready = UCCISA;
+        player.proiettile.ready = SCARICO;
         napms(sys_slownes);
     }
 }
@@ -141,8 +143,8 @@ int enemyLV1_old(int x,int y,int id,int direzione,int *sender,int *receiver) {
     Player nemico;
     nemico.proiettile.x = -1;
     nemico.proiettile.y = -1;
-    nemico.proiettile.ready = 0;
-    nemico.proiettile.diagonale = id;
+    nemico.proiettile.ready = SCARICO;
+    nemico.proiettile.riconoscimento = id;
     nemico.coordinata.x = x;
     nemico.coordinata.y = y;
     nemico.id = id;
@@ -185,9 +187,9 @@ int enemyLV1_old(int x,int y,int id,int direzione,int *sender,int *receiver) {
                 direzione = !direzione;
                 rec[id + 1] = 0;
             }
-            nemico.proiettile.ready = 0;
+            nemico.proiettile.ready = SCARICO;
             if (nemico.proiettile.x == -1 && rand() % 1250 == 1) {
-                nemico.proiettile.ready = 1;
+                nemico.proiettile.ready = PRONTO;
             }
             usleep(20);
             /*
@@ -248,13 +250,13 @@ void screen(WINDOW *w1) {
     Player player;
 
     /* Inizializzazione pipes e processi */
-    int tmp[2];
+    int enemy_receiver[2];
     int bullet_p[2];
-    int enemy_frame[2];
+    int enemy_sender[2];
     int playerpipe[2];
     int bomba_p[2];
-    pipe(tmp);
-    pipe(enemy_frame);
+    pipe(enemy_receiver);
+    pipe(enemy_sender);
     pipe(bullet_p);
     pipe(playerpipe);
     pipe(bomba_p);
@@ -272,8 +274,7 @@ void screen(WINDOW *w1) {
     Bullet proiettil;
 
     /* Flag, contatori e distanze */
-    int i, coordinata, decremento, w = 0, k = 0, delta, direzione, flag, j; //Contatori
-    //K corrisponde all'ID del nemico, il 3 facilita per gestire le bombe nemiche
+    int i, coordinata, decremento, w = 0, identificativo = 0, delta, direzione, j; //Contatori
     int flag_proiettile_ready = 0;
     int num_bombe = 0;
     int y_spawner; //Indica in che ordinata andrà a spawnare il nemico
@@ -286,14 +287,8 @@ void screen(WINDOW *w1) {
     int num_proiettili = 0;
     int maxy, maxx;
     int flag_pr[2] = {};
-    int reset_bkg = 0;
     getmaxyx(stdscr, maxy, maxx);
-    /*
-    for (i = 0; i < ENEM_TEST; i++) {
-        pipe(tmp[i]);
-        pipe(enemy_frame[i]);
-    }
-    */
+    
 
     giocatore = fork();
     switch (giocatore) {
@@ -314,12 +309,12 @@ void screen(WINDOW *w1) {
                                 if(decremento % 2 == 0) direzione = !direzione;
                                 y_spawner = coordinata % (maxy - 2); //Si prende il modulo per scegliere la coordinata dello sprite
                                 decremento = (decremento * 3 * 2); //In modo da avere almeno uno sprite di stacco tra i nemici (Asse x)
-                                enemyLV1_old(maxx - decremento - 3, y_spawner, k, 0, tmp, enemy_frame);
-                                //enemyLV1_new(70, coordinata * 3 * 2, k, 0, tmp, enemy_frame);
+                                enemyLV1_old(maxx - decremento - 3, y_spawner, identificativo, 0, enemy_receiver, enemy_sender);
+                                //enemyLV1_new(70, coordinata * 3 * 2, k, 0, enemy_receiver, enemy_sender);
                                 exit(-1);
                                 break;
                             default: // 4) Processo bombe nemiche
-                                k++;
+                                identificativo++;
                                 break;
                         }
                     }
@@ -330,11 +325,11 @@ void screen(WINDOW *w1) {
                     wait((int *) 0);
                     /*
                     for (i = 0; i < ENEM_TEST; i++) {
-                        close(tmp[i][1]);
-                        close(enemy_frame[i][0]);
+                        close(enemy_receiver[i][1]);
+                        close(enemy_sender[i][0]);
                     }*/
-                    close(tmp[1]);
-                    close(enemy_frame[0]);
+                    close(enemy_receiver[1]);
+                    close(enemy_sender[0]);
                     // finche non raggiungo il gameover,scrivo lo schermo
                     while (player_started) {
                         close(playerpipe[1]);
@@ -372,20 +367,23 @@ void screen(WINDOW *w1) {
 
                         // Lettura pipe dei nemici
                         for (i = 0; i < maxenemies; i++) {
-                            read(tmp[0], &arr[i],sizeof(Player));
+                            read(enemy_receiver[0], &arr[i],sizeof(Player));
                         }
 
+                        // Processo bomba nemica
                         for (i = 0; i < maxenemies; i++) {
-                            if (arr[i].proiettile.ready == PRONTO) {
-                                num_bombe++;
-                                bomb = fork();
+                            if (arr[i].proiettile.ready == PRONTO) { //Se la navicella è pronta a sparare
+                                num_bombe++; //Si aumenta il numero di bombe in gioco
+                                bomb = fork(); //Creazione del processo bombe
                                 switch (bomb) {
                                     case 0:
-                                        close(bomba_p[0]);
-                                        bomba(w1,arr[i].coordinata.x,arr[i].coordinata.y,arr[i].proiettile.diagonale,bomba_p);
-                                        exit(0);
+                                        close(bomba_p[0]); //Chiusura descrittore in lettura
+                                        //Richiamo della funzione per lanciare una bomba nemica
+                                        bomba(w1,arr[i].coordinata.x,arr[i].coordinata.y,arr[i].proiettile.riconoscimento,bomba_p);
+                                        exit(0); //Chiusura del processo
                                         break;
                                     default:
+                                        //Il ramo default continua l'esecuzione dell'area di gioco
                                         break;
                                 }
                             }
@@ -393,9 +391,12 @@ void screen(WINDOW *w1) {
 
                         // Lettura pipe della bomba
                         for(i=0;i<num_bombe;i++) {
+                            // Viene effettuata la read soltanto per il numero di bombe in campo
                             read(bomba_p[0], &proiettil, sizeof(Bullet));
                             for(j=0;j<maxenemies;j++) {
-                                if (proiettil.diagonale == arr[j].proiettile.diagonale) {
+                                // Si cerca la corrispondenza tra l'id della bomba e della navicella nemica
+                                if (proiettil.riconoscimento == arr[j].proiettile.riconoscimento) {
+                                    // Una volta riconosciuta, copia la sua struttura
                                     arr[j].proiettile.x = proiettil.x;
                                     arr[j].proiettile.y = proiettil.y;
                                     arr[j].proiettile.ready = proiettil.ready;
@@ -405,7 +406,6 @@ void screen(WINDOW *w1) {
 
                         // Lettura pipe del proiettile
                         for(i=0;i<num_proiettili;i++) {
-                            //close(bullet_p[1]);
                             read(bullet_p[0], &proiettil, sizeof(Bullet));
                             if (proiettil.id == 0) proiettili[0] = proiettil;
                             if (proiettil.id == 1) proiettili[1] = proiettil;
@@ -417,113 +417,110 @@ void screen(WINDOW *w1) {
 
                         for (i = 0; i < maxenemies; i++) {
                             //if (arr[i].coordinata.y > -1) {
-                                ///*pseudo selectionsort per controllare il rimbalzo in caso di collisioni
-                                for (w = i + 1; w < maxenemies; w++) {
-                                    // modificando jumpbox si puo modificare il rilevamento di caselle prima di fare il salto
-                                    // attenzione a non ridurla troppo altrimenti ci potrbbero essere conflitti di sprite
+                            ///*pseudo selectionsort per controllare il rimbalzo in caso di collisioni
+                            for (w = i + 1; w < maxenemies; w++) {
+                                // modificando jumpbox si puo modificare il rilevamento di caselle prima di fare il salto
+                                // attenzione a non ridurla troppo altrimenti ci potrbbero essere conflitti di sprite
 
-                                    // controllo distanza tra i due nemici                  controllo se sono nella stessa x e che abbiano direzione diversa
-                                    if (kill_pr[i] == 0 && kill_pr[w] == 0) {
-                                        if ((abs(abs(arr[i].coordinata.y) - abs(arr[w].coordinata.y)) < jumpbox) &&
-                                            arr[i].coordinata.x == arr[w].coordinata.x) {   // ulteriore controllo di direzione,attenzione quando si modifica qui
+                                // controllo distanza tra i due nemici                  controllo se sono nella stessa x e che abbiano direzione diversa
+                                if (kill_pr[i] == 0 && kill_pr[w] == 0) {
+                                    if ((abs(abs(arr[i].coordinata.y) - abs(arr[w].coordinata.y)) < jumpbox) &&
+                                        arr[i].coordinata.x ==
+                                        arr[w].coordinata.x) {   // ulteriore controllo di direzione,attenzione quando si modifica qui
 
-                                            if ((arr[i].coordinata.y < arr[w].coordinata.y && arr[i].angolo == 0 &&
-                                                 arr[w].angolo == 1) ||
-                                                (arr[i].coordinata.y > arr[w].coordinata.y && arr[i].angolo == 1 &&
-                                                 arr[w].angolo == 0)) {
-                                                // salvataggio dei processi che necessitano di rimbalzo,usando l'id dei processi
-                                                jump[arr[w].id + 1] = 1;
-                                                jump[arr[i].id + 1] = 1;
-                                                // info di debug
-                                                // mvwprintw(w1, arr[i].id + 3, 30, "Hit");
-                                                break;
-                                            }else{
+                                        if ((arr[i].coordinata.y < arr[w].coordinata.y && arr[i].angolo == 0 &&
+                                             arr[w].angolo == 1) ||
+                                            (arr[i].coordinata.y > arr[w].coordinata.y && arr[i].angolo == 1 &&
+                                             arr[w].angolo == 0)) {
+                                            // salvataggio dei processi che necessitano di rimbalzo,usando l'id dei processi
+                                            jump[arr[w].id + 1] = 1;
+                                            jump[arr[i].id + 1] = 1;
+                                            // info di debug
+                                            // mvwprintw(w1, arr[i].id + 3, 30, "Hit");
+                                            break;
+                                        } else {
 
-                                                if ((abs(abs(arr[i].coordinata.y) - abs(arr[w].coordinata.y)) < jumpbox/2 + 1))
-                                                {
-                                                    if(arr[i].coordinata.y < arr[w].coordinata.y && arr[i].angolo && arr[w].angolo){
-                                                        jump[arr[i].id + 1] = 1;
+                                            if ((abs(abs(arr[i].coordinata.y) - abs(arr[w].coordinata.y)) <
+                                                 jumpbox / 2 + 1)) {
+                                                if (arr[i].coordinata.y < arr[w].coordinata.y && arr[i].angolo &&
+                                                    arr[w].angolo) {
+                                                    jump[arr[i].id + 1] = 1;
+                                                    break;
+                                                } else {
+                                                    if (arr[i].coordinata.y > arr[w].coordinata.y && !arr[i].angolo &&
+                                                        !arr[w].angolo) {
+                                                        jump[arr[w].id + 1] = 1;
                                                         break;
-                                                    }else{
-                                                        if(arr[i].coordinata.y > arr[w].coordinata.y && !arr[i].angolo && !arr[w].angolo){
-                                                            jump[arr[w].id + 1] = 1;
-                                                            break;
-                                                        }
                                                     }
-
                                                 }
-                                                
+
                                             }
 
                                         }
+
                                     }
                                 }
-                                //collisione navetta/limite con nemico
-                                if ((arr[i].coordinata.x <= 0) || (arr[i].coordinata.x < player.coordinata.x) && abs(arr[i].coordinata.y - player.coordinata.y) < 2 ||
-                                    life == 0) {
-                                    //questo killa definitivamente tutti i nemici,ma serve principalmente in caso di gameover
-                                    //jump e usata per inviare info ai processi,in questo caso li killa tutti
-                                    jump[0] = 0;
-                                    player_started = 0;
-                                }
+                            }
+                            //collisione navetta/limite con nemico
+                            if ((arr[i].coordinata.x <= 0) || (arr[i].coordinata.x < player.coordinata.x) &&
+                                                              abs(arr[i].coordinata.y - player.coordinata.y) < 2 ||
+                                life == 0) {
+                                //questo killa definitivamente tutti i nemici,ma serve principalmente in caso di gameover
+                                //jump e usata per inviare info ai processi,in questo caso li killa tutti
+                                jump[0] = 0;
+                                player_started = 0;
+                            }
 
-                                /*
-                                for(i=0;i<maxenemies;i++) {
-                                    mvwprintw(w1, 11 + i, 10, "x:%d", arr[i].proiettile.x);
-                                }
-                                */
-                                //stampa nemici
-                                stampanemici(w1,arr[i]);
+                            // Stampa delle navicelle nemiche
+                            stampanemici(w1, arr[i]);
 
-                                //collisione navetta-proiettile_nemico
-                                //Se la navetta non è nello stato di invincibilita
-                                if (invincibility == 0) {
-                                    /* La prima condizione dell'if copre la parte sinistra e destra del cannone
-                                     * La seconda condizione copre il cannone della navicella principale
-                                     * Se un proiettile nemico colpisce una di queste 5 coordinate, viene
-                                     * Abilitata la flag "hit" con valore true e reso il player invincibile */
-                                    for (delta = -2; delta < DIM - 2; delta++) {
-                                        if ((arr[i].proiettile.y == player.coordinata.y + delta &&
-                                             arr[i].proiettile.x == player.coordinata.x - 4) ||
-                                            (arr[i].proiettile.y == player.coordinata.y &&
-                                             arr[i].proiettile.x == player.coordinata.x)) {
-                                            mvwaddch(w1, player.coordinata.y, player.coordinata.x, 'X');
-                                            hit = 1;
-                                            invincibility = 120;
-                                        }
+                            //collisione navetta-proiettile_nemico
+                            //Se la navetta non è nello stato di invincibilita
+                            if (invincibility == 0) {
+                                /* La prima condizione dell'if copre la parte sinistra e destra del cannone
+                                 * La seconda condizione copre il cannone della navicella principale
+                                 * Se un proiettile nemico colpisce una di queste 5 coordinate, viene
+                                 * Abilitata la flag "hit" con valore true e reso il player invincibile */
+                                for (delta = -2; delta < DIM - 2; delta++) {
+                                    if ((arr[i].proiettile.y == player.coordinata.y + delta &&
+                                         arr[i].proiettile.x == player.coordinata.x - 4) ||
+                                        (arr[i].proiettile.y == player.coordinata.y &&
+                                         arr[i].proiettile.x == player.coordinata.x)) {
+                                        mvwaddch(w1, player.coordinata.y, player.coordinata.x, 'X');
+                                        hit = 1;
+                                        invincibility = 120;
                                     }
                                 }
+                            }
 
-                                /* Se la navetta principale è stata colpita, la flag hit e impostata a 1
-                                 * Questo fa sì che il giocatore principale perda una vita e venga resettata la flag a 0. */
-                                if (hit == 1) {
-                                    reset_bkg = 3;
-                                    life--;
-                                    hit = 0;
-                                }
+                            /* Se la navetta principale è stata colpita, la flag hit e impostata a 1
+                             * Questo fa sì che il giocatore principale perda una vita e venga resettata la flag a 0. */
+                            if (hit == 1) {
+                                life--;
+                                hit = 0;
+                            }
 
-                                //collisione proiettile-navetta_nemica
-                                for (w = 0; w < num_proiettili; ++w) {
-                                    if (flag_pr[proiettili[w].id] == 0 && 
-                                        (proiettili[w].x - arr[i].coordinata.x < hitbox && proiettili[w].x - arr[i].coordinata.x >= 0) &&
-                                        ((hitbox > proiettili[w].y - arr[i].coordinata.y &&
-                                          -hitbox < proiettili[w].y - arr[i].coordinata.y) ||
-                                         (-hitbox < proiettili[w].y - arr[i].coordinata.y &&
-                                          hitbox > proiettili[w].y - arr[i].coordinata.y))) {
-                                        //possiamo sfruttare questo meccanismo per spawnare nemici da lv 1 a lv 2,e in generale per togliere la vita ai nemici
-                                        jump[arr[i].id + 1] = -1;
-                                        mvwaddch(w1, arr[i].coordinata.y, arr[i].coordinata.x, '#');
+                            //collisione proiettile-navetta_nemica
+                            for (w = 0; w < num_proiettili; ++w) {
+                                if (flag_pr[proiettili[w].id] == 0 &&
+                                    (proiettili[w].x - arr[i].coordinata.x < hitbox &&
+                                     proiettili[w].x - arr[i].coordinata.x >= 0) &&
+                                    ((hitbox > proiettili[w].y - arr[i].coordinata.y &&
+                                      -hitbox < proiettili[w].y - arr[i].coordinata.y) ||
+                                     (-hitbox < proiettili[w].y - arr[i].coordinata.y &&
+                                      hitbox > proiettili[w].y - arr[i].coordinata.y))) {
+                                    //possiamo sfruttare questo meccanismo per spawnare nemici da lv 1 a lv 2,e in generale per togliere la vita ai nemici
+                                    jump[arr[i].id + 1] = -1;
+                                    mvwaddch(w1, arr[i].coordinata.y, arr[i].coordinata.x, '#');
 
-                                        reset_bkg = 3;
-                                        flag_pr[proiettili[w].id] = 1;
-                                        //serve per ridurre i nemici nei vari counter
-                                        if (arr[i].proiettile.id == 1) {
-                                            ++killed;
-                                            kill_pr[arr[i].id] = 1;
-                                        }
+                                    flag_pr[proiettili[w].id] = 1;
+                                    //serve per ridurre i nemici nei vari counter
+                                    if (arr[i].proiettile.id == 1) {
+                                        ++killed;
+                                        kill_pr[arr[i].id] = 1;
                                     }
                                 }
-                            //}
+                            }
                         }
 
                         // STAMPE
@@ -549,10 +546,10 @@ void screen(WINDOW *w1) {
                         wattroff(w1,COLOR_PAIR(CY_BL));
                         print_info(flag_proiettile_ready, life, w1, maxx);
 
-                        for(i=0;i<maxenemies;i++){
-                            if(arr[i].proiettile.ready == 2) { //Se il proiettile è arrivato al massimo
-                                num_bombe--;
-                                arr[i].proiettile.ready = 0;
+                        for(i=0;i<maxenemies;i++){ //Si controlla se qualche bomba ha raggiunto il bordo
+                            if(arr[i].proiettile.ready == BORDO) { //Se il proiettile è arrivato al massimo
+                                num_bombe--; // Si riduce il numero di proiettili
+                                arr[i].proiettile.ready = SCARICO; // La navicella nemica è SCARICA
                             }
                         }
 
@@ -581,7 +578,7 @@ void screen(WINDOW *w1) {
                             // invio normale
                             //if (arr[i].coordinata.y > -1)
                             //{
-                                write(enemy_frame[1], jump, (ENEM_TEST + 1) * sizeof(int));
+                                write(enemy_sender[1], jump, (ENEM_TEST + 1) * sizeof(int));
                                // if (kill_pr[arr[i].id] == 1)
                                // {
                                //     arr[i].coordinata.y = -5;
@@ -603,13 +600,6 @@ void screen(WINDOW *w1) {
                         
 
                         wrefresh(w1);
-                        if (reset_bkg)
-                        {
-                            --reset_bkg;
-                            wbkgd(w1, COLOR_PAIR(RED_YEL));
-                        }else{
-                            wbkgd(w1, COLOR_PAIR(WHITE_BLACK));
-                        }
 
                         if (maxenemies == 0) {
                             player_started = 0;
