@@ -106,7 +106,7 @@ int enemyLV1_old(int x,int y,int id,int direzione,int *sender,int *receiver) {
     close(receiver[1]);
     //Inizializzazione navicella nemica
     int decremento = 0;
-    int skipframe = 10+ENEM_TEST;
+    int skipframe = 2*ENEM_TEST;
     int alive = 3; //Stato navicella nemica
 
     //Inizializzazione nemico,info del nemico
@@ -134,7 +134,7 @@ int enemyLV1_old(int x,int y,int id,int direzione,int *sender,int *receiver) {
 
             //sincronizzazione + scambio di info
             write(sender[1], &nemico,sizeof(Player));
-            napms(ENEM_TEST/10);
+            napms(ENEM_TEST/5 + 1);
             ++decremento;
             if (decremento == skipframe) {
                 decremento = 0;
