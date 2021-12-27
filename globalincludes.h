@@ -22,7 +22,9 @@
 #define LARGHEZZA 3 // Larghezza dello sprite dal suo centro (nel player grande 5 -> 2+(centro)=3)
 #define DIAGONALE 8 // Ogni quante x l'ordinata del proiettile viene incrementata
 #define VIVA 1 // Stato navicella nemica
-#define UCCISA 0 
+#define UCCISA 0
+#define BORDO 2 //La bomba ha raggiunto il bordo
+#define SCARICO 0 //Il caricatore dei proiettili principali o delle bombe è scarico
 
 #define GM_LESS_DARKER_RED 9
 #define GM_MORE_DARKER_RED 10
@@ -60,7 +62,7 @@ typedef struct {
 typedef struct {
 	int x;
 	int y;
-	int diagonale;
+	int riconoscimento;
     int ready;
     int id;
 } Bullet;
