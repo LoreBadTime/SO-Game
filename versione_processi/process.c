@@ -7,9 +7,9 @@
  * int y = Ordinata del proiettile.
  * int direzione = Direzione del proiettile.
  * int* pipe,reciv = Pipes. */
-void proiettile(int x, int y, int direzione, int *pipe) {
+void proiettile(WINDOW* w,int x, int y, int direzione, int *pipe) {
     int maxy, maxx;
-    getmaxyx(stdscr, maxy, maxx);
+    getmaxyx(w, maxy, maxx);
     int diagonale = 0;
     int tmp = 0;
     Bullet proiettile;
@@ -30,7 +30,7 @@ void proiettile(int x, int y, int direzione, int *pipe) {
         close(pipe[0]);
         write(pipe[1], &proiettile, sizeof(Bullet));
         usleep(20);
-    } while ( (x <= maxx) || (((y+diagonale) <= maxy) && ((y+diagonale) >= 3)) );
+    } while ( (x <= maxx-2) || (((y+diagonale) <= maxy-2) && ((y+diagonale) >= 3)) );
     
     usleep(20);
     proiettile.x=-1;
@@ -310,7 +310,7 @@ void screen(WINDOW *w1) {
                             switch (proiett) {
                                 case 0:
                                     close(bullet_p[0]);
-                                    proiettile(player.coordinata.x, player.coordinata.y, 0, bullet_p);
+                                    proiettile(w1,player.coordinata.x, player.coordinata.y, 0, bullet_p);
                                     exit(0);
                                     break;
                                 default:
@@ -318,7 +318,7 @@ void screen(WINDOW *w1) {
                                     switch (secondo) {
                                         case 0:
                                             close(bullet_p[0]);
-                                            proiettile(player.coordinata.x, player.coordinata.y, 1, bullet_p);
+                                            proiettile(w1,player.coordinata.x, player.coordinata.y, 1, bullet_p);
                                             exit(0);
                                             break;
                                         default:
