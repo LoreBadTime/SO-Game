@@ -532,7 +532,27 @@ void screen(WINDOW *w1) {
                         mvwprintw(w1,12,10,"proiettili: %d",num_proiettili);
                          */
 
-                        // Stampa navetta
+                        if (flag_pr[0] == 1 && flag_pr[1] == 1)
+                        {   //clear della pipe finche i processi non finiscono
+                           if(proiettili[0].x != (-1) && proiettili[0].y != -1)
+                           {
+                            proiettil.x = 0;
+                            do{
+                                read(bullet_p[0], &proiettil, sizeof(Bullet));
+                            }while (proiettil.x != -1);
+                            proiettili[0].x = -1;
+                            proiettili[0].y = -1;                            
+                            }
+                            if(proiettili[1].x != (-1) && proiettili[1].y != -1)
+                            {
+                            proiettil.x = 0;
+                            do{
+                                read(bullet_p[0], &proiettil, sizeof(Bullet));
+                            }while (proiettil.x != -1);
+                            proiettili[1].x = -1;
+                            proiettili[1].y = -1;
+                            }
+                        }
                         // Se il proiettile della navetta è stato resettato o non è ancora stato lanciato:
                         if (((proiettili[0].x == (-1) && proiettili[0].y == (-1))
                           && (proiettili[1].x == (-1) && proiettili[1].y == (-1))) ||
