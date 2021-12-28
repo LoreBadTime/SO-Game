@@ -29,14 +29,14 @@ void proiettile(WINDOW* w,int x, int y, int direzione, int *pipe) {
 
         close(pipe[0]);
         write(pipe[1], &proiettile, sizeof(Bullet));
-        usleep(20);
+        usleep(500);
     } while ( (x <= maxx-2) || (((y+diagonale) <= maxy-2) && ((y+diagonale) >= 3)) );
-    
-    usleep(20);
+
     proiettile.x=-1;
     proiettile.y=-1;
     close(pipe[0]);
     write(pipe[1], &proiettile, sizeof(Bullet));
+    usleep(500);
 }
 
 /**
@@ -52,21 +52,28 @@ void bomba(WINDOW* w,int x, int y, int id,int *pipe) {
     bomba.y = y; //La bomba prende le y in entrata (della navicella nemica)
     bomba.riconoscimento = id; //Si associa l'id della navicella nemica con quello del proiettile
     bomba.ready = 1; //La bomba è pronta ad essere sparata
+    int skipframe = 0;
     do {
-        --x; //Avanza verso il giocatore principale
+        //Avanza verso il giocatore principale
+        if(skipframe % 2 == 1){
+            --x;
+        }else{
+            skipframe = 0;
+        }
         bomba.x = x; //Si aggiorna la coordinata della bomba
-
         close(pipe[0]); //Chiusura lato lettura della pipe
         write(pipe[1], &bomba, sizeof(Bullet)); //Scrittura della struttura sulla pipe
-        napms(10); //Ritardo per rallentare la bomba nemica
+        usleep(200); //Ritardo per rallentare la bomba nemica
+        ++skipframe;
     } while (x >= 0); //La bomba avanza finchè non raggiunge il bordo
 
     //Raggiunto il bordo
-    usleep(20); //Si crea un delay per la sincronizzazione
+     
     bomba.x = -1; //La bomba nemica ha ora una x fuori dallo schermo
     bomba.ready = BORDO; //Si segnala allo schermo che la bomba ha raggiunto il bordo
     close(pipe[0]); //Chiusura lato lettura della pipe
     write(pipe[1], &bomba, sizeof(Bullet)); //Scrittura della struttura sulla pipe
+    usleep(200);//Si crea un delay per la sincronizzazione
 }
 
 /**
@@ -165,12 +172,13 @@ int enemyLV1_old(int x,int y,int id,int direzione,int *sender,int *receiver) {
 
             //sincronizzazione + scambio di info
             write(sender[1], &nemico,sizeof(Player));
-            napms(ENEM_TEST/5 + 1);
+            napms(ENEM_TEST/2 + 1);
             ++decremento;
             if (decremento == skipframe) {
                 decremento = 0;
             }
             read(receiver[0], rec, (ENEM_TEST + 1) * sizeof(int));
+            usleep(20);
             //impostazione skip dei frame
             
             if (rec[0] == 0) {
@@ -191,7 +199,7 @@ int enemyLV1_old(int x,int y,int id,int direzione,int *sender,int *receiver) {
             if (nemico.proiettile.x == -1 && rand() % 1250 == 1) {
                 nemico.proiettile.ready = PRONTO;
             }
-            usleep(20);
+            
             /*
             // Ottenimento info per lanciare il processo proiettile,+ randomizzazione lancio proiettile(altrimenti diventa un bullet hell)
             if (nemico.proiettile.x <= -1 && (rand() % 1250 == 1)) {
@@ -244,6 +252,8 @@ int enemyLV1_old(int x,int y,int id,int direzione,int *sender,int *receiver) {
  *
  * WINDOW* w1 : Finestra di stampa. */
 void screen(WINDOW *w1) {
+    clock_t start,stop;
+    double res = 0;
 
     wbkgd(w1, COLOR_PAIR(WHITE_BLACK)); //Inizializzazione schermo nero con caratteri bianchi
     int life = 3; //Vite del giocatore
@@ -272,6 +282,7 @@ void screen(WINDOW *w1) {
     int arrint[ENEM_TEST][7] = {}; //Contiene alcune info da inviare ai nemici(tra cui il salto e l'uccisione)
     Player arr[ENEM_TEST] = {}; //Contiene le info di tutti in nemici, controllare enemyLV1 per piu info
     Bullet proiettil;
+    Bullet bombe[ENEM_TEST] = {};
 
     /* Flag, contatori e distanze */
     int i, coordinata, decremento, w = 0, identificativo = 0, delta, direzione, j; //Contatori
@@ -287,6 +298,8 @@ void screen(WINDOW *w1) {
     int num_proiettili = 0;
     int maxy, maxx;
     int flag_pr[2] = {};
+    int fps = 0;
+    int fps_counter = 0;
     getmaxyx(stdscr, maxy, maxx);
     
 
@@ -332,6 +345,8 @@ void screen(WINDOW *w1) {
                     close(enemy_sender[0]);
                     // finche non raggiungo il gameover,scrivo lo schermo
                     while (player_started) {
+                        ++fps;
+                        start = clock();
                         close(playerpipe[1]);
                         read(playerpipe[0], &player, sizeof(Player));
 
@@ -372,7 +387,7 @@ void screen(WINDOW *w1) {
 
                         // Processo bomba nemica
                         for (i = 0; i < maxenemies; i++) {
-                            if (arr[i].proiettile.ready == PRONTO) { //Se la navicella è pronta a sparare
+                            if (arr[i].proiettile.ready == PRONTO && bombe[arr[i].proiettile.riconoscimento].ready == SCARICO) { //Se la navicella è pronta a sparare
                                 num_bombe++; //Si aumenta il numero di bombe in gioco
                                 bomb = fork(); //Creazione del processo bombe
                                 switch (bomb) {
@@ -390,37 +405,36 @@ void screen(WINDOW *w1) {
                         }
                         // Lettura pipe del proiettile
                         for(i=0;i<num_proiettili;i++) {
-                            mvwprintw(w1,10+i,30,"R %d,%d",i,num_proiettili);
-                            wrefresh(w1);
+                            //mvwprintw(w1,10+i,30,"R %d,%d",i,num_proiettili);
+                            //wrefresh(w1);
                             read(bullet_p[0], &proiettil, sizeof(Bullet));
                             if (proiettil.id == 0) proiettili[0] = proiettil;
                             if (proiettil.id == 1) proiettili[1] = proiettil;
-                            mvwprintw(w1,10+i,30 + 5,"D %d,%d",i,num_proiettili);
-                            wrefresh(w1);
+                            //mvwprintw(w1,10+i,30 + 5,"D %d,%d",i,num_proiettili);
+                            //wrefresh(w1);
                         }
-                        mvwprintw(w1,10+i+1,30,"OUT_PROIETTILI %d,%d",i,num_proiettili);
-                        wrefresh(w1);
+                        //mvwprintw(w1,10+i+1,30,"OUT_PROIETTILI %d,%d",i,num_proiettili);
+                        //wrefresh(w1);
 
                         // Lettura pipe della bomba
                         for(i=0;i<num_bombe;i++) {
                             // Viene effettuata la read soltanto per il numero di bombe in campo
-                            mvwprintw(w1,10+i,10,"R %d,%d",i,num_bombe);
-                            wrefresh(w1);
-                            read(bomba_p[0], &proiettil, sizeof(Bullet));
-                            mvwprintw(w1,10+i,10 + 5,"D %d,%d",i,num_bombe);
-                            wrefresh(w1);
+                            //mvwprintw(w1,10+i,10,"R %d,%d",i,num_bombe);
+                            //wrefresh(w1);
+                            read(bomba_p[0], &bombe[i], sizeof(Bullet));
+                            //mvwprintw(w1,10+i,10 + 5,"D %d,%d",i,num_bombe);
+                            //wrefresh(w1);
                             for(j=0;j<maxenemies;j++) {
                                 // Si cerca la corrispondenza tra l'id della bomba e della navicella nemica
-                                if (proiettil.riconoscimento == arr[j].proiettile.riconoscimento) {
+                                if (bombe[i].riconoscimento == arr[j].proiettile.riconoscimento) {
                                     // Una volta riconosciuta, copia la sua struttura
-                                    arr[j].proiettile.x = proiettil.x;
-                                    arr[j].proiettile.y = proiettil.y;
-                                    arr[j].proiettile.ready = proiettil.ready;
+                                    arr[j].proiettile.x = bombe[i].x;
+                                    arr[j].proiettile.y = bombe[i].y;
                                 }
                             }
                         }
-                        mvwprintw(w1,10+i+1,10,"OUT_BOMBE %d,%d",i,num_bombe);
-                        wrefresh(w1);
+                        //mvwprintw(w1,10+i+1,10,"OUT_BOMBE %d,%d",i,num_bombe);
+                        //wrefresh(w1);
 
                         
 
@@ -580,9 +594,10 @@ void screen(WINDOW *w1) {
                         print_info(flag_proiettile_ready, life, w1, maxx);
 
                         for(i=0;i<maxenemies;i++){ //Si controlla se qualche bomba ha raggiunto il bordo
-                            if(arr[i].proiettile.ready == BORDO) { //Se il proiettile è arrivato al massimo
+                            if(bombe[i].ready == BORDO) { //Se il proiettile è arrivato al massimo
                                 num_bombe--; // Si riduce il numero di proiettili
-                                arr[i].proiettile.ready = SCARICO; // La navicella nemica è SCARICA
+                                //questo non può funzionare,ogni volta che si fa la read questo dato si cancella
+                                bombe[i].ready = SCARICO; // La navicella nemica è SCARICA
                             }
                         }
 
@@ -629,9 +644,18 @@ void screen(WINDOW *w1) {
                             --killed;
                             --maxenemies;
                         }
-                        
-                        
 
+                        
+                        stop = clock();
+                        res = res + (double)(stop - start);
+                        if(res/CLOCKS_PER_SEC*100 >= 1){
+                            fps_counter = fps;
+                            fps = 0;
+                            res = 0;
+                        }
+                        start = 0;
+                        stop = 0;
+                        mvwprintw(w1,0,60,"FPS:%d",fps_counter);
                         wrefresh(w1);
 
                         if (maxenemies == 0) {
@@ -646,6 +670,21 @@ void screen(WINDOW *w1) {
         victory(w1, player.coordinata.x, player.coordinata.y);
     } else {
         game_over(w1, player.coordinata.x, player.coordinata.y);
+    }
+    //pulizia processi
+    while(num_bombe){
+        proiettil.ready = 0;
+        do{
+            read(bomba_p[0], &proiettil, sizeof(Bullet));
+        } while (proiettil.ready == BORDO);
+        --num_bombe; 
+    }
+    while(num_proiettili){
+        proiettil.x = 0;
+        do{
+            read(bullet_p[0], &proiettil, sizeof(Bullet));
+        } while (proiettil.x != -1);
+        --num_proiettili; 
     }
     //chiusura lettore input
     kill(player.id, SIGKILL);
