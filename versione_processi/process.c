@@ -388,11 +388,27 @@ void screen(WINDOW *w1) {
                                 }
                             }
                         }
+                        // Lettura pipe del proiettile
+                        for(i=0;i<num_proiettili;i++) {
+                            mvwprintw(w1,10+i,30,"R %d,%d",i,num_proiettili);
+                            wrefresh(w1);
+                            read(bullet_p[0], &proiettil, sizeof(Bullet));
+                            if (proiettil.id == 0) proiettili[0] = proiettil;
+                            if (proiettil.id == 1) proiettili[1] = proiettil;
+                            mvwprintw(w1,10+i,30 + 5,"D %d,%d",i,num_proiettili);
+                            wrefresh(w1);
+                        }
+                        mvwprintw(w1,10+i+1,30,"OUT_PROIETTILI %d,%d",i,num_proiettili);
+                        wrefresh(w1);
 
                         // Lettura pipe della bomba
                         for(i=0;i<num_bombe;i++) {
                             // Viene effettuata la read soltanto per il numero di bombe in campo
+                            mvwprintw(w1,10+i,10,"R %d,%d",i,num_bombe);
+                            wrefresh(w1);
                             read(bomba_p[0], &proiettil, sizeof(Bullet));
+                            mvwprintw(w1,10+i,10 + 5,"D %d,%d",i,num_bombe);
+                            wrefresh(w1);
                             for(j=0;j<maxenemies;j++) {
                                 // Si cerca la corrispondenza tra l'id della bomba e della navicella nemica
                                 if (proiettil.riconoscimento == arr[j].proiettile.riconoscimento) {
@@ -403,13 +419,10 @@ void screen(WINDOW *w1) {
                                 }
                             }
                         }
+                        mvwprintw(w1,10+i+1,10,"OUT_BOMBE %d,%d",i,num_bombe);
+                        wrefresh(w1);
 
-                        // Lettura pipe del proiettile
-                        for(i=0;i<num_proiettili;i++) {
-                            read(bullet_p[0], &proiettil, sizeof(Bullet));
-                            if (proiettil.id == 0) proiettili[0] = proiettil;
-                            if (proiettil.id == 1) proiettili[1] = proiettil;
-                        }
+                        
 
                         werase(w1);
 
