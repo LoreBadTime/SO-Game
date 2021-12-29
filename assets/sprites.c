@@ -129,7 +129,7 @@ void stampanemici(WINDOW* w1, Player arr) {
 
 
 //Stampa numero di vite e disponibilita proiettili a schermo
-void print_info(int proiettile_pronto,int life,WINDOW *w1,int maxx){
+void print_info(int proiettile_pronto,int life,WINDOW *w1,int maxx, int maxy){
     int i;
     mvwprintw(w1, 0, 1, "Proiettile:" );
     if(proiettile_pronto != PRONTO) {
@@ -149,6 +149,12 @@ void print_info(int proiettile_pronto,int life,WINDOW *w1,int maxx){
 	}
     for(i=0;i<maxx + 3;i++){
         mvwaddch(w1,1,i,'_');
+    }
+
+    for(i=2;i<maxy;i++){
+        wattron(w1, COLOR_PAIR(DARKRED_BL));
+        mvwaddch(w1,i,11,'|');
+        wattroff(w1, COLOR_PAIR(DARKRED_BL));
     }
 }
 

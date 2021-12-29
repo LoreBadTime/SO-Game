@@ -178,7 +178,7 @@ int enemyLV1_old(int x,int y,int id,int direzione,int *sender,int *receiver) {
     }
 
     //Ciclo che gesitisce il nemico
-    while (nemico.coordinata.x > -5 && alive) {
+    while (alive) {
         //Ciclo che gestisce il rimbalzo
         while (nemico.coordinata.y >= 4 && nemico.coordinata.y <= maxy - 3) {
 
@@ -216,17 +216,6 @@ int enemyLV1_old(int x,int y,int id,int direzione,int *sender,int *receiver) {
                 nemico.proiettile.ready = PRONTO;
             }
             
-            /*
-            // Ottenimento info per lanciare il processo proiettile,+ randomizzazione lancio proiettile(altrimenti diventa un bullet hell)
-            if (nemico.proiettile.x <= -1 && (rand() % 1250 == 1)) {
-                nemico.proiettile.x = nemico.coordinata.x;
-                nemico.proiettile.y = nemico.coordinata.y;
-            }
-            //avanzamento poiettile
-            if (decremento % 2 == 1) {
-                --nemico.proiettile.x;
-            }
-             */
             //adesso aggiorniamo i dati solo una volta
             if (decremento == 0) {
                 if (direzione) {
@@ -497,17 +486,15 @@ void screen(WINDOW *w1) {
                                 }
                             }
                             //collisione navetta/limite con nemico
-                            if ((arr[i].coordinata.x <= 0) || (arr[i].coordinata.x < player.coordinata.x) &&
-                                                              abs(arr[i].coordinata.y - player.coordinata.y) < 2 ||
+                            if ((arr[i].coordinata.x <= 5) || 
+                              //(arr[i].coordinata.x < player.coordinata.x) &&
+                              //abs(arr[i].coordinata.y - player.coordinata.y) < 2 ||
                                 life == 0) {
                                 //questo killa definitivamente tutti i nemici,ma serve principalmente in caso di gameover
                                 //jump e usata per inviare info ai processi,in questo caso li killa tutti
                                 jump[0] = 0;
                                 player_started = 0;
                             }
-
-                            // Stampa delle navicelle nemiche
-                            stampanemici(w1, arr[i]);
 
                             //collisione navetta-proiettile_nemico
                             //Se la navetta non è nello stato di invincibilita
@@ -599,7 +586,12 @@ void screen(WINDOW *w1) {
                         wattron(w1,COLOR_PAIR(CY_BL));
                         invincibility = print_nave(invincibility, w1, player.coordinata.x, player.coordinata.y);
                         wattroff(w1,COLOR_PAIR(CY_BL));
-                        print_info(flag_proiettile_ready, life, w1, maxx);
+                        print_info(flag_proiettile_ready, life, w1, maxx, maxy);
+                        
+                        for(i=0;i<maxenemies;i++){
+                            // Stampa delle navicelle nemiche
+                            stampanemici(w1, arr[i]);
+                        }
 
                         for(i=0;i<maxenemies;i++){ //Si controlla se qualche bomba ha raggiunto il bordo
                             if(bombe[i].ready == BORDO) { //Se il proiettile è arrivato al massimo
