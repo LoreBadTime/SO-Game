@@ -606,25 +606,26 @@ void screen(WINDOW *w1) {
 
                         //mvwprintw(w1,10,10,"num:%d",num_bombe);
 
+
+                        // Check se i proiettili sono ancora attivi
+                        if ( (proiettili[1].x == -1 && proiettili[1].y == -1) &&
+                             (proiettili[0].x == -1 && proiettili[0].y == -1) &&
+                             (num_proiettili != 0) ) {
+                            --num_proiettili; // riduzione numero dei proiettili
+                            --num_proiettili;
+                        }
                         // Stampa proiettili
-                        for (i = 0; i < num_proiettili; i++) {
+                        // Per evitare stampe dopo la linea separatrice
+                        if (proiettili[1].y >= 2 && flag_pr[1] == 0) { // Controllo se il proiettile ha già colpito il nemico
+                            mvwaddch(w1, proiettili[1].y, proiettili[1].x, '=');
+                        }
 
-                            if ( (proiettili[1].x == -1 && proiettili[1].y == -1) &&
-                                 (proiettili[0].x == -1 && proiettili[0].y == -1) &&
-                                 (num_proiettili != 0) ) {
-                                --num_proiettili;
-                                --num_proiettili;
-                            }
-
-                            if (proiettili[1].y >= 2 && flag_pr[1] == 0) { //In modo da non collidere con la linea separatrice
-                                mvwaddch(w1, proiettili[1].y, proiettili[1].x, '=');
-                            }
-                            if(flag_pr[0] == 0){
-                                mvwaddch(w1, proiettili[0].y, proiettili[0].x, '=');
+                        if(flag_pr[0] == 0){ // Controllo se il proiettile ha già colpito il nemico
+                            mvwaddch(w1, proiettili[0].y, proiettili[0].x, '=');
                             }
                         }
 
-                        //sincronizzazione processi + invio info su rimbalzi/uccisioni
+
                         for (i = 0; i < maxenemies; i++) {
                             // invio normale
                             //if (arr[i].coordinata.y > -1)
