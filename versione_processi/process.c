@@ -91,54 +91,52 @@ void bomba(WINDOW* w,int x, int y, int id,int *pipe) {
 /**
  * Generatore coordinate della nave principale
  *
- * Player player = Struttura del giocatore principale.
  * int* pipe = Pipe.
  * int sys_slownes = Velocità di gioco. */
 void gestore_input(int *pipe, int sys_slownes) {
-    close(pipe[0]); //Chiusura lato lettura della pipe
-    int c;
-    int maxy, maxx;
-    getmaxyx(stdscr, maxy, maxx);
-    // variabili di spawn della navetta
-    Player player;
-    player.coordinata.x = 5;
-    player.coordinata.y = 10;
-    player.proiettile.x = 0;
-    player.proiettile.y = 0;
-    player.proiettile.ready = 0;
-    player.id = getpid();
-    player.angolo = 0;
 
-    timeout(0);
+    /* Ottenimento risoluzione della finestra */
+    int maxy, maxx; // Inizializzazione variabili dello schermo
+    getmaxyx(stdscr, maxy, maxx); // Funzione di ottenimento della risoluzione
 
+    /* Struttura del player */
+    Player player; // Inizializzazione del player
+    player.coordinata.x = 5; // Il player inizia da un'ascissa arbitraria
+    player.coordinata.y = 10; // Il player inizia da un'ordinata arbitraria
+    player.proiettile.x = SCARICO; // Il proiettile non è ancora stato sparato
+    player.proiettile.y = SCARICO; // Il proiettile non è ancora stato sparato
+    player.proiettile.ready = SCARICO; // Il proiettile non è ancora stato sparato
+    player.id = getpid(); // Si prende il pid del player
+    int c; // Carattere letto da input tastiera ( Convertito in intero )
+
+    timeout(0); //Per non bloccare l'esecuzione del programma dato che si aspetta un input da tastiera
+
+    /* Movimento del player */
+    close(pipe[0]); // Chiusura lato lettura della pipe
     while (true) {
-        //uso della getch, cosi non fa refresh allo schermo principale
-        c = getch();
-        // ottenimento dati da keyboard
-        if (c != ERR) {
-            switch (c) {
-                //aggiungendo gli altri due casi e possibile muoversi anche nell'asse x
-                case KEY_UP:
-                    if (player.coordinata.y > LARGHEZZA + 1) {
-                        player.coordinata.y--;
+        c = getch(); // Si aspetta un input da tastiera
+        if (c != ERR) { // Nel caso l'input sia valido
+            switch (c) { // Si distingue caso per caso
+                case KEY_UP: // Se è stato premuto tasto in alto, la navetta va verso l'alto
+                    if (player.coordinata.y > LARGHEZZA + 1) { // A patto che sia distanziata da sopra
+                        player.coordinata.y--; // Decremento dell'ordinata
                     }
                     break;
-                case KEY_DOWN:
-                    if (player.coordinata.y < maxy - LARGHEZZA) {
-                        player.coordinata.y++;
+                case KEY_DOWN: // Se è stato premuto tasto in basso, la navetta va verso il basso
+                    if (player.coordinata.y < maxy - LARGHEZZA) { // A patto che sia distanziata da sotto
+                        player.coordinata.y++; // Incremento dell'ordinata
                     }
                     break;
                     // lancio proiettile
-                case (int) ' ':
-                    player.proiettile.ready = PRONTO;
+                case (int) ' ': // Se è stato premuta la barra spaziatrice, la navetta carica un proiettile
+                    player.proiettile.ready = PRONTO; // Si abilita la flag del proiettile pronto
                 default:
                     break;
             }
-            while (c == getch()) { ; }
         }
-        write(pipe[1], &player, sizeof(Player));
-        player.proiettile.ready = SCARICO;
-        napms(sys_slownes);
+        write(pipe[1], &player, sizeof(Player)); // Si scrive la struttura su un buffer
+        player.proiettile.ready = SCARICO; // Il proiettile è stato sparato, caricatore SCARICO.
+        napms(sys_slownes); // Delay per la sincronizzazione dei processi
     }
 }
 
