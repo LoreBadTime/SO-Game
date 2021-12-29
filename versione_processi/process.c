@@ -59,31 +59,33 @@ void proiettile(WINDOW* w,int x, int y, int direzione, int *pipe) {
  * int id = Identificativo della bomba.
  * int* pipe = Pipe per la comunicazione. */
 void bomba(WINDOW* w,int x, int y, int id,int *pipe) {
-    close(pipe[0]); //Chiusura lato lettura della pipe
-    Bullet bomba; //Struttura per la bomba
-    bomba.y = y; //La bomba prende le y in entrata (della navicella nemica)
-    bomba.riconoscimento = id; //Si associa l'id della navicella nemica con quello del proiettile
-    bomba.ready = 1; //La bomba è pronta ad essere sparata
-    bomba.x = x;
-    int skipframe = 0;
-    do {
-        //Avanza verso il giocatore principale
-        if(skipframe % 2 == 1){
-            //anche qui si potrebbe decrementare direttamente bomba.x
-            --x;
-        }
-        bomba.x = x; //Si aggiorna la coordinata della bomba
-        write(pipe[1], &bomba, sizeof(Bullet)); //Scrittura della struttura sulla pipe
-        usleep(200); //Ritardo per rallentare la bomba nemica
-        ++skipframe;
-    } while (x >= 0); //La bomba avanza finchè non raggiunge il bordo
 
-    //Raggiunto il bordo
-    bomba.x = -1; //La bomba nemica ha ora una x fuori dallo schermo
-    bomba.ready = BORDO; //Si segnala allo schermo che la bomba ha raggiunto il bordo
-    write(pipe[1], &bomba, sizeof(Bullet)); //Scrittura della struttura sulla pipe
-    usleep(200);//Si crea un delay per la sincronizzazione
-    close(pipe[1]); //Chiusura lato scrittura della pipe
+    /* Struttura della bomba */
+    Bullet bomba; // Inizializzazione della bomba
+    bomba.y = y; // La bomba prende le y in entrata (della navicella nemica)
+    bomba.x = x; // La bomba prende le x in entrata (della navicella nemica)
+    bomba.riconoscimento = id; // Si associa l'id della navicella nemica con quello del proiettile
+    bomba.ready = 1; // La bomba è pronta per essere sparata
+    int skipframe = 0; // Variabile per rallentare il movimento della bomba
+
+    /* Movimento della bomba */
+    close(pipe[0]); //Chiusura lato lettura della pipe
+    do {
+        // Avanza verso il giocatore principale
+        if(skipframe % 2 == 1){ // Per valori dispari, la bomba avanza, per valori pari invece, rimane ferma
+            bomba.x--; // La bomba avanza verso il giocatore/schermo sinistro
+        }
+        write(pipe[1], &bomba, sizeof(Bullet)); // Scrittura della struttura sulla pipe
+        usleep(200); // Ritardo per rallentare la bomba nemica
+        ++skipframe; // Si incrementa la variabile per rallentare la bomba
+    } while (bomba.x >= 0); //La bomba avanza finchè non raggiunge il bordo sinistro dello schermo
+
+    /* Termine esecuzione bomba */
+    bomba.x = -1; // La bomba nemica ha ora una x fuori dallo schermo
+    bomba.ready = BORDO; // Si segnala allo schermo che la bomba ha raggiunto il bordo
+    write(pipe[1], &bomba, sizeof(Bullet)); // Scrittura della struttura sulla pipe
+    usleep(200);// Si crea un delay per la sincronizzazione
+    close(pipe[1]); // Chiusura di sicurezza per la pipe in scrittura
 }
 
 /**
