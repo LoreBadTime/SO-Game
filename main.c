@@ -50,6 +50,7 @@ void menu() {
     init_pair(YEL_BL, COLOR_YELLOW, COLOR_BLACK);
     init_pair(CY_BLU, CYAN, COLOR_BLUE);
     init_pair(CY_GRE, CYAN, COLOR_GREEN);
+    init_pair(DARKRED_BL, GM_LESS_DARKER_RED, COLOR_BLACK);
 
     /* Creazione indicatore e coordinate per il menù */
     int y_SELECT = (maxy / 2) + 2; //Ordinate scritta indicativa
