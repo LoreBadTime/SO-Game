@@ -49,6 +49,7 @@
 #define RED_BL 13
 #define CY_GRE 14
 #define CY_BLU 15
+#define DARKRED_BL 16
 
 typedef struct {
   int x;        // Coordinata x
