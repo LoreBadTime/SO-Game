@@ -80,7 +80,7 @@ void bomba(WINDOW* w,int x, int y, int id,int *pipe) {
         ++skipframe; // Si incrementa la variabile per rallentare la bomba
     } while (bomba.x >= 0); //La bomba avanza finchè non raggiunge il bordo sinistro dello schermo
 
-    //Raggiunto il bordo
+    /* Termine esecuzione bomba */
     bomba.x = -1; // La bomba nemica ha ora una x fuori dallo schermo
     bomba.ready = BORDO; // Si segnala allo schermo che la bomba ha raggiunto il bordo
     write(pipe[1], &bomba, sizeof(Bullet)); // Scrittura della struttura sulla pipe
