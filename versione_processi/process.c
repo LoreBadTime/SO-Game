@@ -493,9 +493,6 @@ void screen(WINDOW *w1) {
                                 player_started = 0;
                             }
 
-                            // Stampa delle navicelle nemiche
-                            stampanemici(w1, arr[i]);
-
                             //collisione navetta-proiettile_nemico
                             //Se la navetta non è nello stato di invincibilita
                             if (invincibility == 0) {
@@ -586,7 +583,12 @@ void screen(WINDOW *w1) {
                         wattron(w1,COLOR_PAIR(CY_BL));
                         invincibility = print_nave(invincibility, w1, player.coordinata.x, player.coordinata.y);
                         wattroff(w1,COLOR_PAIR(CY_BL));
-                        print_info(flag_proiettile_ready, life, w1, maxx);
+                        print_info(flag_proiettile_ready, life, w1, maxx, maxy);
+                        
+                        for(i=0;i<maxenemies;i++){
+                            // Stampa delle navicelle nemiche
+                            stampanemici(w1, arr[i]);
+                        }
 
                         for(i=0;i<maxenemies;i++){ //Si controlla se qualche bomba ha raggiunto il bordo
                             if(bombe[i].ready == BORDO) { //Se il proiettile è arrivato al massimo
