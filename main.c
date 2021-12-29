@@ -11,6 +11,7 @@ void menu() {
     int maxx = 0;
     int maxy = 0;
     int key = 0;
+    int fixscreen = 0;
     WINDOW *w1;
 
     /* Inizializzazione schermo */
@@ -24,6 +25,11 @@ void menu() {
 
     //
     getmaxyx(stdscr, maxy, maxx);
+    //risolvere problemi nel caso di risoluzione dispari
+    if(maxx % 2 == 1){
+        --maxx;
+        ++fixscreen;
+    }
     w1 = newwin(maxy, maxx, 0, 0);
     start_color();
     // definizione colori
@@ -52,12 +58,12 @@ void menu() {
     init_pair(CY_GRE, CYAN, COLOR_GREEN);
 
     /* Creazione indicatore e coordinate per il menù */
-    int y_SELECT = (maxy / 2) + 2; //Ordinate scritta indicativa
-    int y_START = (maxy / 2) + 5; //Ordinate scritta Inizio partita
-    int y_SETTINGS = (maxy / 2) + 6; //Ordinate scritta EXIT
-    int y_EXIT = (maxy / 2) + 8; //Ordinate scritta EXIT
-    int xbase = (maxx / 2) - 10; //Ascisse di default
-    Posizione oggetto = {(maxx / 2) - 12, y_START};
+    int y_SELECT = (maxy / 2) + 2 + fixscreen; //Ordinate scritta indicativa
+    int y_START = (maxy / 2) + 5 + fixscreen; //Ordinate scritta Inizio partita
+    int y_SETTINGS = (maxy / 2) + 6 + fixscreen; //Ordinate scritta EXIT
+    int y_EXIT = (maxy / 2) + 8 + fixscreen; //Ordinate scritta EXIT
+    int xbase = (maxx / 2) - 10 + fixscreen; //Ascisse di default
+    Posizione oggetto = {(maxx / 2) - 12 + fixscreen, y_START};
 
 
 

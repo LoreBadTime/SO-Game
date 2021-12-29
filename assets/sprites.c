@@ -147,8 +147,7 @@ void print_info(int proiettile_pronto,int life,WINDOW *w1,int maxx){
 		mvwaddch(w1, 0, 22 + i, '#');
         wattroff(w1, COLOR_PAIR(RED_BL));
 	}
-
-    for(i=0;i<maxx;i++){
+    for(i=0;i<maxx + 3;i++){
         mvwaddch(w1,1,i,'_');
     }
 }
