@@ -38,7 +38,7 @@ void proiettile(WINDOW* w,int x, int y, int direzione, int *pipe) {
         proiettile.y = y + diagonale; // Viene assegnato il proiettile il valore della navicella + la diagonale.
 
         write(pipe[1], &proiettile, sizeof(Bullet)); // Si comunica la nuova posizione del proiettile
-        usleep(500); // Delay per la sincronizzazione tra processi
+        usleep(200); // Delay per la sincronizzazione tra processi
     } while ( (proiettile.x <= maxx-2) || ( (proiettile.y <= maxy-2) && (proiettile.y >= 3) ) );
     /* Il proiettile avanza finché non raggiunge la fine dello schermo */
 
@@ -46,7 +46,7 @@ void proiettile(WINDOW* w,int x, int y, int direzione, int *pipe) {
     proiettile.x=-1; // L'ascissa del proiettile viene impostata fuori dallo schermo
     proiettile.y=-1; // L'ordinata del proiettile viene impostata fuori dallo schermo
     write(pipe[1], &proiettile, sizeof(Bullet)); // Si comunica la nuova posizione del proiettile
-    usleep(500); // Delay per la sincronizzazione tra processi
+    usleep(200); // Delay per la sincronizzazione tra processi
     close(pipe[1]); // Chiusura di sicurezza per la pipe in scrittura
 }
 
