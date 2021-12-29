@@ -243,57 +243,65 @@ void nemico(int x,int y,int id,int direzione,int *sender,int *receiver) {
  *
  * WINDOW* w1 : Finestra di stampa. */
 void screen(WINDOW *w1) {
-    clock_t start,stop;
+
+    /* Ottenimento risoluzione della finestra */
+    int maxy, maxx; // Inizializzazione variabili dello schermo
+    getmaxyx(stdscr, maxy, maxx); // Funzione di ottenimento della risoluzione
+    wbkgd(w1, COLOR_PAIR(WHITE_BLACK)); // Inizializzazione schermo nero con caratteri bianchi
+    clock_t start,stop; // Variabili per misurare il tempo
+    int fps = 0;
+    int fps_counter = 0;
     double res = 0;
 
-    wbkgd(w1, COLOR_PAIR(WHITE_BLACK)); //Inizializzazione schermo nero con caratteri bianchi
-    int life = 3; //Vite del giocatore
-    Player player;
-
-    /* Inizializzazione pipes e processi */
-    int enemy_receiver[2];
-    int bullet_p[2];
-    int enemy_sender[2];
-    int playerpipe[2];
-    int bomba_p[2];
-    pipe(enemy_receiver);
-    pipe(enemy_sender);
-    pipe(bullet_p);
-    pipe(playerpipe);
-    pipe(bomba_p);
-    pid_t nemici, spawn, giocatore, proiett, secondo, bomb;
-    Bullet proiettili[2] = {};
+    /* Struttura per la gestione del player */
+    Player player; // Inizializzazione struttura player
+    int life = 3; ///* personalizzabile Vite del giocatore
+    int hit; // Flag se la navetta principale è stata colpita
+    int flag_proiettile_ready = 0; // Flag, indica se il proiettile è pronto ad essere sparato o meno
+    int invincibility = 0; // Flag e durata di invincibilità
+    Bullet proiettil; // Struttura di appoggio per la lettura del processo proiettile
+    Bullet proiettili[2] = {}; // Struttura per memorizzare i dati dei proiettili
+    int flag_pr[2] = {};
+    int num_proiettili = 0; // Numero di proiettili attualmente in gioco
 
     /* Strutture per la gestione dei nemici */
     int pr_rec[MAX_PROIETTILI][3] = {};
     int jump[ENEM_TEST + 1] = {1};
     int kill_pr[ENEM_TEST] = {};
-    int helper = 0;
-    int maxenemies = ENEM_TEST;
-    int arrint[ENEM_TEST][7] = {}; //Contiene alcune info da inviare ai nemici(tra cui il salto e l'uccisione)
-    Player arr[ENEM_TEST] = {}; //Contiene le info di tutti in nemici, controllare enemyLV1 per piu info
-    Bullet proiettil;
+    int maxenemies = ENEM_TEST; ///* personalizzabile Numero di nemici in schermo
+    int arrint[ENEM_TEST][7] = {}; // Contiene alcune info da inviare ai nemici(tra cui il salto e l'uccisione)
+    Player arr[ENEM_TEST] = {}; // Contiene le info di tutti in nemici, controllare enemyLV1 per piu info
     Bullet bombe[ENEM_TEST] = {};
-
-    /* Flag, contatori e distanze */
-    int i, coordinata, decremento, w = 0, identificativo = 0, delta, direzione, j; //Contatori
-    int flag_proiettile_ready = 0;
-    int num_bombe = 0;
-    int y_spawner; //Indica in che ordinata andrà a spawnare il nemico
-    int hit; // Flag se la navetta principale è stata colpita
-    int player_started = 1; // Game-Start
-    int invincibility = 0; // Flag e durata di invincibilità
-    int killed = 0; //Indica i nemici uccisi
-    int jumpbox = 6; // (>2) Distanza di rimbalzo
-    int hitbox = 2; //Distanza dei caratteri dal centro
-    int num_proiettili = 0;
-    int maxy, maxx;
-    int flag_pr[2] = {};
-    int fps = 0;
-    int fps_counter = 0;
-    getmaxyx(stdscr, maxy, maxx);
+    int coordinata; // Variabile per spawnare i nemici all'interno dello schermo
+    int decremento; // Variabile per distanziare i nemici all'interno dello schermo al momento di spawn
+    int identificativo = 0; // Indentificativo di ogni processo nemico
+    int delta; // Differenza di distanza tra il centro e il bordo dello sprite
+    int direzione; // Direzione della navicella nemica
+    int killed = 0; // Indica i nemici uccisi
+    int y_spawner; // Indica in che ordinata andrà a spawnare il nemico
+    int num_bombe = 0; // Indica il numero di bombe attualmente in gioco
     
+    /* Contatori e distanze */
+    int i, j, w; //Contatori vari
+    int player_started = 1; // Flag di Game-Start
+    int jumpbox = 6; // Distanza di rimbalzo tra un nemico e un altro
+    int hitbox = 2; // Distanza dei caratteri dal centro
 
+    /* Inizializzazione pipes e processi */
+    int enemy_receiver[2]; // Pipe per il processo nemico, si occupa di ricevere la struttura
+    int enemy_sender[2]; // Pipe per il processo nemico, si occupa di scrivere le posizioni per rimbalzi e uccisioni
+    int bullet_p[2]; // Pipe per il processo proiettile, si occupa di ricevere la struttura
+    int playerpipe[2]; // Pipe per il processo navicella principale, si occupa di ricevere la struttura
+    int bomba_p[2]; // Pipe per il processo bomba nemica, si occupa di ricevere la struttura
+    pipe(enemy_receiver); // Crea la pipe per il processo nemico
+    pipe(enemy_sender); // Crea la pipe per il processo nemico
+    pipe(bullet_p); // Crea la pipe per il processo proiettile
+    pipe(playerpipe); // Crea la pipe per il processo navicella principale
+    pipe(bomba_p); // Crea la pipe per il processo bomba nemica
+    pid_t nemici, spawn, giocatore, proiett, secondo, bomb; // Variabile per i processi
+    
+    
+    /* Inizio del gioco */
     giocatore = fork();
     switch (giocatore) {
         case 0: // 1) Processo navicella principale
@@ -310,10 +318,10 @@ void screen(WINDOW *w1) {
                             case 0: // 3) Spawner di processi nemici
                                 coordinata = (coordinata * 3 * 2); //In modo da avere almeno uno sprite di stacco tra i nemici (Asse y)
                                 decremento = coordinata / (maxy - 2); //Ogni volta che si supera il maxy viene decrementata la x
-                                if(decremento % 2 == 0) direzione = !direzione;
+                                if(decremento % 2 == 0) direzione = !direzione; ///* personalizzabile
                                 y_spawner = coordinata % (maxy - 2); //Si prende il modulo per scegliere la coordinata dello sprite
                                 decremento = (decremento * 3 * 2); //In modo da avere almeno uno sprite di stacco tra i nemici (Asse x)
-                                nemico(maxx - decremento - 3, y_spawner, identificativo, 0, enemy_receiver, enemy_sender);
+                                nemico(maxx - decremento - 3, y_spawner, identificativo, direzione, enemy_receiver, enemy_sender);
                                 exit(-1);
                                 break;
                             default: // 4) Processo bombe nemiche
