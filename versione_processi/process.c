@@ -9,41 +9,45 @@
  * int direzione = Direzione del proiettile.
  * int* pipe = Pipe per la comunicazione. */
 void proiettile(WINDOW* w,int x, int y, int direzione, int *pipe) {
-    close(pipe[0]);//chiusura lettura
-    //ottenimento info schermo
-    int maxy, maxx;
-    getmaxyx(w, maxy, maxx);
-    int diagonale = 0;
-    Bullet proiettile;
-    //migliorabile
-    //proiettile.id = direzione;
-    if (direzione == 0) proiettile.id = 0 ;
-    if (direzione == 1) proiettile.id = 1 ;
-    proiettile.ready=0;
-    proiettile.x = x;
-    do {
-        //migliorabile incrementando direttamente proiettile.x
-        ++proiettile.x;
-        if ( (proiettile.x % DIAGONALE == 1) && (direzione == 0) ) {
-            ++diagonale;
-        }
-        if ( (proiettile.x % DIAGONALE == 1) && (direzione == 1) ) {
-            --diagonale;
-        }
-        //assegnamento eliminabile
-        proiettile.x = x;
-        //questo e necessario
-        proiettile.y = y + diagonale;
 
-        write(pipe[1], &proiettile, sizeof(Bullet));
-        usleep(500);
-    } while ((proiettile.x <= maxx-2) || (((y+diagonale) <= maxy-2) && ((y+diagonale) >= 3)) );
-    // fine dei proiettili
-    proiettile.x=-1;
-    proiettile.y=-1;
-    write(pipe[1], &proiettile, sizeof(Bullet));
-    usleep(500);
-    close(pipe[1]);
+    /* Ottenimento risoluzione della finestra */
+    int maxy, maxx; // Inizializzazione variabili dello schermo
+    getmaxyx(w, maxy, maxx); // Funzione di ottenimento della risoluzione
+
+    /* Struttura del proiettile */
+    Bullet proiettile; // Inizializzazione struttura del proiettile
+    proiettile.id = direzione; // Il proiettile verso l'alto e quello verso il basso avranno ID diversi
+    proiettile.ready = 0; // Il proiettile è stato sparato
+    proiettile.x = x; // Il proiettile prende le ascisse della navicella principale
+    proiettile.y = y; // Il proiettile prende le ordinate della navicella principale
+    int diagonale = 0; // Diagonale effettuata dal proiettile (ordinate)
+
+    /* Movimento del proiettile */
+    close(pipe[0]); // Chiusura della pipe in lettura
+    do {
+        /* Avanzamento lungo l'asse delle ascisse */
+        proiettile.x++; // Il proiettile avanza lungo le ascisse
+        
+        /* Avanzamento lungo l'asse delle ordinate */
+        if ( (proiettile.x % DIAGONALE == 1) && (proiettile.id == PROIETTILE_BASSO) ) {
+            ++diagonale; // La diagonale del proiettile viene incrementata ogni "DIAGONALE" x.
+        }
+        if ( (proiettile.x % DIAGONALE == 1) && (proiettile.id == PROIETTILE_ALTO) ) {
+            --diagonale; // La diagonale del proiettile viene decrementata ogni "DIAGONALE" x.
+        }
+        proiettile.y = y + diagonale; // Viene assegnato il proiettile il valore della navicella + la diagonale.
+
+        write(pipe[1], &proiettile, sizeof(Bullet)); // Si comunica la nuova posizione del proiettile
+        usleep(500); // Delay per la sincronizzazione tra processi
+    } while ( (proiettile.x <= maxx-2) || ( (proiettile.y <= maxy-2) && (proiettile.y >= 3) ) );
+    /* Il proiettile avanza finché non raggiunge la fine dello schermo */
+
+    /* Termine esecuzione proiettile */
+    proiettile.x=-1; // L'ascissa del proiettile viene impostata fuori dallo schermo
+    proiettile.y=-1; // L'ordinata del proiettile viene impostata fuori dallo schermo
+    write(pipe[1], &proiettile, sizeof(Bullet)); // Si comunica la nuova posizione del proiettile
+    usleep(500); // Delay per la sincronizzazione tra processi
+    close(pipe[1]); // Chiusura di sicurezza per la pipe in scrittura
 }
 
 /**
@@ -64,11 +68,11 @@ void bomba(WINDOW* w,int x, int y, int id,int *pipe) {
     int skipframe = 0;
     do {
         //Avanza verso il giocatore principale
-        if(skipframe % 3 == 1){
+        if(skipframe % 2 == 1){
             //anche qui si potrebbe decrementare direttamente bomba.x
-            --bomba.x;
+            --x;
         }
-        //Si aggiorna la coordinata della bomba
+        bomba.x = x; //Si aggiorna la coordinata della bomba
         write(pipe[1], &bomba, sizeof(Bullet)); //Scrittura della struttura sulla pipe
         usleep(200); //Ritardo per rallentare la bomba nemica
         ++skipframe;
