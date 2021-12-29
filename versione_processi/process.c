@@ -29,10 +29,10 @@ void proiettile(WINDOW* w,int x, int y, int direzione, int *pipe) {
         proiettile.x++; // Il proiettile avanza lungo le ascisse
         
         /* Avanzamento lungo l'asse delle ordinate */
-        if ( (proiettile.x % DIAGONALE == 1) && (proiettile.id == 0) ) {
+        if ( (proiettile.x % DIAGONALE == 1) && (proiettile.id == PROIETTILE_BASSO) ) {
             ++diagonale; // La diagonale del proiettile viene incrementata ogni "DIAGONALE" x.
         }
-        if ( (proiettile.x % DIAGONALE == 1) && (proiettile.id == 1) ) {
+        if ( (proiettile.x % DIAGONALE == 1) && (proiettile.id == PROIETTILE_ALTO) ) {
             --diagonale; // La diagonale del proiettile viene decrementata ogni "DIAGONALE" x.
         }
         proiettile.y = y + diagonale; // Viene assegnato il proiettile il valore della navicella + la diagonale.
