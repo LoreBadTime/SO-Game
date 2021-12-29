@@ -36,9 +36,9 @@ void proiettile(WINDOW* w,int x, int y, int direzione, int *pipe) {
             --diagonale; // La diagonale del proiettile viene decrementata ogni "DIAGONALE" x.
         }
         proiettile.y = y + diagonale; // Viene assegnato il proiettile il valore della navicella + la diagonale.
-
+        usleep(100);
         write(pipe[1], &proiettile, sizeof(Bullet)); // Si comunica la nuova posizione del proiettile
-        usleep(200); // Delay per la sincronizzazione tra processi
+        usleep(100); // Delay per la sincronizzazione tra processi
     } while ( (proiettile.x <= maxx-2) || ( (proiettile.y <= maxy-2) && (proiettile.y >= 3) ) );
     /* Il proiettile avanza finché non raggiunge la fine dello schermo */
 
@@ -74,9 +74,12 @@ void bomba(WINDOW* w,int x, int y, int id,int *pipe) {
         // Avanza verso il giocatore principale
         if(skipframe % 2 == 1){ // Per valori dispari, la bomba avanza, per valori pari invece, rimane ferma
             bomba.x--; // La bomba avanza verso il giocatore/schermo sinistro
+        }else{
+            skipframe = 0;
         }
+        usleep(100);
         write(pipe[1], &bomba, sizeof(Bullet)); // Scrittura della struttura sulla pipe
-        usleep(200); // Ritardo per rallentare la bomba nemica
+        napms(10); // Ritardo per rallentare la bomba nemica
         ++skipframe; // Si incrementa la variabile per rallentare la bomba
     } while (bomba.x >= 0); //La bomba avanza finchè non raggiunge il bordo sinistro dello schermo
 
