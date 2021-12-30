@@ -228,10 +228,10 @@ void menu() {
                                 break;
                             case 65: // Freccia verso l'alto
                                 if (oggetto.y == y_NUMNEMICI) {
-                                    oggetto.y = y_EXIT;
+                                    oggetto.y = y_EXITSETTINGS;
                                     oggetto.x = xbase + 8;
                                 } else {
-                                    if (oggetto.y == y_EXIT) {
+                                    if (oggetto.y == y_EXITSETTINGS) {
                                         oggetto.y = y_RIMBALZI;
                                         oggetto.x = xbase - 2;
                                     } else {
@@ -288,7 +288,7 @@ void menu() {
                                 }
                                 break;
                             case 10: // Tasto invio
-                                if (oggetto.y == y_EXIT) {
+                                if (oggetto.y == y_EXITSETTINGS) {
                                     settings = 0;
                                 }
                                 break;
