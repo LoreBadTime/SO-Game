@@ -312,6 +312,7 @@ void screen(WINDOW *w1, int num_nemici, int rimbalzi, int colore) {
             exit(0);
             break;
         default:
+            
             nemici = fork();
             switch (nemici) {
                 case 0:
@@ -339,6 +340,7 @@ void screen(WINDOW *w1, int num_nemici, int rimbalzi, int colore) {
                 default: // 5) Processo Area di Gioco
                     //aspetto l'avvio dei nemici prima di iniziare la scrittura schermo
                     wait((int *) 0);
+                    signal(SIGCHLD,SIG_IGN);
                     /*
                     for (i = 0; i < ENEM_TEST; i++) {
                         close(enemy_receiver[i][1]);
@@ -368,6 +370,7 @@ void screen(WINDOW *w1, int num_nemici, int rimbalzi, int colore) {
                                     exit(0);
                                     break;
                                 default:
+                                    signal(SIGCHLD,SIG_IGN);
                                     secondo = fork();
                                     switch (secondo) {
                                         case 0:
@@ -376,6 +379,7 @@ void screen(WINDOW *w1, int num_nemici, int rimbalzi, int colore) {
                                             exit(0);
                                             break;
                                         default:
+                                            signal(SIGCHLD,SIG_IGN);
                                             break;
                                     }
                                     break;
@@ -400,6 +404,7 @@ void screen(WINDOW *w1, int num_nemici, int rimbalzi, int colore) {
                                         exit(0); //Chiusura del processo
                                         break;
                                     default:
+                                        signal(SIGCHLD,SIG_IGN);
                                         //Il ramo default continua l'esecuzione dell'area di gioco
                                         break;
                                 }
@@ -718,5 +723,6 @@ void screen(WINDOW *w1, int num_nemici, int rimbalzi, int colore) {
     close(bullet_p[1]);
     close(enemy_receiver[0]);
     close(enemy_sender[1]);
-    close(playerpipe[0]);    
+    close(playerpipe[0]);
+    signal(SIGCHLD,SIG_DFL);    
 }
