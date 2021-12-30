@@ -6,6 +6,6 @@
 #define MAX_PROIETTILI 2
 int enemyLV1(int x,int y,int id,int direzione,int *sender,int *receiver);
 void *getinput();
-void screen(WINDOW *w1);
+void screen(WINDOW *w1, int num_nemici, int rimbalzi, int colore);
 
 #endif
