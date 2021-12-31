@@ -153,7 +153,7 @@ void print_info(int proiettile_pronto,int life,WINDOW *w1,int maxx, int maxy){
 
     for(i=2;i<maxy;i++){
         wattron(w1, COLOR_PAIR(DARKRED_BL));
-        mvwaddch(w1,i,11,'|');
+        mvwaddch(w1,i,8,'|');
         wattroff(w1, COLOR_PAIR(DARKRED_BL));
     }
 }
