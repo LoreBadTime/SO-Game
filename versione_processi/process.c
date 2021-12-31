@@ -593,30 +593,34 @@ void screen(WINDOW *w1, int num_nemici, int rimbalzi, int colore) {
                             flag_proiettile_ready=1;
 
 
-                        if (colore == 0) { // Bianco
+                        switch (colore){ // stampa navetta colorata
+                        case 0: // Bianco
                             wattron(w1,COLOR_PAIR(WHITE_BLACK));
                             invincibility = print_nave(invincibility, w1, player.coordinata.x, player.coordinata.y);
                             wattroff(w1,COLOR_PAIR(WHITE_BLACK));
-                        }
-                        if (colore == 1) { // Ciano
-                        wattron(w1,COLOR_PAIR(CY_BL));
-                        invincibility = print_nave(invincibility, w1, player.coordinata.x, player.coordinata.y);
-                        wattroff(w1,COLOR_PAIR(CY_BL));
-                        }
-                        if (colore == 2) { // Rosso
+                            break;
+                        case 1: // Ciano
+                            wattron(w1,COLOR_PAIR(CY_BL));
+                            invincibility = print_nave(invincibility, w1, player.coordinata.x, player.coordinata.y);
+                            wattroff(w1,COLOR_PAIR(CY_BL));
+                            break;
+                        case 2: // Rosso
                             wattron(w1,COLOR_PAIR(RED_BL));
                             invincibility = print_nave(invincibility, w1, player.coordinata.x, player.coordinata.y);
                             wattroff(w1,COLOR_PAIR(RED_BL));
-                        }
-                        if (colore == 3) { // Verde
+                            break;
+                        case 3: // verde
                             wattron(w1,COLOR_PAIR(GRE_BL));
                             invincibility = print_nave(invincibility, w1, player.coordinata.x, player.coordinata.y);
                             wattroff(w1,COLOR_PAIR(GRE_BL));
-                        }
-                        if (colore == 4) { // Giallo
+                            break;
+                        case 4: // Giallo
                             wattron(w1,COLOR_PAIR(YEL_BL));
                             invincibility = print_nave(invincibility, w1, player.coordinata.x, player.coordinata.y);
                             wattroff(w1,COLOR_PAIR(YEL_BL));
+                            break;
+                        default:
+                            break;
                         }
                         print_info(flag_proiettile_ready, life, w1, maxx, maxy);
                         
@@ -636,7 +640,6 @@ void screen(WINDOW *w1, int num_nemici, int rimbalzi, int colore) {
                         //mvwprintw(w1,10,10,"num:%d",num_bombe);
 
                         // Stampa proiettili
-                        for (i = 0; i < num_proiettili; i++) {
 
                             if ( (proiettili[1].x == -1 && proiettili[1].y == -1) &&
                                  (proiettili[0].x == -1 && proiettili[0].y == -1) &&
@@ -651,7 +654,7 @@ void screen(WINDOW *w1, int num_nemici, int rimbalzi, int colore) {
                             if(flag_pr[0] == 0){
                                 mvwaddch(w1, proiettili[0].y, proiettili[0].x, '=');
                             }
-                        }
+                        // Sincronizzazione processi + invio info su rimbalzi/uccisioni
 
                         //sincronizzazione processi + invio info su rimbalzi/uccisioni
                         for (i = 0; i < maxenemies; i++) {
@@ -671,9 +674,10 @@ void screen(WINDOW *w1, int num_nemici, int rimbalzi, int colore) {
                             jump[i] = 0;
                         }
                         
-                        maxenemies -= killed;
-                        killed = 0;
-
+                        if(killed){
+                            maxenemies -= killed;
+                            killed = 0;
+                        }
                         
                         stop = clock();
                         res = res + (double)(stop - start);
