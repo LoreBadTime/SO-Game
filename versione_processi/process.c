@@ -440,6 +440,7 @@ void screen(WINDOW *w1, int num_nemici, int rimbalzi, int colore) {
                                     // Una volta riconosciuta, copia la sua struttura
                                     arr[j].proiettile.x = bombe[i].x;
                                     arr[j].proiettile.y = bombe[i].y;
+                                    break;
                                 }
                             }
                         }
@@ -525,18 +526,21 @@ void screen(WINDOW *w1, int num_nemici, int rimbalzi, int colore) {
                                         (arr[i].proiettile.y == player.coordinata.y &&
                                          arr[i].proiettile.x == player.coordinata.x)) {
                                         mvwaddch(w1, player.coordinata.y, player.coordinata.x, 'X');
-                                        hit = 1;
+                                        //hit = 1;
                                         invincibility = 120;
+                                        --life;
+                                        break;
                                     }
                                 }
                             }
 
                             /* Se la navetta principale è stata colpita, la flag hit e impostata a 1
                              * Questo fa sì che il giocatore principale perda una vita e venga resettata la flag a 0. */
+                            /*
                             if (hit == 1) {
                                 life--;
                                 hit = 0;
-                            }
+                            }*/
 
                             //collisione proiettile-navetta_nemica
                             for (w = 0; w < num_proiettili; ++w) {
