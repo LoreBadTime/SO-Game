@@ -1,6 +1,7 @@
 #include "./globalincludes.h"
 
 void main(){
+    srand(time(NULL));
 	menu();
 }
 

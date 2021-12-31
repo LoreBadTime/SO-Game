@@ -156,7 +156,7 @@ void nemico(int x,int y,int id,int direzione,int *sender,int *receiver) {
     /* Ottenimento risoluzione della finestra */
     int maxy, maxx; // Inizializzazione variabili dello schermo
     getmaxyx(stdscr, maxy, maxx); // Funzione di ottenimento della risoluzione
-    srand(time(NULL) * getpid()); // Inizializzazione del motore generatore di numeri casuali
+    //srand(time(NULL) * getpid()); // Inizializzazione del motore generatore di numeri casuali
 
     /* Struttura del nemico */
     Player nemico; // Inizializzazione del nemico
@@ -215,10 +215,11 @@ void nemico(int x,int y,int id,int direzione,int *sender,int *receiver) {
                 direzione = !direzione; // Si cambia la direzione della navicella nemica
                 rec[id + 1] = 0;
             }
+            /*
             nemico.proiettile.ready = SCARICO; // La bomba nemica è scarica di default
             if (nemico.proiettile.x == -1 && rand() % 1250 == 1) { // Se la bomba non è nello schermo e arriva segnale
                 nemico.proiettile.ready = PRONTO; // Viene sparata una nuova bomba
-            }
+            }*/
             
         } // Fine del ciclo di rimbalzo
 
@@ -394,7 +395,7 @@ void screen(WINDOW *w1, int num_nemici, int rimbalzi, int colore) {
 
                         // Processo bomba nemica
                         for (i = 0; i < maxenemies; i++) {
-                            if (arr[i].proiettile.ready == PRONTO && bombe[arr[i].proiettile.riconoscimento].ready == SCARICO) { //Se la navicella è pronta a sparare
+                            if ((rand() % 1250 == 1) && bombe[arr[i].proiettile.riconoscimento].ready == SCARICO && num_bombe < 2) { //Se la navicella è pronta a sparare
                                 num_bombe++; //Si aumenta il numero di bombe in gioco
                                 bomb = fork(); //Creazione del processo bombe
                                 switch (bomb) {
