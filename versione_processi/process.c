@@ -176,7 +176,7 @@ void nemico(int x,int y,int id,int direzione,int *sender,int *receiver) {
     close(sender[0]); // Chiusura lato lettura della pipe che spedisce
     close(receiver[1]); // Chiusura lato scrittura della pipe che riceve
     while (vite) { // Si continua a ciclare finchè le vite del nemico sono uguali a 0.
-        while (nemico.coordinata.y >= 3 && nemico.coordinata.y <= maxy - 3) { // Ciclo del rimbalzo dei nemici
+        while (nemico.coordinata.y >= 4 && nemico.coordinata.y <= maxy - 3) { // Ciclo del rimbalzo dei nemici
 
             nemico.proiettile.id = vite;
             nemico.angolo = direzione; // Viene scritta la direzione del nemico all'interno della struttura
@@ -327,7 +327,7 @@ void screen(WINDOW *w1, int num_nemici, int rimbalzi, int colore) {
                                 }
                                 y_spawner = coordinata % (maxy - 2); //Si prende il modulo per scegliere la coordinata dello sprite
                                 decremento = (decremento * 3 * 2); //In modo da avere almeno uno sprite di stacco tra i nemici (Asse x)
-                                nemico(maxx - decremento - 3, y_spawner, identificativo, direzione, enemy_receiver, enemy_sender);
+                                nemico(maxx - decremento - 4, y_spawner, identificativo, direzione, enemy_receiver, enemy_sender);
                                 exit(-1);
                                 break;
                             default: // 4) Processo bombe nemiche
