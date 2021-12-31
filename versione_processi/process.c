@@ -327,7 +327,7 @@ void screen(WINDOW *w1, int num_nemici, int rimbalzi, int colore) {
                                 }
                                 y_spawner = coordinata % (maxy - 2); //Si prende il modulo per scegliere la coordinata dello sprite
                                 decremento = (decremento * 3 * 2); //In modo da avere almeno uno sprite di stacco tra i nemici (Asse x)
-                                nemico(maxx - decremento - 3, y_spawner, identificativo, direzione, enemy_receiver, enemy_sender);
+                                nemico(maxx - decremento - 4, y_spawner, identificativo, direzione, enemy_receiver, enemy_sender);
                                 exit(-1);
                                 break;
                             default: // 4) Processo bombe nemiche
