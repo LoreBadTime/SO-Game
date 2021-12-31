@@ -85,10 +85,10 @@ void printnemicolv1_f2(int x,int y,WINDOW *w){
  *
  * WINDOW* w1 : Finestra di stampa.
  * Player arr : Array di nemici. */
-void stampanemici(WINDOW* w1, Player arr) {
+void stampanemici(WINDOW* w1, Player arr, int frame) {
     /* Se il nemico è ancora vivo, avrà un frame diverso per ogni ordinata
      * Per fare ciò si usa l'operatore di modulo */
-    if (arr.coordinata.y % 2 == 0 && arr.coordinata.y) {
+    if (frame % 2 == 0 && arr.coordinata.y) {
         if (arr.proiettile.id == 3) { //Se al nemico rimangono tre vite
             wattron(w1, COLOR_PAIR(GRE_BL));
             printnemicolv1_f1(arr.coordinata.x, arr.coordinata.y, w1);

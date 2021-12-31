@@ -83,7 +83,7 @@ typedef struct {
 } Player;
 
 
-void stampanemici(WINDOW* w1,Player arr);
+void stampanemici(WINDOW* w1,Player arr,int frame);
 void menu();
 
 #endif
