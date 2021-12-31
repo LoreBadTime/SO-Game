@@ -694,7 +694,7 @@ void screen(WINDOW *w1, int num_nemici, int rimbalzi, int colore) {
             }
             break;
     }
-
+    kill(player.id, 1);
     if (maxenemies == 0) {
         victory(w1, player.coordinata.x, player.coordinata.y);
     } else {
@@ -716,7 +716,7 @@ void screen(WINDOW *w1, int num_nemici, int rimbalzi, int colore) {
         --num_proiettili; 
     }
     //chiusura lettore input
-    kill(player.id, SIGKILL);
+    
     close(bomba_p[0]);
     close(bomba_p[1]);
     close(bullet_p[0]);
