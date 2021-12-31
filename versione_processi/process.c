@@ -476,13 +476,9 @@ void screen(WINDOW *w1, int num_nemici, int rimbalzi, int colore) {
                                                 if (((abs(abs(arr[i].coordinata.y) - abs(arr[w].coordinata.y)) < jumpbox / 2) && arr[i].angolo == arr[w].angolo)) {
                                                     if(arr[i].coordinata.y < arr[w].coordinata.y){
                                                         if(arr[i].angolo){
-                                                if (arr[i].coordinata.y < arr[w].coordinata.y && arr[i].angolo &&
-                                                    arr[w].angolo) {
                                                             jump[arr[w].id + 1] = 1;
                                                             jump[arr[i].id + 1] = 0;
                                                         }else{
-                                                    if (arr[i].coordinata.y > arr[w].coordinata.y && !arr[i].angolo &&
-                                                        !arr[w].angolo) {
                                                             jump[arr[i].id + 1] = 1;
                                                             jump[arr[w].id + 1] = 0;
                                                         }
@@ -497,7 +493,6 @@ void screen(WINDOW *w1, int num_nemici, int rimbalzi, int colore) {
                                                     }
                                                     break;
                                                 }
-
                                         }
 
                                     }
