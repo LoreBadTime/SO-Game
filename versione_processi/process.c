@@ -176,7 +176,7 @@ void nemico(int x,int y,int id,int direzione,int *sender,int *receiver) {
     close(sender[0]); // Chiusura lato lettura della pipe che spedisce
     close(receiver[1]); // Chiusura lato scrittura della pipe che riceve
     while (vite) { // Si continua a ciclare finchè le vite del nemico sono uguali a 0.
-        while (nemico.coordinata.y >= 4 && nemico.coordinata.y <= maxy - 3) { // Ciclo del rimbalzo dei nemici
+        while (nemico.coordinata.y >= 3 && nemico.coordinata.y <= maxy - 3) { // Ciclo del rimbalzo dei nemici
 
             nemico.proiettile.id = vite;
             nemico.angolo = direzione; // Viene scritta la direzione del nemico all'interno della struttura
@@ -287,7 +287,7 @@ void screen(WINDOW *w1, int num_nemici, int rimbalzi, int colore) {
     /* Contatori e distanze */
     int i, j, w; //Contatori vari
     int player_started = 1; // Flag di Game-Start
-    int jumpbox = 6; // Distanza di rimbalzo tra un nemico e un altro
+    int jumpbox = 8; // Distanza di rimbalzo tra un nemico e un altro
     int hitbox = 2; // Distanza dei caratteri dal centro
 
     /* Inizializzazione pipes e processi */
@@ -474,16 +474,16 @@ void screen(WINDOW *w1, int num_nemici, int rimbalzi, int colore) {
                                             break;
                                         } else {
 
-                                            if ((abs(abs(arr[i].coordinata.y) - abs(arr[w].coordinata.y)) <
-                                                 jumpbox / 2 + 1)) {
+                                            if ((abs(abs(arr[i].coordinata.y) - abs(arr[w].coordinata.y)) <=
+                                                 jumpbox / 2)) {
                                                 if (arr[i].coordinata.y < arr[w].coordinata.y && arr[i].angolo &&
                                                     arr[w].angolo) {
-                                                    jump[arr[i].id + 1] = 1;
+                                                    jump[arr[w].id + 1] = 1;
                                                     break;
                                                 } else {
                                                     if (arr[i].coordinata.y > arr[w].coordinata.y && !arr[i].angolo &&
                                                         !arr[w].angolo) {
-                                                        jump[arr[w].id + 1] = 1;
+                                                        jump[arr[i].id + 1] = 1;
                                                         break;
                                                     }
                                                 }
@@ -626,7 +626,7 @@ void screen(WINDOW *w1, int num_nemici, int rimbalzi, int colore) {
                         
                         for(i=0;i<maxenemies;i++){
                             // Stampa delle navicelle nemiche
-                            stampanemici(w1, arr[i]);
+                            stampanemici(w1, arr[i],fps);
                         }
 
                         for(i=0;i<maxenemies;i++){ //Si controlla se qualche bomba ha raggiunto il bordo
