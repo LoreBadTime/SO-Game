@@ -287,7 +287,7 @@ void screen(WINDOW *w1, int num_nemici, int rimbalzi, int colore) {
     /* Contatori e distanze */
     int i, j, w; //Contatori vari
     int player_started = 1; // Flag di Game-Start
-    int jumpbox = 8; // Distanza di rimbalzo tra un nemico e un altro
+    int jumpbox = 6; // Distanza di rimbalzo tra un nemico e un altro
     int hitbox = 2; // Distanza dei caratteri dal centro
 
     /* Inizializzazione pipes e processi */
@@ -458,7 +458,7 @@ void screen(WINDOW *w1, int num_nemici, int rimbalzi, int colore) {
 
                                 // controllo distanza tra i due nemici                  controllo se sono nella stessa x e che abbiano direzione diversa
                                 if (kill_pr[i] == 0 && kill_pr[w] == 0) {
-                                    if ((abs(abs(arr[i].coordinata.y) - abs(arr[w].coordinata.y)) < jumpbox) &&
+                                    if ((abs(abs(arr[i].coordinata.y) - abs(arr[w].coordinata.y)) <= jumpbox) &&
                                         arr[i].coordinata.x ==
                                         arr[w].coordinata.x) {   // ulteriore controllo di direzione,attenzione quando si modifica qui
 
@@ -473,22 +473,22 @@ void screen(WINDOW *w1, int num_nemici, int rimbalzi, int colore) {
                                             // mvwprintw(w1, arr[i].id + 3, 30, "Hit");
                                             break;
                                         } else {
-                                                if (((abs(abs(arr[i].coordinata.y) - abs(arr[w].coordinata.y)) < jumpbox / 2) && arr[i].angolo == arr[w].angolo)) {
+                                                if (((abs(abs(arr[i].coordinata.y) - abs(arr[w].coordinata.y)) <= jumpbox / 2 + 1) && arr[i].angolo == arr[w].angolo)) {
                                                     if(arr[i].coordinata.y < arr[w].coordinata.y){
                                                         if(arr[i].angolo){
                                                             jump[arr[w].id + 1] = 1;
-                                                            jump[arr[i].id + 1] = 0;
+                                                            //jump[arr[i].id + 1] = 0;
                                                         }else{
                                                             jump[arr[i].id + 1] = 1;
-                                                            jump[arr[w].id + 1] = 0;
+                                                            //jump[arr[w].id + 1] = 0;
                                                         }
                                                     }else{
                                                         if(arr[i].angolo){
                                                             jump[arr[i].id + 1] = 1;
-                                                            jump[arr[w].id + 1] = 0;
+                                                            //jump[arr[w].id + 1] = 0;
                                                         }else{
                                                             jump[arr[w].id + 1] = 1;
-                                                            jump[arr[i].id + 1] = 0;
+                                                            //jump[arr[i].id + 1] = 0;
                                                         }
                                                     }
                                                     break;
