@@ -255,6 +255,8 @@ void screen(WINDOW *w1, int num_nemici, int rimbalzi, int colore) {
     clock_t start,stop; // Variabili per misurare il tempo
     int fps = 0;
     int fps_counter = 0;
+    long long int total_fps = 0;
+    int seconds = 0;
     double res = 0;
 
     /* Struttura per la gestione del player */
@@ -686,13 +688,17 @@ void screen(WINDOW *w1, int num_nemici, int rimbalzi, int colore) {
                         stop = clock();
                         res = res + (double)(stop - start);
                         if(res/CLOCKS_PER_SEC*100 >= 1){
+                            total_fps += fps;
+                            ++seconds; 
                             fps_counter = fps;
                             fps = 0;
                             res = 0;
                         }
                         start = 0;
                         stop = 0;
-                        mvwprintw(w1,0,60,"FPS:%d",fps_counter);
+                        if(seconds > 1){
+                        mvwprintw(w1,0,60,"FPS:%d,Media FPS:%d",fps_counter,(int)(total_fps/seconds));
+                        }
                         wrefresh(w1);
 
                         if (maxenemies == 0) {
