@@ -79,7 +79,8 @@ void bomba(WINDOW* w,int x, int y, int id,int *pipe) {
         }
         usleep(100);
         write(pipe[1], &bomba, sizeof(Bullet)); // Scrittura della struttura sulla pipe
-        napms(ENEM_TEST); // Ritardo per rallentare la bomba nemica
+        usleep(200);// Delay per la sincronizzazione tra processi
+        //napms(ENEM_TEST); // Ritardo per rallentare la bomba nemica
         ++skipframe; // Si incrementa la variabile per rallentare la bomba
     } while (bomba.x >= 0); //La bomba avanza finchè non raggiunge il bordo sinistro dello schermo
 
@@ -255,8 +256,8 @@ void screen(WINDOW *w1, int num_nemici, int rimbalzi, int colore) {
     clock_t start,stop; // Variabili per misurare il tempo
     int fps = 0;
     int fps_counter = 0;
-    long long int total_fps = 0;
-    int seconds = 0;
+    int total_fps = 0; // Media fps
+    int seconds = 0; // secondi totali
     double res = 0;
 
     /* Struttura per la gestione del player */
@@ -267,17 +268,17 @@ void screen(WINDOW *w1, int num_nemici, int rimbalzi, int colore) {
     int invincibility = 0; // Flag e durata di invincibilità
     Bullet proiettil; // Struttura di appoggio per la lettura del processo proiettile
     Bullet proiettili[2] = {}; // Struttura per memorizzare i dati dei proiettili
-    int flag_pr[2] = {};
+    int flag_pr[2] = {}; // Flag per disattivazione proiettili in caso di hit dei nemici
     int num_proiettili = 0; // Numero di proiettili attualmente in gioco
 
     /* Strutture per la gestione dei nemici */
     int pr_rec[MAX_PROIETTILI][3];
-    int jump[ENEM_TEST + 1] = {1};
-    int kill_pr[ENEM_TEST];
+    int jump[ENEM_TEST + 1] = {1}; // Array per invio info su rimbalzi uccisioni
+    int kill_pr[ENEM_TEST] = {0};
     int maxenemies = num_nemici; ///* personalizzabile Numero di nemici in schermo
     //int arrint[num_nemici][7]; // Contiene alcune info da inviare ai nemici(tra cui il salto e l'uccisione)
-    Player arr[ENEM_TEST] = {}; // Contiene le info di tutti in nemici, controllare enemyLV1 per piu info
-    Bullet bombe[MAX_PROIETTILI] = {};
+    Player arr[ENEM_TEST] = {}; // Contiene le info di tutti i nemici, controllare funzione nemico per più info
+    Bullet bombe[MAX_PROIETTILI] = {}; // Contiene le info di tutte le bombe nemiche
     int coordinata; // Variabile per spawnare i nemici all'interno dello schermo
     int decremento; // Variabile per distanziare i nemici all'interno dello schermo al momento di spawn
     int identificativo = 0; // Indentificativo di ogni processo nemico
@@ -290,7 +291,7 @@ void screen(WINDOW *w1, int num_nemici, int rimbalzi, int colore) {
     /* Contatori e distanze */
     int i, j, w; //Contatori vari
     int player_started = 1; // Flag di Game-Start
-    int jumpbox = 9; // Distanza di rimbalzo tra un nemico e un altro
+    int jumpbox = 5; // Distanza di rimbalzo tra un nemico e un altro
     int hitbox = 2; // Distanza dei caratteri dal centro
 
     /* Inizializzazione pipes e processi */
@@ -343,24 +344,23 @@ void screen(WINDOW *w1, int num_nemici, int rimbalzi, int colore) {
                 default: // 5) Processo Area di Gioco
                     //aspetto l'avvio dei nemici prima di iniziare la scrittura schermo
                     wait((int *) 0);
-                    signal(SIGCHLD,SIG_IGN);
-                    /*
-                    for (i = 0; i < ENEM_TEST; i++) {
-                        close(enemy_receiver[i][1]);
-                        close(enemy_sender[i][0]);
-                    }*/
+                    signal(SIGCHLD,SIG_IGN); // Serve per eviatare la creazione di processi zomie quando i figli terminano da soli
+                    // Chiusura pipes
                     close(enemy_receiver[1]);
                     close(enemy_sender[0]);
                     close(playerpipe[1]);
-                    // finche non raggiungo il gameover,scrivo lo schermo
+                    // finche non raggiungo il gameover/vittoria,scrivo lo schermo
                     while (player_started) {
+                        // Contatore fps
                         ++fps;
                         start = clock();
+                        // Lettura input schermo
                         read(playerpipe[0], &player, sizeof(Player));
 
+                        /*  Lancio dei proiettili navetta in caso di input */
                         if (player.proiettile.ready == PRONTO && num_proiettili == 0) {
                             beep();
-                            flag_proiettile_ready = 0;
+                            // Flag che segnalano i nemici
                             flag_pr[0] = 0;
                             flag_pr[1] = 0;
                             ++num_proiettili;
@@ -368,18 +368,21 @@ void screen(WINDOW *w1, int num_nemici, int rimbalzi, int colore) {
                             proiett = fork();
                             switch (proiett) {
                                 case 0:
+                                    // Lancio proiettile 1
                                     proiettile(w1,player.coordinata.x, player.coordinata.y, 0, bullet_p);
                                     exit(0);
                                     break;
                                 default:
-                                    signal(SIGCHLD,SIG_IGN);
+                                    signal(SIGCHLD,SIG_IGN); // Serve per non creare processi Zombie in caso di autoterminazione
                                     secondo = fork();
                                     switch (secondo) {
                                         case 0:
+                                            // Lancio secondo proiettile
                                             proiettile(w1,player.coordinata.x, player.coordinata.y, 1, bullet_p);
                                             exit(0);
                                             break;
                                         default:
+                                            // Serve per non creare processi Zombie in caso di autoterminazione
                                             signal(SIGCHLD,SIG_IGN);
                                             break;
                                     }
@@ -394,18 +397,20 @@ void screen(WINDOW *w1, int num_nemici, int rimbalzi, int colore) {
                         }
 
                         // Processo bomba nemica
-                        for (i = 0; i < num_bombe + 1; i++) {                     //modifica il 2 anche nell'array di bombe
+                        for (i = 0; i < num_bombe + 1; i++) {
+                            // Se è possibile lanciare le bombe                      
                             if (bombe[i].ready == SCARICO && arr[i].proiettile.ready == PRONTO && num_bombe < MAX_PROIETTILI) { 
-                                num_bombe++; //Si aumenta il numero di bombe in gioco
+                                num_bombe++; // Si aumenta il numero di bombe in gioco
+                                bombe[i].ready = 1; // Bomba lanciata
                                 bomb = fork(); //Creazione del processo bombe
                                 switch (bomb) {
                                     case 0:
-                                        //Richiamo della funzione per lanciare una bomba nemica
+                                        // Richiamo della funzione per lanciare una bomba nemica
                                         bomba(w1,arr[i].coordinata.x,arr[i].coordinata.y,arr[i].proiettile.riconoscimento,bomba_p);
-                                        exit(0); //Chiusura del processo
+                                        exit(0); // Chiusura del processo
                                         break;
                                     default:
-                                        signal(SIGCHLD,SIG_IGN);
+                                        signal(SIGCHLD,SIG_IGN); // Serve per eliminare i processi zombie
                                         //Il ramo default continua l'esecuzione dell'area di gioco
                                         break;
                                 }
@@ -413,63 +418,48 @@ void screen(WINDOW *w1, int num_nemici, int rimbalzi, int colore) {
                         }
                         // Lettura pipe del proiettile
                         for(i=0;i<num_proiettili;i++) {
-                            //mvwprintw(w1,10+i,30,"R %d,%d",i,num_proiettili);
-                            //wrefresh(w1);
                             read(bullet_p[0], &proiettil, sizeof(Bullet));
                             if (proiettil.id == 0) proiettili[0] = proiettil;
                             if (proiettil.id == 1) proiettili[1] = proiettil;
-                            //mvwprintw(w1,10+i,30 + 5,"D %d,%d",i,num_proiettili);
-                            //wrefresh(w1);
                         }
-                        //mvwprintw(w1,10+i+1,30,"OUT_PROIETTILI %d,%d",i,num_proiettili);
-                        //wrefresh(w1);
 
                         // Lettura pipe della bomba
                         for(i=0;i<num_bombe;i++) {
                             // Viene effettuata la read soltanto per il numero di bombe in campo
-                            //mvwprintw(w1,10+i,10,"R %d,%d",i,num_bombe);
-                            //wrefresh(w1);
                             read(bomba_p[0], &bombe[i], sizeof(Bullet));
-                            //mvwprintw(w1,10+i,10 + 5,"D %d,%d",i,num_bombe);
-                            //wrefresh(w1);
-                            arr[i].proiettile.x = bombe[i].x;
-                            arr[i].proiettile.y = bombe[i].y;
-                            
                         }
-                        //mvwprintw(w1,10+i+1,10,"OUT_BOMBE %d,%d",i,num_bombe);
-                        //wrefresh(w1);
-
-
 
                         werase(w1);
 
                         // CONTROLLO COLLISIONI
 
                         for (i = 0; i < maxenemies; i++) {
-                            //if (arr[i].coordinata.y > -1) {
                             ///*pseudo selectionsort per controllare il rimbalzo in caso di collisioni
                             for (w = i + 1; w < maxenemies; w++) {
                                 // modificando jumpbox si puo modificare il rilevamento di caselle prima di fare il salto
                                 // attenzione a non ridurla troppo altrimenti ci potrbbero essere conflitti di sprite
-
-                                // controllo distanza tra i due nemici                  controllo se sono nella stessa x e che abbiano direzione diversa
+                                // controllo distanza tra i due nemici,controllo se sono nella stessa x e che siano abbastanza vicine
+                                // controllo per evitare i controlli successivi sui nemici già uccisi
                                 if (kill_pr[i] == 0 && kill_pr[w] == 0) {
+                                    // controllo se hanno la stessa x e se hanno una distanza y che potrebbe collidere nei frame dopo
                                     if ((abs(abs(arr[i].coordinata.y) - abs(arr[w].coordinata.y)) <= jumpbox) &&
                                         arr[i].coordinata.x ==
-                                        arr[w].coordinata.x) {   // ulteriore controllo di direzione,attenzione quando si modifica qui
-
+                                        arr[w].coordinata.x) {   
+                                        // controllo la loro posizione e se hanno una direzione che potrebbe collidere
                                         if ((arr[i].coordinata.y < arr[w].coordinata.y && arr[i].angolo == 0 &&
                                              arr[w].angolo == 1) ||
                                             (arr[i].coordinata.y > arr[w].coordinata.y && arr[i].angolo == 1 &&
                                              arr[w].angolo == 0)) {
-                                            // salvataggio dei processi che necessitano di rimbalzo,usando l'id dei processi
+                                            // salvataggio dei processi che necessitano di rimbalzo,usando l'id dei processi stessi
                                             jump[arr[w].id + 1] = 1;
                                             jump[arr[i].id + 1] = 1;
                                             // info di debug
                                             // mvwprintw(w1, arr[i].id + 3, 30, "Hit");
                                             break;
                                         } else {
+                                                // Controllo nel caso in cui alcune sprite hanno la stessa direzione,ma collidono (a seguito di qualche salto di x mentre ci sono già altri nemici nella stessa posizione) 
                                                 if (((abs(abs(arr[i].coordinata.y) - abs(arr[w].coordinata.y)) <= jumpbox / 2 + 1) && arr[i].angolo == arr[w].angolo)) {
+                                                    // in questo caso la collisione necessita di situazioni più specifiche,e solo una dovrà rimbalzare
                                                     if(arr[i].coordinata.y < arr[w].coordinata.y){
                                                         if(arr[i].angolo){
                                                             jump[arr[w].id + 1] = 1;
@@ -495,10 +485,11 @@ void screen(WINDOW *w1, int num_nemici, int rimbalzi, int colore) {
                                 }
                             }
                             //collisione navetta/limite con nemico
-                            if ((arr[i].coordinata.x <= 5) ||
+                            if ((arr[i].coordinata.x <= 5) 
                               //(arr[i].coordinata.x < player.coordinata.x) &&
-                              //abs(arr[i].coordinata.y - player.coordinata.y) < 2 ||
-                                life == 0) {
+                              // abilitazione delle ix in caso potesse servire
+                              // || abs(arr[i].coordinata.y - player.coordinata.y) < 2 && abs(arr[i].coordinata.x - player.coordinata.x) < 2
+                                ) {
                                 //questo killa definitivamente tutti i nemici,ma serve principalmente in caso di gameover
                                 //jump e usata per inviare info ai processi,in questo caso li killa tutti
                                 jump[0] = 0;
@@ -507,19 +498,18 @@ void screen(WINDOW *w1, int num_nemici, int rimbalzi, int colore) {
 
                             //collisione proiettile-navetta_nemica
                             for (w = 0; w < num_proiettili; ++w) {
+                                // Primo controllo se il proiettile è attivo
                                 if (flag_pr[proiettili[w].id] == 0 &&
+                                    // Controlli hitbox tra proiettile navetta nemica
                                     (proiettili[w].x - arr[i].coordinata.x < hitbox &&
                                      proiettili[w].x - arr[i].coordinata.x >= 0) &&
                                     ((hitbox > proiettili[w].y - arr[i].coordinata.y &&
                                       -hitbox < proiettili[w].y - arr[i].coordinata.y) ||
                                      (-hitbox < proiettili[w].y - arr[i].coordinata.y &&
                                       hitbox > proiettili[w].y - arr[i].coordinata.y))) {
-                                    //possiamo sfruttare questo meccanismo per spawnare nemici da lv 1 a lv 2,e in generale per togliere la vita ai nemici
-                                    jump[arr[i].id + 1] = -1;
-                                    mvwaddch(w1, arr[i].coordinata.y, arr[i].coordinata.x, '#');
-
-                                    flag_pr[proiettili[w].id] = 1;
-                                    //serve per ridurre i nemici nei vari counter
+                                    jump[arr[i].id + 1] = -1; // invio hit al nemico
+                                    flag_pr[proiettili[w].id] = 1; // disabilitazione proiettile 
+                                    // serve per ridurre i nemici nei vari counter
                                     if (arr[i].proiettile.id == 1) {
                                         ++killed;
                                         kill_pr[arr[i].id] = 1;
@@ -527,68 +517,62 @@ void screen(WINDOW *w1, int num_nemici, int rimbalzi, int colore) {
                                 }
                             }
                         }
-                        //collisione navetta-proiettile_nemico
+
                         //Se la navetta non è nello stato di invincibilita
-                        if (invincibility == 0) {
+                        for (i = 0; i < num_bombe; i++){   
+                            // stampa della bomba
+                            wattron(w1, COLOR_PAIR(RED_BL));
+                            mvwaddch(w1, bombe[i].y, bombe[i].x, 'O');
+                            wattroff(w1, COLOR_PAIR(RED_BL));
+                            // controllo collisioni navetta - proiettile nemico
                             /* La prima condizione dell'if copre la parte sinistra e destra del cannone
                              * La seconda condizione copre il cannone della navicella principale
                              * Se un proiettile nemico colpisce una di queste 5 coordinate, viene
-                             * Abilitata la flag "hit" con valore true e reso il player invincibile */
-                            for (i = 0; i < num_bombe && invincibility == 0; i++)
-                            {
-                                for (delta = -2; delta < DIM - 2; delta++)
+                             * Tolta una vita al giocatore e reso il player invincibile per un certo numero di frame*/
+                            for (delta = -2; invincibility == 0 && delta < DIM - 2; delta++)
+                            {   // controllo hitbox
+                                if ((bombe[i].y == player.coordinata.y + delta &&
+                                     bombe[i].x == player.coordinata.x - 4) ||
+                                    (bombe[i].y == player.coordinata.y &&
+                                     bombe[i].x == player.coordinata.x))
                                 {
-                                    if ((bombe[i].y == player.coordinata.y + delta &&
-                                         bombe[i].x == player.coordinata.x - 4) ||
-                                        (bombe[i].y == player.coordinata.y &&
-                                         bombe[i].x == player.coordinata.x))
-                                    {
-                                        // hit = 1;
-                                        invincibility = 120;
-                                        --life;
-                                        break;
-                                    }
+                                    invincibility = 180;
+                                    --life;
+                                    break;
                                 }
                             }
                         }
+                        // Condizione d'uscita
+                        if(life == 0){
+                            jump[0] = 0;
+                            player_started = 0;
+                        }
 
-                        // STAMPE
-
-                        /*
-                        // DEBUG -- Stampe debug proiettile
-                        mvwprintw(w1,10,10,"x: %d",proiettili[0].x);
-                        mvwprintw(w1,11,10,"y: %d",proiettili[1].x);
-                        mvwprintw(w1,12,10,"proiettili: %d",num_proiettili);
-                         */
-
+                        
+                        // Controllo se i proiettili della navetta sono stati disabilitati,in modo da riabilitarli
                         if (flag_pr[0] == 1 && flag_pr[1] == 1)
-                        {   //clear della pipe finche i processi non finiscono
-                           if(proiettili[0].x != (-1) && proiettili[0].y != -1)
-                           {
-                            proiettil.x = 0;
-                            do{
-                                read(bullet_p[0], &proiettil, sizeof(Bullet));
-                            }while (proiettil.x != -1);
-                            proiettili[0].x = -1;
-                            proiettili[0].y = -1;
+                        {  // Clear della pipe finchè i processi non finiscono
+                           // Primo proiettile
+                           if(proiettili[0].x != (-1) && proiettili[0].y != -1){
+                               proiettil.x = 0;
+                               do
+                               {
+                                   read(bullet_p[0], &proiettil, sizeof(Bullet));
+                               } while (proiettil.x != -1);// condizione d'uscita del nemico,mi dice che è stato terminato
+                               proiettili[0].x = -1;
+                               proiettili[0].y = -1;
                             }
-                            if(proiettili[1].x != (-1) && proiettili[1].y != -1)
-                            {
-                            proiettil.x = 0;
-                            do{
-                                read(bullet_p[0], &proiettil, sizeof(Bullet));
-                            }while (proiettil.x != -1);
-                            proiettili[1].x = -1;
-                            proiettili[1].y = -1;
+                            // Secondo proiettile
+                            if(proiettili[1].x != (-1) && proiettili[1].y != -1){
+                                proiettil.x = 0;
+                                do
+                                {
+                                    read(bullet_p[0], &proiettil, sizeof(Bullet));
+                                } while (proiettil.x != -1);
+                                proiettili[1].x = -1;
+                                proiettili[1].y = -1;
                             }
                         }
-                        // Se il proiettile della navetta è stato resettato o non è ancora stato lanciato:
-                        if (((proiettili[0].x == (-1) && proiettili[0].y == (-1))
-                          && (proiettili[1].x == (-1) && proiettili[1].y == (-1))) ||
-                           ( (proiettili[0].x == (0) && proiettili[0].y == (0))
-                          && (proiettili[1].x == (0) && proiettili[1].y == (0))) )
-                            flag_proiettile_ready=1;
-
 
                         switch (colore){ // stampa navetta colorata
                         case 0: // Bianco
@@ -619,7 +603,7 @@ void screen(WINDOW *w1, int num_nemici, int rimbalzi, int colore) {
                         default:
                             break;
                         }
-                        print_info(flag_proiettile_ready, life, w1, maxx, maxy);
+                        print_info(num_proiettili == 0, life, w1, maxx, maxy);// stampa stato del player
                         
                         for(i=0;i<maxenemies;i++){
                             // Stampa delle navicelle nemiche
@@ -633,18 +617,14 @@ void screen(WINDOW *w1, int num_nemici, int rimbalzi, int colore) {
                                 bombe[i].ready = SCARICO; // La navicella nemica è SCARICA
                             }
                         }
-
-                        //mvwprintw(w1,10,10,"num:%d",num_bombe);
-
-                        // Stampa proiettili
-
+                        // Controllo se sono disabilitati per abilitarli al lancio
                             if ( (proiettili[1].x == -1 && proiettili[1].y == -1) &&
                                  (proiettili[0].x == -1 && proiettili[0].y == -1) &&
                                  (num_proiettili != 0) ) {
                                 --num_proiettili;
                                 --num_proiettili;
                             }
-
+                            // Stampa proiettili
                             if (proiettili[1].y >= 2 && flag_pr[1] == 0) { //In modo da non collidere con la linea separatrice
                                 mvwaddch(w1, proiettili[1].y, proiettili[1].x, '=');
                             }
@@ -655,28 +635,20 @@ void screen(WINDOW *w1, int num_nemici, int rimbalzi, int colore) {
 
                         //sincronizzazione processi + invio info su rimbalzi/uccisioni
                         for (i = 0; i < maxenemies; i++) {
-                            // invio normale
-                            //if (arr[i].coordinata.y > -1)
-                            //{
-                                write(enemy_sender[1], jump, (ENEM_TEST + 1) * sizeof(int));
-                               // if (kill_pr[arr[i].id] == 1)
-                               // {
-                               //     arr[i].coordinata.y = -5;
-                               // }
-                            //}
+                            write(enemy_sender[1], jump, (ENEM_TEST + 1) * sizeof(int));
                         }
 
                         //reset dei rimbalzi,necessario
                         for (i = 1; i < ENEM_TEST + 1; i++) {
                             jump[i] = 0;
                         }
-                        
+                        //riduzione dei nemici
                         if(killed){
                             maxenemies -= killed;
                             killed = 0;
                         }
                         
-                        
+                        // controllo FPS
                         if(seconds > 1){
                         mvwprintw(w1,0,60,"FPS:%d,Media FPS:%d",fps_counter,(int)(total_fps/seconds));
                         }
@@ -692,7 +664,7 @@ void screen(WINDOW *w1, int num_nemici, int rimbalzi, int colore) {
                         }
                         start = 0;
                         stop = 0;
-
+                        // uscita in caso di vittoria
                         if (maxenemies == 0) {
                             player_started = 0;
                         }
@@ -701,12 +673,13 @@ void screen(WINDOW *w1, int num_nemici, int rimbalzi, int colore) {
             break;
     }
     kill(player.id, 1);
+
     if (maxenemies == 0) {
         victory(w1, player.coordinata.x, player.coordinata.y);
     } else {
         game_over(w1, player.coordinata.x, player.coordinata.y);
     }
-    //pulizia processi
+    //pulizia processi proiettili/bomba
     while(num_bombe){
         proiettil.ready = 0;
         do{

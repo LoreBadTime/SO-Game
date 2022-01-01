@@ -122,9 +122,6 @@ void stampanemici(WINDOW* w1, Player arr, int frame) {
         }
     }
 
-    wattron(w1, COLOR_PAIR(RED_BL));
-    mvwaddch(w1, arr.proiettile.y, arr.proiettile.x, 'O');
-    wattroff(w1, COLOR_PAIR(RED_BL));
 }
 
 
