@@ -79,7 +79,7 @@ void bomba(WINDOW* w,int x, int y, int id,int *pipe) {
         }
         usleep(100);
         write(pipe[1], &bomba, sizeof(Bullet)); // Scrittura della struttura sulla pipe
-        napms(10); // Ritardo per rallentare la bomba nemica
+        usleep(1000); // Ritardo per rallentare la bomba nemica
         ++skipframe; // Si incrementa la variabile per rallentare la bomba
     } while (bomba.x >= 0); //La bomba avanza finchè non raggiunge il bordo sinistro dello schermo
 
@@ -182,7 +182,7 @@ void nemico(int x,int y,int id,int direzione,int *sender,int *receiver) {
             nemico.angolo = direzione; // Viene scritta la direzione del nemico all'interno della struttura
             write(sender[1], &nemico,sizeof(Player)); // Invio della struttura del nemico
             
-            napms(ENEM_TEST/(ENEM_TEST / 5)+ 1); // Delay per la sincronizzazione di processi
+            napms(ENEM_TEST/2); // Delay per la sincronizzazione di processi
             
             /* Algoritmo per il ritardo di gioco */
             ++decremento; // Viene incrementata la variabile per il rallentamento
@@ -290,7 +290,7 @@ void screen(WINDOW *w1, int num_nemici, int rimbalzi, int colore) {
     /* Contatori e distanze */
     int i, j, w; //Contatori vari
     int player_started = 1; // Flag di Game-Start
-    int jumpbox = 6; // Distanza di rimbalzo tra un nemico e un altro
+    int jumpbox = 9; // Distanza di rimbalzo tra un nemico e un altro
     int hitbox = 2; // Distanza dei caratteri dal centro
 
     /* Inizializzazione pipes e processi */
@@ -311,7 +311,7 @@ void screen(WINDOW *w1, int num_nemici, int rimbalzi, int colore) {
     giocatore = fork();
     switch (giocatore) {
         case 0: // 1) Processo navicella principale
-            gestore_input(playerpipe, ENEM_TEST);
+            gestore_input(playerpipe, ENEM_TEST+2);
             exit(0);
             break;
         default:
@@ -689,6 +689,11 @@ void screen(WINDOW *w1, int num_nemici, int rimbalzi, int colore) {
                             killed = 0;
                         }
                         
+                        
+                        if(seconds > 1){
+                        mvwprintw(w1,0,60,"FPS:%d,Media FPS:%d",fps_counter,(int)(total_fps/seconds));
+                        }
+                        wrefresh(w1);
                         stop = clock();
                         res = res + (double)(stop - start);
                         if(res/CLOCKS_PER_SEC*100 >= 1){
@@ -700,10 +705,6 @@ void screen(WINDOW *w1, int num_nemici, int rimbalzi, int colore) {
                         }
                         start = 0;
                         stop = 0;
-                        if(seconds > 1){
-                        mvwprintw(w1,0,60,"FPS:%d,Media FPS:%d",fps_counter,(int)(total_fps/seconds));
-                        }
-                        wrefresh(w1);
 
                         if (maxenemies == 0) {
                             player_started = 0;
