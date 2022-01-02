@@ -1,4 +1,5 @@
 #include "./threads.h"
+pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER;
 
 typedef struct{
     int x;
@@ -23,15 +24,18 @@ void* proiettile(void* p_proiettile) {
     getmaxyx(parametro->w, maxy, maxx); // Funzione di ottenimento della risoluzione
 
     /* Struttura del proiettile */
+    pthread_mutex_lock(&mutex);
     Bullet proiettile; // Inizializzazione struttura del proiettile
     proiettile.id = parametro->direzione; // Il proiettile verso l'alto e quello verso il basso avranno ID diversi
     proiettile.ready = 0; // Il proiettile è stato sparato
     proiettile.x = parametro->x; // Il proiettile prende le ascisse della navicella principale
     proiettile.y = parametro->y; // Il proiettile prende le ordinate della navicella principale
     int diagonale = 0; // Diagonale effettuata dal proiettile (ordinate)
+    pthread_mutex_unlock(&mutex);
 
     /* Movimento del proiettile */
     do {
+        pthread_mutex_lock(&mutex);
         /* Avanzamento lungo l'asse delle ascisse */
         proiettile.x++; // Il proiettile avanza lungo le ascisse
         
@@ -43,13 +47,16 @@ void* proiettile(void* p_proiettile) {
             --diagonale; // La diagonale del proiettile viene decrementata ogni "DIAGONALE" x.
         }
         proiettile.y = parametro->y + diagonale; // Viene assegnato il proiettile il valore della navicella + la diagonale.
+        pthread_mutex_unlock(&mutex);
         usleep(200);
     } while ( (proiettile.x <= maxx-2) || ( (proiettile.y <= maxy-2) && (proiettile.y >= 3) ) );
     /* Il proiettile avanza finché non raggiunge la fine dello schermo */
 
     /* Termine esecuzione proiettile */
+    pthread_mutex_lock(&mutex);
     proiettile.x=-1; // L'ascissa del proiettile viene impostata fuori dallo schermo
     proiettile.y=-1; // L'ordinata del proiettile viene impostata fuori dallo schermo
+    pthread_mutex_unlock(&mutex);
 }
 
 typedef struct{
@@ -71,15 +78,18 @@ void* bomba(void* p_bomba) {
     parametro = (parametro_bomba*) p_bomba;
 
     /* Struttura della bomba */
+    pthread_mutex_lock(&mutex);
     Bullet bomba; // Inizializzazione della bomba
     bomba.y = parametro->y; // La bomba prende le y in entrata (della navicella nemica)
     bomba.x = parametro->x; // La bomba prende le x in entrata (della navicella nemica)
     bomba.riconoscimento = parametro->id; // Si associa l'id della navicella nemica con quello del proiettile
     bomba.ready = 1; // La bomba è pronta per essere sparata
     int skipframe = 0; // Variabile per rallentare il movimento della bomba
+    pthread_mutex_unlock(&mutex);
 
     /* Movimento della bomba */
     do {
+        pthread_mutex_lock(&mutex);
         // Avanza verso il giocatore principale
         if(skipframe % 2 == 1){ // Per valori dispari, la bomba avanza, per valori pari invece, rimane ferma
             bomba.x--; // La bomba avanza verso il giocatore/schermo sinistro
@@ -88,12 +98,15 @@ void* bomba(void* p_bomba) {
         }
         //napms(ENEM_TEST); // Ritardo per rallentare la bomba nemica
         ++skipframe; // Si incrementa la variabile per rallentare la bomba
+        pthread_mutex_unlock(&mutex);
         usleep(200);
     } while (bomba.x >= 0); //La bomba avanza finchè non raggiunge il bordo sinistro dello schermo
 
     /* Termine esecuzione bomba */
+    pthread_mutex_lock(&mutex);
     bomba.x = -1; // La bomba nemica ha ora una x fuori dallo schermo
     bomba.ready = BORDO; // Si segnala allo schermo che la bomba ha raggiunto il bordo
+    pthread_mutex_unlock(&mutex);
 }
 
 /**
@@ -107,6 +120,7 @@ void* nave() {
     getmaxyx(stdscr, maxy, maxx); // Funzione di ottenimento della risoluzione
 
     /* Struttura del player */
+    pthread_mutex_lock(&mutex);
     Player player; // Inizializzazione del player
     player.coordinata.x = 5; // Il player inizia da un'ascissa arbitraria
     player.coordinata.y = 10; // Il player inizia da un'ordinata arbitraria
@@ -115,10 +129,12 @@ void* nave() {
     player.proiettile.ready = SCARICO; // Il proiettile non è ancora stato sparato
     player.id = getpid(); // Si prende il pid del player
     int c; // Carattere letto da input tastiera ( Convertito in intero )
+    pthread_mutex_unlock(&mutex);
 
     /* Movimento del player */
     while (true) {
         c = getch(); // Si aspetta un input da tastiera
+        pthread_mutex_lock(&mutex);
         if (c != ERR) { // Nel caso l'input sia valido
             switch (c) { // Si distingue caso per caso
                 case KEY_UP: // Se è stato premuto tasto in alto, la navetta va verso l'alto
@@ -139,6 +155,7 @@ void* nave() {
             }
         }
         player.proiettile.ready = SCARICO; // Il proiettile è stato sparato, caricatore SCARICO.
+        pthread_mutex_unlock(&mutex);
         napms(10);
     }
 }
@@ -164,6 +181,7 @@ void* nemico(void* p_nemico) {
     srand(time(NULL)); // Inizializzazione del motore generatore di numeri casuali
 
     /* Struttura del nemico */
+    pthread_mutex_lock(&mutex);
     Player nemico; // Inizializzazione del nemico
     parametro_nemico* parametro;
     parametro = (parametro_nemico*) p_nemico;
@@ -180,11 +198,13 @@ void* nemico(void* p_nemico) {
     int vite = 3; // Vite della navicella nemica
     int rec[ENEM_TEST + 1] = {}; // Vettore di raccolta informazioni su rimbalzi tra nemici e morti
     int direzione = parametro->direzione;
+    pthread_mutex_unlock(&mutex);
 
     /* Movimento del nemico */
     while (vite) { // Si continua a ciclare finchè le vite del nemico sono uguali a 0.
         while (nemico.coordinata.y >= 4 && nemico.coordinata.y <= maxy - 3) { // Ciclo del rimbalzo dei nemici
 
+            pthread_mutex_lock(&mutex);
             nemico.proiettile.id = vite;
             nemico.angolo = parametro->direzione; // Viene scritta la direzione del nemico all'interno della struttura
             
@@ -223,10 +243,11 @@ void* nemico(void* p_nemico) {
             if (nemico.proiettile.x == -1 && rand() % 2 == 1) { // Se la bomba non è nello schermo e arriva segnale
                 nemico.proiettile.ready = PRONTO; // Viene sparata una nuova bomba
             }
+            pthread_mutex_unlock(&mutex);
             
         } // Fine del ciclo di rimbalzo
 
-        ///* ottimizzabile
+        pthread_mutex_lock(&mutex);
         nemico.coordinata.x -= 6; // La navicella nemica avanza finchè non arriva alla x del player
         direzione = !direzione; // Cambio direzione navicella nemica (per il rimbalzo)
 
@@ -237,6 +258,7 @@ void* nemico(void* p_nemico) {
         if (nemico.coordinata.y >= maxy - 2) { // Se il nemico ha raggiunto il bordo basso
             nemico.coordinata.y--; // Si decrementa la sua ordinata per rientrare nel ciclo
         }
+        pthread_mutex_unlock(&mutex);
     }
 }
 
@@ -290,35 +312,34 @@ void screen_threads(WINDOW *w1, int num_nemici, int rimbalzi, int colore) {
     int player_started = 1; // Flag di Game-Start
     int jumpbox = 5; // Distanza di rimbalzo tra un nemico e un altro
     int hitbox = 2; // Distanza dei caratteri dal centro
-    
+
     /* Threads e mutex */
     pthread_t t_nave, t_nemico, t_bomba, proiettile_alto, proiettile_basso;
-    parametro_bomba* p_bomba = malloc(sizeof(parametro_bomba));
-    parametro_proiettile* p_proiettile = malloc(sizeof(parametro_proiettile));
-    parametro_nemico* p_nemico = malloc(sizeof(parametro_nemico));
-    pthread_mutex_t mutex;
-    pthread_mutex_init (&mutex, NULL);
+    parametro_bomba *p_bomba = malloc(sizeof(parametro_bomba));
+    parametro_proiettile *p_proiettile = malloc(sizeof(parametro_proiettile));
+    parametro_nemico *p_nemico = malloc(sizeof(parametro_nemico));
 
 
     /* Inizio del gioco */
-    pthread_create(&t_nave,NULL,nave,NULL);
-    for (coordinata = 1; coordinata < maxenemies + 1; coordinata++) {
-        coordinata = (coordinata * 3 * 2); //In modo da avere almeno uno sprite di stacco tra i nemici (Asse y)
-        decremento = coordinata / (maxy - 2); //Ogni volta che si supera il maxy viene decrementata la x
-        if (rimbalzi == 0) {
-            if (decremento % 2 == 0) direzione = !direzione; ///* personalizzabile
-        }
-        y_spawner = coordinata % (maxy - 2); //Si prende il modulo per scegliere la coordinata dello sprite
-        decremento = (decremento * 3 * 2); //In modo da avere almeno uno sprite di stacco tra i nemici (Asse x)
-        p_nemico->x = maxx - decremento - 4;
-        p_nemico->y = y_spawner;
-        p_nemico->direzione = identificativo;
-        p_nemico->id = direzione;
-        pthread_create(&t_nemico,NULL,nemico,p_nemico);
-    }
-
     // finche non raggiungo il gameover/vittoria,scrivo lo schermo
     while (player_started) {
+        pthread_create(&t_nave, NULL, nave, NULL);
+        //pthread_join(t_nave, NULL);
+        for (coordinata = 1; coordinata < maxenemies + 1; coordinata++) {
+            coordinata = (coordinata * 3 * 2); //In modo da avere almeno uno sprite di stacco tra i nemici (Asse y)
+            decremento = coordinata / (maxy - 2); //Ogni volta che si supera il maxy viene decrementata la x
+            if (rimbalzi == 0) {
+                if (decremento % 2 == 0) direzione = !direzione; ///* personalizzabile
+            }
+            y_spawner = coordinata % (maxy - 2); //Si prende il modulo per scegliere la coordinata dello sprite
+            decremento = (decremento * 3 * 2); //In modo da avere almeno uno sprite di stacco tra i nemici (Asse x)
+            p_nemico->x = maxx - decremento - 4;
+            p_nemico->y = y_spawner;
+            p_nemico->direzione = identificativo;
+            p_nemico->id = direzione;
+            pthread_create(&t_nemico, NULL, nemico, p_nemico);
+            //pthread_join(t_nemico,NULL);
+        }
         // Contatore fps
         ++fps;
         start = clock();
@@ -335,13 +356,15 @@ void screen_threads(WINDOW *w1, int num_nemici, int rimbalzi, int colore) {
             p_proiettile->x = player.coordinata.x;
             p_proiettile->y = player.coordinata.y;
             p_proiettile->w = w1;
-            pthread_create(&proiettile_alto,NULL,proiettile,p_proiettile);
+            pthread_create(&proiettile_alto, NULL, proiettile, p_proiettile);
+            //pthread_join(proiettile_alto,NULL);
 
             p_proiettile->direzione = 1;
             p_proiettile->x = player.coordinata.x;
             p_proiettile->y = player.coordinata.y;
             p_proiettile->w = w1;
-            pthread_create(&proiettile_basso,NULL,proiettile,p_proiettile);
+            pthread_create(&proiettile_basso, NULL, proiettile, p_proiettile);
+            //pthread_join(proiettile_basso,NULL);
         }
 
         // Processo bomba nemica
@@ -355,7 +378,8 @@ void screen_threads(WINDOW *w1, int num_nemici, int rimbalzi, int colore) {
                 p_bomba->x = arr[i].coordinata.x;
                 p_bomba->y = arr[i].coordinata.y;
                 p_bomba->id = arr[i].proiettile.riconoscimento;
-                pthread_create(&t_bomba,NULL,bomba,p_bomba);
+                pthread_create(&t_bomba, NULL, bomba, p_bomba);
+                //pthread_join(t_bomba,NULL);
             }
         }
 
