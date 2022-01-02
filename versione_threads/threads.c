@@ -1,6 +1,4 @@
 #include "./threads.h"
-#include <pthread.h>
-#include <semaphore.h>
 
 typedef struct{
     int x;
@@ -15,7 +13,10 @@ typedef struct{
  * int x = Ascissa del proiettile.
  * int y = Ordinata del proiettile.
  * int direzione = Direzione del proiettile. */
-void* proiettile(parametro_proiettile* parametro) {
+void* proiettile(void* p_proiettile) {
+
+    parametro_proiettile* parametro;
+    parametro = (parametro_proiettile*) p_proiettile;
 
     /* Ottenimento risoluzione della finestra */
     int maxy, maxx; // Inizializzazione variabili dello schermo
@@ -64,7 +65,10 @@ typedef struct{
  * int x = Ascissa della bomba.
  * int y = Ordinata della bomba.
  * int id = Identificativo della bomba. */
-void* bomba(parametro_bomba* parametro) {
+void* bomba(void* p_bomba) {
+
+    parametro_bomba* parametro;
+    parametro = (parametro_bomba*) p_bomba;
 
     /* Struttura della bomba */
     Bullet bomba; // Inizializzazione della bomba
@@ -152,7 +156,7 @@ typedef struct{
  * int y = Ordinata del nemico.
  * int id = Identificativo del nemico (per organizzazione).
  * int direzione = Direzione di partenza del nemico. */
-void* nemico(parametro_nemico* parametro) {
+void* nemico(void* p_nemico) {
 
     /* Ottenimento risoluzione della finestra */
     int maxy, maxx; // Inizializzazione variabili dello schermo
@@ -161,6 +165,8 @@ void* nemico(parametro_nemico* parametro) {
 
     /* Struttura del nemico */
     Player nemico; // Inizializzazione del nemico
+    parametro_nemico* parametro;
+    parametro = (parametro_nemico*) p_nemico;
     nemico.proiettile.x = -1; // Inizializzazione del proiettile nemico (ascissa)
     nemico.proiettile.y = -1; // Inizializzazione del proiettile nemico (ordinata)
     nemico.proiettile.ready = SCARICO; // Inizializzazione del proiettile nemico (caricatore)
@@ -286,7 +292,7 @@ void screen_threads(WINDOW *w1, int num_nemici, int rimbalzi, int colore) {
     int hitbox = 2; // Distanza dei caratteri dal centro
     
     /* Threads e mutex */
-    pthread_t nave, nemico, bomba, proiettile_alto, proiettile_basso;
+    pthread_t t_nave, t_nemico, t_bomba, proiettile_alto, proiettile_basso;
     parametro_bomba* p_bomba = malloc(sizeof(parametro_bomba));
     parametro_proiettile* p_proiettile = malloc(sizeof(parametro_proiettile));
     parametro_nemico* p_nemico = malloc(sizeof(parametro_nemico));
@@ -295,7 +301,7 @@ void screen_threads(WINDOW *w1, int num_nemici, int rimbalzi, int colore) {
 
 
     /* Inizio del gioco */
-    pthread_create(&nave,NULL,nave,NULL);
+    pthread_create(&t_nave,NULL,nave,NULL);
     for (coordinata = 1; coordinata < maxenemies + 1; coordinata++) {
         coordinata = (coordinata * 3 * 2); //In modo da avere almeno uno sprite di stacco tra i nemici (Asse y)
         decremento = coordinata / (maxy - 2); //Ogni volta che si supera il maxy viene decrementata la x
@@ -308,7 +314,7 @@ void screen_threads(WINDOW *w1, int num_nemici, int rimbalzi, int colore) {
         p_nemico->y = y_spawner;
         p_nemico->direzione = identificativo;
         p_nemico->id = direzione;
-        pthread_create(&nemico,NULL,nemico,p_nemico);
+        pthread_create(&t_nemico,NULL,nemico,p_nemico);
     }
 
     // finche non raggiungo il gameover/vittoria,scrivo lo schermo
@@ -349,7 +355,7 @@ void screen_threads(WINDOW *w1, int num_nemici, int rimbalzi, int colore) {
                 p_bomba->x = arr[i].coordinata.x;
                 p_bomba->y = arr[i].coordinata.y;
                 p_bomba->id = arr[i].proiettile.riconoscimento;
-                pthread_create(&bomba,NULL,bomba,p_bomba);
+                pthread_create(&t_bomba,NULL,bomba,p_bomba);
             }
         }
 
