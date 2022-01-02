@@ -2,10 +2,8 @@
 pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER;
 
 typedef struct{
-    int x;
-    int y;
-    int direzione;
-    WINDOW* w;
+    Bullet *bullet;
+    WINDOW *w;
 } parametro_proiettile;
 /**
  * Generatore coordinate del proiettile principale
@@ -16,20 +14,24 @@ typedef struct{
  * int direzione = Direzione del proiettile. */
 void* proiettile(void* p_proiettile) {
 
-    parametro_proiettile* parametro;
-    parametro = (parametro_proiettile*) p_proiettile;
+    // cambio di tipo da void
+    parametro_proiettile *realdata = NULL;
+	realdata = (parametro_proiettile *)p_proiettile;
 
     /* Ottenimento risoluzione della finestra */
     int maxy, maxx; // Inizializzazione variabili dello schermo
-    getmaxyx(parametro->w, maxy, maxx); // Funzione di ottenimento della risoluzione
+    getmaxyx(realdata->w, maxy, maxx); // Funzione di ottenimento della risoluzione
 
     /* Struttura del proiettile */
+    //non mi pare serva
     pthread_mutex_lock(&mutex);
-    Bullet proiettile; // Inizializzazione struttura del proiettile
-    proiettile.id = parametro->direzione; // Il proiettile verso l'alto e quello verso il basso avranno ID diversi
+    Bullet *proiettile = realdata->bullet // Inizializzazione struttura del proiettile
+    
+    // questi li assegnamo quando entriamo nella funzione,dallo schermo
+    //proiettile.id = direzione; // Il proiettile verso l'alto e quello verso il basso avranno ID diversi
     proiettile.ready = 0; // Il proiettile è stato sparato
-    proiettile.x = parametro->x; // Il proiettile prende le ascisse della navicella principale
-    proiettile.y = parametro->y; // Il proiettile prende le ordinate della navicella principale
+    proiettile.x = x; // Il proiettile prende le ascisse della navicella principale
+    int y = proiettile->y; // Il proiettile prende le ordinate della navicella principale
     int diagonale = 0; // Diagonale effettuata dal proiettile (ordinate)
     pthread_mutex_unlock(&mutex);
 
@@ -37,32 +39,30 @@ void* proiettile(void* p_proiettile) {
     do {
         pthread_mutex_lock(&mutex);
         /* Avanzamento lungo l'asse delle ascisse */
-        proiettile.x++; // Il proiettile avanza lungo le ascisse
+        proiettile->x++; // Il proiettile avanza lungo le ascisse
         
         /* Avanzamento lungo l'asse delle ordinate */
-        if ( (proiettile.x % DIAGONALE == 1) && (proiettile.id == PROIETTILE_BASSO) ) {
+        if ( (proiettile->x % DIAGONALE == 1) && (proiettile->id == PROIETTILE_BASSO) ) {
             ++diagonale; // La diagonale del proiettile viene incrementata ogni "DIAGONALE" x.
         }
-        if ( (proiettile.x % DIAGONALE == 1) && (proiettile.id == PROIETTILE_ALTO) ) {
+        if ( (proiettile->x % DIAGONALE == 1) && (proiettile->id == PROIETTILE_ALTO) ) {
             --diagonale; // La diagonale del proiettile viene decrementata ogni "DIAGONALE" x.
         }
-        proiettile.y = parametro->y + diagonale; // Viene assegnato il proiettile il valore della navicella + la diagonale.
+        proiettile->y = y + diagonale; // Viene assegnato il proiettile il valore della navicella + la diagonale.
+        
         pthread_mutex_unlock(&mutex);
         usleep(200);
-    } while ( (proiettile.x <= maxx-2) || ( (proiettile.y <= maxy-2) && (proiettile.y >= 3) ) );
+    } while ( (proiettile->x <= maxx-2) || ( (proiettile->y <= maxy-2) && (proiettile->y >= 3) ) );
     /* Il proiettile avanza finché non raggiunge la fine dello schermo */
-
-    /* Termine esecuzione proiettile */
     pthread_mutex_lock(&mutex);
-    proiettile.x=-1; // L'ascissa del proiettile viene impostata fuori dallo schermo
-    proiettile.y=-1; // L'ordinata del proiettile viene impostata fuori dallo schermo
-    pthread_mutex_unlock(&mutex);
+    /* Termine esecuzione proiettile */
+    proiettile->x=-1; // L'ascissa del proiettile viene impostata fuori dallo schermo
+    proiettile->y=-1; // L'ordinata del proiettile viene impostata fuori dallo schermo
+   pthread_mutex_unlock(&mutex);
 }
-
+/*
 typedef struct{
-    int x;
-    int y;
-    int id;
+    Bullet *bomba;
     WINDOW* w;
 } parametro_bomba;
 /**
@@ -74,16 +74,18 @@ typedef struct{
  * int id = Identificativo della bomba. */
 void* bomba(void* p_bomba) {
 
-    parametro_bomba* parametro;
-    parametro = (parametro_bomba*) p_bomba;
-
+    Bullet *bomba = NULL;
+	bomba = (Bullet *)p_bomba;
     /* Struttura della bomba */
     pthread_mutex_lock(&mutex);
-    Bullet bomba; // Inizializzazione della bomba
-    bomba.y = parametro->y; // La bomba prende le y in entrata (della navicella nemica)
-    bomba.x = parametro->x; // La bomba prende le x in entrata (della navicella nemica)
-    bomba.riconoscimento = parametro->id; // Si associa l'id della navicella nemica con quello del proiettile
+
+    // assegnamo direttamente nella funzione,questo è da rimuovere
+
+    bomba.y = y; // La bomba prende le y in entrata (della navicella nemica)
+    bomba.x = x; // La bomba prende le x in entrata (della navicella nemica)
+    bomba.riconoscimento = id; // Si associa l'id della navicella nemica con quello del proiettile
     bomba.ready = 1; // La bomba è pronta per essere sparata
+
     int skipframe = 0; // Variabile per rallentare il movimento della bomba
     pthread_mutex_unlock(&mutex);
 
@@ -92,7 +94,7 @@ void* bomba(void* p_bomba) {
         pthread_mutex_lock(&mutex);
         // Avanza verso il giocatore principale
         if(skipframe % 2 == 1){ // Per valori dispari, la bomba avanza, per valori pari invece, rimane ferma
-            bomba.x--; // La bomba avanza verso il giocatore/schermo sinistro
+            bomba->x--; // La bomba avanza verso il giocatore/schermo sinistro
         }else{
             skipframe = 0;
         }
@@ -100,12 +102,12 @@ void* bomba(void* p_bomba) {
         ++skipframe; // Si incrementa la variabile per rallentare la bomba
         pthread_mutex_unlock(&mutex);
         usleep(200);
-    } while (bomba.x >= 0); //La bomba avanza finchè non raggiunge il bordo sinistro dello schermo
+    } while (bomba->x >= 0); //La bomba avanza finchè non raggiunge il bordo sinistro dello schermo
 
     /* Termine esecuzione bomba */
     pthread_mutex_lock(&mutex);
-    bomba.x = -1; // La bomba nemica ha ora una x fuori dallo schermo
-    bomba.ready = BORDO; // Si segnala allo schermo che la bomba ha raggiunto il bordo
+    bomba->x = -1; // La bomba nemica ha ora una x fuori dallo schermo
+    bomba->ready = BORDO; // Si segnala allo schermo che la bomba ha raggiunto il bordo
     pthread_mutex_unlock(&mutex);
 }
 
