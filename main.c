@@ -141,6 +141,7 @@ void menu() {
                 }
                 if (oggetto.y == y_START) { // Scelta menù = Inizia una partita
                     screen(w1,numnemici,rimbalzi,colore); // Funzione area di gioco
+                    //screen_threads(w1,numnemici,rimbalzi,colore); // Funzione area di gioco
                     wclear(w1); // Pulizia dello schermo
                 }
                 if (oggetto.y == y_SETTINGS) { // Scelta menù = Impostazioni di gioco
