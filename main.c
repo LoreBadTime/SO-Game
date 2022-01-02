@@ -261,10 +261,10 @@ void menu() {
                             
                                 /* Opzione NUMERO NEMICI */
                                 if (oggetto.y == y_NUMNEMICI) { // Se il puntatore si trova a NUMERO NEMICI
-                                    if(numnemici != ENEM_TEST) { // Se non ha raggiunto il massimo di nemici spawnabili
+                                    if(numnemici < ENEM_TEST) { // Se non ha raggiunto il massimo di nemici spawnabili
                                         numnemici++; // Aumenta il numero di nemici
                                     } else {
-                                        numnemici = 0; // Se ha superato il massimo dei nemici, torna a zero
+                                        numnemici = 1; // Se ha superato il massimo dei nemici, torna a uno
                                     }
                                 }
                                 
@@ -291,7 +291,7 @@ void menu() {
 
                                 /* Opzione NUMERO NEMICI */
                                 if (oggetto.y == y_NUMNEMICI) { // Se il puntatore si trova a NUMERO NEMICI
-                                    if(numnemici != 0) {  // Se non ha raggiunto il minimo di nemici spawnabili
+                                    if(numnemici - 1 > 0) {  // Se non ha raggiunto il minimo di nemici spawnabili
                                         numnemici--; // Diminusci il numero di nemici
                                     } else {
                                         numnemici = ENEM_TEST; // Se ha superato il minimo dei nemici, torna al massimo

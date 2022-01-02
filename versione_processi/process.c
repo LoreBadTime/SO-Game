@@ -38,7 +38,7 @@ void proiettile(WINDOW* w,int x, int y, int direzione, int *pipe) {
         proiettile.y = y + diagonale; // Viene assegnato il proiettile il valore della navicella + la diagonale.
         usleep(100);
         write(pipe[1], &proiettile, sizeof(Bullet)); // Si comunica la nuova posizione del proiettile
-        usleep(100); // Delay per la sincronizzazione tra processi
+        usleep(200); // Delay per la sincronizzazione tra processi
     } while ( (proiettile.x <= maxx-2) || ( (proiettile.y <= maxy-2) && (proiettile.y >= 3) ) );
     /* Il proiettile avanza finché non raggiunge la fine dello schermo */
 
@@ -218,7 +218,7 @@ void nemico(int x,int y,int id,int direzione,int *sender,int *receiver) {
             }
             
             nemico.proiettile.ready = SCARICO; // La bomba nemica è scarica di default
-            if (nemico.proiettile.x == -1 && rand() % 250 == 1) { // Se la bomba non è nello schermo e arriva segnale
+            if (nemico.proiettile.x == -1 && rand() % 1250 == 1) { // Se la bomba non è nello schermo e arriva segnale
                 nemico.proiettile.ready = PRONTO; // Viene sparata una nuova bomba
             }
             
