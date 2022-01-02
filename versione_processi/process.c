@@ -38,7 +38,7 @@ void proiettile(WINDOW* w,int x, int y, int direzione, int *pipe) {
         proiettile.y = y + diagonale; // Viene assegnato il proiettile il valore della navicella + la diagonale.
         usleep(100);
         write(pipe[1], &proiettile, sizeof(Bullet)); // Si comunica la nuova posizione del proiettile
-        usleep(100); // Delay per la sincronizzazione tra processi
+        usleep(200); // Delay per la sincronizzazione tra processi
     } while ( (proiettile.x <= maxx-2) || ( (proiettile.y <= maxy-2) && (proiettile.y >= 3) ) );
     /* Il proiettile avanza finché non raggiunge la fine dello schermo */
 
@@ -183,7 +183,7 @@ void nemico(int x,int y,int id,int direzione,int *sender,int *receiver) {
             nemico.angolo = direzione; // Viene scritta la direzione del nemico all'interno della struttura
             write(sender[1], &nemico,sizeof(Player)); // Invio della struttura del nemico
             
-            napms(10/2); // Delay per la sincronizzazione di processi
+            napms(6); // Delay per la sincronizzazione di processi
             
             /* Algoritmo per il ritardo di gioco */
             ++decremento; // Viene incrementata la variabile per il rallentamento
