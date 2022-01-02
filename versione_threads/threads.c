@@ -1,7 +1,6 @@
-#include "../globalincludes.h"
-#include <semaphore.h>
-
 #include "./process.h"
+#include <pthread.h>
+#include <semaphore.h>
 
 typedef struct{
     int x;
@@ -283,9 +282,18 @@ void screen(WINDOW *w1, int num_nemici, int rimbalzi, int colore) {
     int player_started = 1; // Flag di Game-Start
     int jumpbox = 5; // Distanza di rimbalzo tra un nemico e un altro
     int hitbox = 2; // Distanza dei caratteri dal centro
+    
+    /* Threads e mutex */
+    pthread_t nave, nemico, bomba, proiettile_alto, proiettile_basso;
+    parametro_bomba* p_bomba = malloc(sizeof(parametro_bomba));
+    parametro_proiettile* p_proiettile = malloc(sizeof(parametro_proiettile));
+    parametro_nemico* p_nemico = malloc(sizeof(parametro_nemico));
+    pthread_mutex_t mutex;
+    pthread_mutex_init (&mutex, NULL);
+
 
     /* Inizio del gioco */
-    nave(ENEM_TEST + 2);
+    pthread_create(&nave,NULL,nave,NULL);
     for (coordinata = 1; coordinata < maxenemies + 1; coordinata++) {
         coordinata = (coordinata * 3 * 2); //In modo da avere almeno uno sprite di stacco tra i nemici (Asse y)
         decremento = coordinata / (maxy - 2); //Ogni volta che si supera il maxy viene decrementata la x
@@ -294,7 +302,11 @@ void screen(WINDOW *w1, int num_nemici, int rimbalzi, int colore) {
         }
         y_spawner = coordinata % (maxy - 2); //Si prende il modulo per scegliere la coordinata dello sprite
         decremento = (decremento * 3 * 2); //In modo da avere almeno uno sprite di stacco tra i nemici (Asse x)
-        nemico(maxx - decremento - 4, y_spawner, identificativo, direzione);
+        p_nemico->x = maxx - decremento - 4;
+        p_nemico->y = y_spawner;
+        p_nemico->direzione = identificativo;
+        p_nemico->id = direzione;
+        pthread_create(&nemico,NULL,nemico,p_nemico)
     }
 
     // finche non raggiungo il gameover/vittoria,scrivo lo schermo
@@ -311,8 +323,17 @@ void screen(WINDOW *w1, int num_nemici, int rimbalzi, int colore) {
             flag_pr[1] = 0;
             ++num_proiettili;
             ++num_proiettili;
-            proiettile(w1, player.coordinata.x, player.coordinata.y, 0);
-            proiettile(w1, player.coordinata.x, player.coordinata.y, 1);
+            p_proiettile->direzione = 0;
+            p_proiettile->x = player.coordinata.x;
+            p_proiettile->y = player.coordinata.y;
+            p_proiettile->w = w1;
+            pthread_create(&proiettile_alto,NULL,proiettile,p_proiettile);
+
+            p_proiettile->direzione = 1;
+            p_proiettile->x = player.coordinata.x;
+            p_proiettile->y = player.coordinata.y;
+            p_proiettile->w = w1;
+            pthread_create(&proiettile_basso,NULL,proiettile,p_proiettile);
         }
 
         // Processo bomba nemica
@@ -322,7 +343,11 @@ void screen(WINDOW *w1, int num_nemici, int rimbalzi, int colore) {
                 num_bombe++; // Si aumenta il numero di bombe in gioco
                 bombe[i].ready = 1; // Bomba lanciata
                 // Richiamo della funzione per lanciare una bomba nemica
-                bomba(w1,arr[i].coordinata.x,arr[i].coordinata.y,arr[i].proiettile.riconoscimento);
+                p_bomba->w = w1;
+                p_bomba->x = arr[i].coordinata.x;
+                p_bomba->y = arr[i].coordinata.y;
+                p_bomba->id = arr[i].proiettile.riconoscimento;
+                pthread_create(&bomba,NULL,bomba,p_bomba);
             }
         }
 
