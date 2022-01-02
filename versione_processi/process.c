@@ -38,7 +38,7 @@ void proiettile(WINDOW* w,int x, int y, int direzione, int *pipe) {
         proiettile.y = y + diagonale; // Viene assegnato il proiettile il valore della navicella + la diagonale.
         usleep(100);
         write(pipe[1], &proiettile, sizeof(Bullet)); // Si comunica la nuova posizione del proiettile
-        usleep(200); // Delay per la sincronizzazione tra processi
+        usleep(100); // Delay per la sincronizzazione tra processi
     } while ( (proiettile.x <= maxx-2) || ( (proiettile.y <= maxy-2) && (proiettile.y >= 3) ) );
     /* Il proiettile avanza finché non raggiunge la fine dello schermo */
 
@@ -140,7 +140,7 @@ void gestore_input(int *pipe, int sys_slownes) {
         }
         write(pipe[1], &player, sizeof(Player)); // Si scrive la struttura su un buffer
         player.proiettile.ready = SCARICO; // Il proiettile è stato sparato, caricatore SCARICO.
-        napms(sys_slownes); // Delay per la sincronizzazione dei processi
+        napms(10); // Delay per la sincronizzazione dei processi
     }
 }
 
@@ -169,7 +169,7 @@ void nemico(int x,int y,int id,int direzione,int *sender,int *receiver) {
     nemico.coordinata.y = y; // Il nemico inizia da un'ordinata assegnata
     nemico.id = id; // Il nemico ottiene l'id assegnatogli
     int decremento = 0; // Variabile per rallentare il movimento del nemico
-    int skipframe = 2*ENEM_TEST; // Variabile per rallentare il movimento del nemico
+    int skipframe = 2*10; // Variabile per rallentare il movimento del nemico
     int vite = 3; // Vite della navicella nemica
     int rec[ENEM_TEST + 1] = {}; // Vettore di raccolta informazioni su rimbalzi tra nemici e morti
 
@@ -183,7 +183,7 @@ void nemico(int x,int y,int id,int direzione,int *sender,int *receiver) {
             nemico.angolo = direzione; // Viene scritta la direzione del nemico all'interno della struttura
             write(sender[1], &nemico,sizeof(Player)); // Invio della struttura del nemico
             
-            napms(ENEM_TEST/2); // Delay per la sincronizzazione di processi
+            napms(10/2); // Delay per la sincronizzazione di processi
             
             /* Algoritmo per il ritardo di gioco */
             ++decremento; // Viene incrementata la variabile per il rallentamento
@@ -218,7 +218,7 @@ void nemico(int x,int y,int id,int direzione,int *sender,int *receiver) {
             }
             
             nemico.proiettile.ready = SCARICO; // La bomba nemica è scarica di default
-            if (nemico.proiettile.x == -1 && rand() % 1250 == 1) { // Se la bomba non è nello schermo e arriva segnale
+            if (nemico.proiettile.x == -1 && rand() % 2 == 1) { // Se la bomba non è nello schermo e arriva segnale
                 nemico.proiettile.ready = PRONTO; // Viene sparata una nuova bomba
             }
             
