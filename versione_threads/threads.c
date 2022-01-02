@@ -1,4 +1,4 @@
-#include "./process.h"
+#include "./threads.h"
 #include <pthread.h>
 #include <semaphore.h>
 
@@ -15,18 +15,18 @@ typedef struct{
  * int x = Ascissa del proiettile.
  * int y = Ordinata del proiettile.
  * int direzione = Direzione del proiettile. */
-void* proiettile(void* parametro) {
+void* proiettile(parametro_proiettile* parametro) {
 
     /* Ottenimento risoluzione della finestra */
     int maxy, maxx; // Inizializzazione variabili dello schermo
-    getmaxyx(w, maxy, maxx); // Funzione di ottenimento della risoluzione
+    getmaxyx(parametro->w, maxy, maxx); // Funzione di ottenimento della risoluzione
 
     /* Struttura del proiettile */
     Bullet proiettile; // Inizializzazione struttura del proiettile
-    proiettile.id = direzione; // Il proiettile verso l'alto e quello verso il basso avranno ID diversi
+    proiettile.id = parametro->direzione; // Il proiettile verso l'alto e quello verso il basso avranno ID diversi
     proiettile.ready = 0; // Il proiettile è stato sparato
-    proiettile.x = x; // Il proiettile prende le ascisse della navicella principale
-    proiettile.y = y; // Il proiettile prende le ordinate della navicella principale
+    proiettile.x = parametro->x; // Il proiettile prende le ascisse della navicella principale
+    proiettile.y = parametro->y; // Il proiettile prende le ordinate della navicella principale
     int diagonale = 0; // Diagonale effettuata dal proiettile (ordinate)
 
     /* Movimento del proiettile */
@@ -41,7 +41,7 @@ void* proiettile(void* parametro) {
         if ( (proiettile.x % DIAGONALE == 1) && (proiettile.id == PROIETTILE_ALTO) ) {
             --diagonale; // La diagonale del proiettile viene decrementata ogni "DIAGONALE" x.
         }
-        proiettile.y = y + diagonale; // Viene assegnato il proiettile il valore della navicella + la diagonale.
+        proiettile.y = parametro->y + diagonale; // Viene assegnato il proiettile il valore della navicella + la diagonale.
         usleep(200);
     } while ( (proiettile.x <= maxx-2) || ( (proiettile.y <= maxy-2) && (proiettile.y >= 3) ) );
     /* Il proiettile avanza finché non raggiunge la fine dello schermo */
@@ -64,13 +64,13 @@ typedef struct{
  * int x = Ascissa della bomba.
  * int y = Ordinata della bomba.
  * int id = Identificativo della bomba. */
-void* bomba(void* parametro) {
+void* bomba(parametro_bomba* parametro) {
 
     /* Struttura della bomba */
     Bullet bomba; // Inizializzazione della bomba
-    bomba.y = y; // La bomba prende le y in entrata (della navicella nemica)
-    bomba.x = x; // La bomba prende le x in entrata (della navicella nemica)
-    bomba.riconoscimento = id; // Si associa l'id della navicella nemica con quello del proiettile
+    bomba.y = parametro->y; // La bomba prende le y in entrata (della navicella nemica)
+    bomba.x = parametro->x; // La bomba prende le x in entrata (della navicella nemica)
+    bomba.riconoscimento = parametro->id; // Si associa l'id della navicella nemica con quello del proiettile
     bomba.ready = 1; // La bomba è pronta per essere sparata
     int skipframe = 0; // Variabile per rallentare il movimento della bomba
 
@@ -152,7 +152,7 @@ typedef struct{
  * int y = Ordinata del nemico.
  * int id = Identificativo del nemico (per organizzazione).
  * int direzione = Direzione di partenza del nemico. */
-void* nemico(void* parametro) {
+void* nemico(parametro_nemico* parametro) {
 
     /* Ottenimento risoluzione della finestra */
     int maxy, maxx; // Inizializzazione variabili dello schermo
@@ -164,21 +164,23 @@ void* nemico(void* parametro) {
     nemico.proiettile.x = -1; // Inizializzazione del proiettile nemico (ascissa)
     nemico.proiettile.y = -1; // Inizializzazione del proiettile nemico (ordinata)
     nemico.proiettile.ready = SCARICO; // Inizializzazione del proiettile nemico (caricatore)
-    nemico.proiettile.riconoscimento = id; // Inizializzazione del proiettile nemico (ID)
-    nemico.coordinata.x = x; // Il nemico inizia da un'ascissa assegnata
-    nemico.coordinata.y = y; // Il nemico inizia da un'ordinata assegnata
-    nemico.id = id; // Il nemico ottiene l'id assegnatogli
+    nemico.proiettile.riconoscimento = parametro->id; // Inizializzazione del proiettile nemico (ID)
+    nemico.coordinata.x = parametro->x; // Il nemico inizia da un'ascissa assegnata
+    nemico.coordinata.y = parametro->y; // Il nemico inizia da un'ordinata assegnata
+    nemico.id = parametro->id; // Il nemico ottiene l'id assegnatogli
+    int id = parametro->id;
     int decremento = 0; // Variabile per rallentare il movimento del nemico
     int skipframe = 2*10; // Variabile per rallentare il movimento del nemico
     int vite = 3; // Vite della navicella nemica
     int rec[ENEM_TEST + 1] = {}; // Vettore di raccolta informazioni su rimbalzi tra nemici e morti
+    int direzione = parametro->direzione;
 
     /* Movimento del nemico */
     while (vite) { // Si continua a ciclare finchè le vite del nemico sono uguali a 0.
         while (nemico.coordinata.y >= 4 && nemico.coordinata.y <= maxy - 3) { // Ciclo del rimbalzo dei nemici
 
             nemico.proiettile.id = vite;
-            nemico.angolo = direzione; // Viene scritta la direzione del nemico all'interno della struttura
+            nemico.angolo = parametro->direzione; // Viene scritta la direzione del nemico all'interno della struttura
             
             napms(10/2); // Delay per la sincronizzazione di processi
             
@@ -236,7 +238,7 @@ void* nemico(void* parametro) {
  * Area di gioco dove verranno gestite stampa e collisioni
  *
  * WINDOW* w1 : Finestra di stampa. */
-void screen(WINDOW *w1, int num_nemici, int rimbalzi, int colore) {
+void screen_threads(WINDOW *w1, int num_nemici, int rimbalzi, int colore) {
 
     /* Ottenimento risoluzione della finestra */
     int maxy, maxx; // Inizializzazione variabili dello schermo
@@ -306,7 +308,7 @@ void screen(WINDOW *w1, int num_nemici, int rimbalzi, int colore) {
         p_nemico->y = y_spawner;
         p_nemico->direzione = identificativo;
         p_nemico->id = direzione;
-        pthread_create(&nemico,NULL,nemico,p_nemico)
+        pthread_create(&nemico,NULL,nemico,p_nemico);
     }
 
     // finche non raggiungo il gameover/vittoria,scrivo lo schermo
