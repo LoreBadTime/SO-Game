@@ -2,7 +2,7 @@
 #define PROC_H
 #include "../globalincludes.h"
 
-#define ENEM_TEST 10 //con + di 8 nemici lo spawner attuale impazzisce,necessario algoritmo migliore
+#define ENEM_TEST 30 //con + di 8 nemici lo spawner attuale impazzisce,necessario algoritmo migliore
 #define MAX_PROIETTILI 2
 int enemyLV1(int x,int y,int id,int direzione,int *sender,int *receiver);
 void *getinput();
