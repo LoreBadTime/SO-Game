@@ -9,9 +9,11 @@
 #include <time.h>
 #include <pthread.h>
 #include <signal.h>
+#include <semaphore.h>
 #include "./assets/animations.h"
 #include "./assets/sprites.h"
 #include "./versione_processi/process.h"
+#include "./versione_threads/threads.h"
 
 #define pos_X 0
 #define pos_Y 1
