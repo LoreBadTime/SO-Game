@@ -190,7 +190,7 @@ void nemico(int x,int y,int id,int direzione,int *sender,int *receiver) {
             if (decremento == skipframe) { // Se questa è uguale ad un certo numero
                 decremento = 0; // Si resetta il decremento
             }
-            if (decremento == 0) { // Se il decremento è resettao
+            if (decremento == 0) { // Se il decremento è resettato
                 if (direzione) { // Si controlla la direzione della navicella nemica
                     nemico.coordinata.y--; // Se va verso l'alto ( con direzione == 1 ) si decrementa
                 } else {
@@ -205,8 +205,8 @@ void nemico(int x,int y,int id,int direzione,int *sender,int *receiver) {
             if (rec[0] == 0) {  // Codice per terminzaione speciale
                 vite = 0; // La navicella nemica non ha più vite
             }
-            if (rec[id + 1] == -1) {
-                --vite; // La navicella nemica perde una vita
+            if (rec[id + 1] < 0) {
+                vite += rec[id + 1]; // La navicella nemica perde una vita
             }
             if (vite == 0) { // Se la navicella ha finito le vite
                 nemico.coordinata.y = -1; // Prende una nuova coordinata per uscire dallo schermo
@@ -499,7 +499,7 @@ void screen(WINDOW *w1, int num_nemici, int rimbalzi, int colore) {
                             //collisione proiettile-navetta_nemica
                             for (w = 0; w < num_proiettili; ++w) {
                                 // Primo controllo se il proiettile è attivo
-                                if (flag_pr[proiettili[w].id] == 0 &&
+                                if (flag_pr[proiettili[w].id] == 0 && 
                                     // Controlli hitbox tra proiettile navetta nemica
                                     (proiettili[w].x - arr[i].coordinata.x < hitbox &&
                                      proiettili[w].x - arr[i].coordinata.x >= 0) &&
@@ -507,13 +507,17 @@ void screen(WINDOW *w1, int num_nemici, int rimbalzi, int colore) {
                                       -hitbox < proiettili[w].y - arr[i].coordinata.y) ||
                                      (-hitbox < proiettili[w].y - arr[i].coordinata.y &&
                                       hitbox > proiettili[w].y - arr[i].coordinata.y))) {
-                                    jump[arr[i].id + 1] = -1; // invio hit al nemico
+                                    if(jump[arr[i].id + 1] == 1){
+                                        jump[arr[i].id + 1] = 0;
+                                    }
+                                    --jump[arr[i].id + 1]; // invio hit al nemico
                                     flag_pr[proiettili[w].id] = 1; // disabilitazione proiettile 
                                     // serve per ridurre i nemici nei vari counter
                                     if (arr[i].proiettile.id == 1) {
                                         ++killed;
                                         kill_pr[arr[i].id] = 1;
                                     }
+                                    --arr[i].proiettile.id;
                                 }
                             }
                         }
