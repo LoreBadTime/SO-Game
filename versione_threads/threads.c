@@ -317,34 +317,37 @@ void screen_threads(WINDOW *w1, int num_nemici, int rimbalzi, int colore) {
     int player_started = 1; // Flag di Game-Start
     int jumpbox = 5; // Distanza di rimbalzo tra un nemico e un altro
     int hitbox = 2; // Distanza dei caratteri dal centro
-
+    
     /* Threads e mutex */
     pthread_t t_nave, t_nemico, t_bomba, proiettile_alto, proiettile_basso;
-    parametro_bomba *p_bomba = malloc(sizeof(parametro_bomba));
-    parametro_proiettile *p_proiettile = malloc(sizeof(parametro_proiettile));
-    parametro_nemico *p_nemico = malloc(sizeof(parametro_nemico));
-
+    // queste non servono
+    //parametro_bomba p_bomba;  //malloc(sizeof(parametro_bomba));
+    parametro_proiettile p_proiettile; //= malloc(sizeof(parametro_proiettile));
+    parametro_nemico p_nemico; = //malloc(sizeof(parametro_nemico));
 
     /* Inizio del gioco */
+    pthread_create(&t_nave, NULL, nave, (void *)&player);
+    for (coordinata = 1; coordinata < maxenemies + 1; coordinata++) {
+        coordinata = (coordinata * 3 * 2); //In modo da avere almeno uno sprite di stacco tra i nemici (Asse y)
+        decremento = coordinata / (maxy - 2); //Ogni volta che si supera il maxy viene decrementata la x
+        if (rimbalzi == 0) {
+            if (decremento % 2 == 0) direzione = !direzione; ///* personalizzabile
+        }
+        y_spawner = coordinata % (maxy - 2); //Si prende il modulo per scegliere la coordinata dello sprite
+        decremento = (decremento * 3 * 2); //In modo da avere almeno uno sprite di stacco tra i nemici (Asse x)
+        //aggiornamento info da inviare ai processi
+        //la memoria è condivisa,quindi possiamo passare direttamente
+        // il puntatore all'array
+        p_nemico.enemy = &arr[coordinata];
+        arr[coordinata].x = maxx - decremento - 4;
+        arr[coordinata].y = y_spawner;
+        arr[coordinata].id = identificativo;
+        arr[coordinata].angolo = direzione;
+        pthread_create(&t_nemico,NULL,nemico,(void *)&p_nemico);
+    }
     // finche non raggiungo il gameover/vittoria,scrivo lo schermo
     while (player_started) {
-        pthread_create(&t_nave, NULL, nave, NULL);
-        //pthread_join(t_nave, NULL);
-        for (coordinata = 1; coordinata < maxenemies + 1; coordinata++) {
-            coordinata = (coordinata * 3 * 2); //In modo da avere almeno uno sprite di stacco tra i nemici (Asse y)
-            decremento = coordinata / (maxy - 2); //Ogni volta che si supera il maxy viene decrementata la x
-            if (rimbalzi == 0) {
-                if (decremento % 2 == 0) direzione = !direzione; ///* personalizzabile
-            }
-            y_spawner = coordinata % (maxy - 2); //Si prende il modulo per scegliere la coordinata dello sprite
-            decremento = (decremento * 3 * 2); //In modo da avere almeno uno sprite di stacco tra i nemici (Asse x)
-            p_nemico->x = maxx - decremento - 4;
-            p_nemico->y = y_spawner;
-            p_nemico->direzione = identificativo;
-            p_nemico->id = direzione;
-            pthread_create(&t_nemico, NULL, nemico, p_nemico);
-            //pthread_join(t_nemico,NULL);
-        }
+        
         // Contatore fps
         ++fps;
         start = clock();
@@ -357,19 +360,17 @@ void screen_threads(WINDOW *w1, int num_nemici, int rimbalzi, int colore) {
             flag_pr[1] = 0;
             ++num_proiettili;
             ++num_proiettili;
-            p_proiettile->direzione = 0;
-            p_proiettile->x = player.coordinata.x;
-            p_proiettile->y = player.coordinata.y;
-            p_proiettile->w = w1;
-            pthread_create(&proiettile_alto, NULL, proiettile, p_proiettile);
-            //pthread_join(proiettile_alto,NULL);
+            p_proiettile.bullet = &proiettili[0];
+            proiettili[0].id = 0;
+            proiettili[0].x = player.coordinata.x;
+            proiettili[0].y = player.coordinata.y;
+            pthread_create(&proiettile_alto,NULL,proiettile,(void *)p_proiettile);
 
-            p_proiettile->direzione = 1;
-            p_proiettile->x = player.coordinata.x;
-            p_proiettile->y = player.coordinata.y;
-            p_proiettile->w = w1;
-            pthread_create(&proiettile_basso, NULL, proiettile, p_proiettile);
-            //pthread_join(proiettile_basso,NULL);
+            p_proiettile.bullet = &proiettili[1];
+            proiettili[1].id = 1;
+            proiettili[1].x = player.coordinata.x;
+            proiettili[1].y = player.coordinata.y;
+            pthread_create(&proiettile_basso,NULL,proiettile,(void *)p_proiettile);            //pthread_join(proiettile_basso,NULL);
         }
 
         // Processo bomba nemica
@@ -379,11 +380,11 @@ void screen_threads(WINDOW *w1, int num_nemici, int rimbalzi, int colore) {
                 num_bombe++; // Si aumenta il numero di bombe in gioco
                 bombe[i].ready = 1; // Bomba lanciata
                 // Richiamo della funzione per lanciare una bomba nemica
-                p_bomba->w = w1;
-                p_bomba->x = arr[i].coordinata.x;
-                p_bomba->y = arr[i].coordinata.y;
-                p_bomba->id = arr[i].proiettile.riconoscimento;
-                pthread_create(&t_bomba, NULL, bomba, p_bomba);
+
+                bombe[i].x = arr[i].coordinata.x;
+                bombe[i].y = arr[i].coordinata.y;
+                bombe[i].id = arr[i].proiettile.riconoscimento;
+                pthread_create(&t_bomba,NULL,bomba,(void*)&bombe[i]);
                 //pthread_join(t_bomba,NULL);
             }
         }
