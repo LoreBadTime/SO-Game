@@ -225,7 +225,10 @@ void* nemico(void* p_nemico) {
                     nemico->coordinata.y++; // Se va verso il basso ( con direzione == 0 ) si incrementa
                 }
             }
-            //napms(10);
+            
+            // PUNTO DI SICRONIZZAZIONE/PAUSA THREAD FINCHE JUMP NON E DISPONIBILE
+
+
             /* Informazioni su rimbalzi e uccisioni */
             if (rec[0] == 0) {  // Codice per terminzaione speciale
                 nemico->proiettile.id = 0; // La navicella nemica non ha più vite
@@ -372,6 +375,9 @@ void screen_threads(WINDOW *w1, int num_nemici, int rimbalzi, int colore) {
             proiettili[1].y = player.coordinata.y;
             pthread_create(&proiettile_basso,NULL,proiettile,(void *)p_proiettile);            //pthread_join(proiettile_basso,NULL);
         }
+
+
+        //PUNTO IN CUI I NEMICI HANNO FINITO DI ELABORARE LE COORDINATE,SOSPENSIONE DEI NEMICI
 
         // Processo bomba nemica
         for (i = 0; i < num_bombe + 1; i++) {
@@ -582,12 +588,16 @@ void screen_threads(WINDOW *w1, int num_nemici, int rimbalzi, int colore) {
         if (flag_pr[0] == 0) {
             mvwaddch(w1, proiettili[0].y, proiettili[0].x, '=');
         }
+
         // Sincronizzazione processi + invio info su rimbalzi/uccisioni
 
-        //reset dei rimbalzi,necessario
+        //PUNTO IN CUI I NEMICI RIPRENDONO L'ESECUZIONE
+
+        //il reset lo possiamo fare direttamente nei nemici
+        /*reset dei rimbalzi,necessario
         for (i = 1; i < ENEM_TEST + 1; i++) {
             jump[i] = 0;
-        }
+        }*/
 
         //riduzione dei nemici
         if (killed) {
