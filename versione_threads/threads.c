@@ -198,7 +198,7 @@ void* nemico(void* p_nemico) {
     //nemico.coordinata.y = y; // Il nemico inizia da un'ordinata assegnata
     //nemico.id = id; // Il nemico ottiene l'id assegnatogli
     int decremento = 0; // Variabile per rallentare il movimento del nemico
-    int skipframe = 20; // Variabile per rallentare il movimento del nemico
+    int skipframe = 500; // Variabile per rallentare il movimento del nemico
     enemy->proiettile.id = 3; // Vite della navicella nemica
     int *rec = NULL;
     rec = realdata->jump; // Vettore di raccolta informazioni su rimbalzi tra nemici e morti
@@ -337,7 +337,7 @@ void screen_threads(WINDOW *w1, int num_nemici, int rimbalzi, int colore) {
     parametro_nemico p_nemico = {}; //= //malloc(sizeof(parametro_nemico));
 
     /* Inizio del gioco */
-    //pthread_create(&t_nave, NULL, nave, (void *)&player);
+    pthread_create(&t_nave, NULL, nave, (void *)&player);
     //exit(1);
     p_nemico.jump = jump;
     i = 0;
@@ -386,8 +386,8 @@ void screen_threads(WINDOW *w1, int num_nemici, int rimbalzi, int colore) {
         while (i < maxenemies)
         {
             while (spinlock[i] != 1){;}
-            mvwprintw(w1,11+i + 1 +fps ,10,"elaborato %d,%d,%d,%d,nemici:%d",arr[i].coordinata.x,arr[i].coordinata.y,arr[i].id,i,maxenemies);
-            wrefresh(w1);
+            //mvwprintw(w1,11+i + 1 +fps ,10,"elaborato %d,%d,%d,%d,nemici:%d",arr[i].coordinata.x,arr[i].coordinata.y,arr[i].id,i,maxenemies);
+            //wrefresh(w1);
             ++i;
         }
 
@@ -434,10 +434,10 @@ void screen_threads(WINDOW *w1, int num_nemici, int rimbalzi, int colore) {
         }*/
         //pthread_mutex_lock(&mutex);
 
-         werase(w1);
+        werase(w1);
         pthread_mutex_lock(&mutex);
 
-        /* CONTROLLO COLLISIONI
+        // CONTROLLO COLLISIONI
 
         for (i = 0; i < maxenemies; i++) {
             ///*pseudo selectionsort per controllare il rimbalzo in caso di collisioni
@@ -535,7 +535,7 @@ void screen_threads(WINDOW *w1, int num_nemici, int rimbalzi, int colore) {
             /* La prima condizione dell'if copre la parte sinistra e destra del cannone
              * La seconda condizione copre il cannone della navicella principale
              * Se un proiettile nemico colpisce una di queste 5 coordinate, viene
-             * Tolta una vita al giocatore e reso il player invincibile per un certo numero di frame
+             * Tolta una vita al giocatore e reso il player invincibile per un certo numero di frame*/
             for (delta = -2; invincibility == 0 && delta < DIM - 2; delta++) {   // controllo hitbox
                 if ((bombe[i].y == player.coordinata.y + delta &&
                      bombe[i].x == player.coordinata.x - 4) ||
@@ -570,7 +570,6 @@ void screen_threads(WINDOW *w1, int num_nemici, int rimbalzi, int colore) {
                 proiettili[1].y = -1;
             }
         }
-*/
         switch (colore) { // stampa navetta colorata
             case 0: // Bianco
                 wattron(w1, COLOR_PAIR(WHITE_BLACK));
