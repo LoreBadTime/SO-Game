@@ -198,7 +198,7 @@ void* nemico(void* p_nemico) {
     //nemico.coordinata.y = y; // Il nemico inizia da un'ordinata assegnata
     //nemico.id = id; // Il nemico ottiene l'id assegnatogli
     int decremento = 0; // Variabile per rallentare il movimento del nemico
-    int skipframe = 500; // Variabile per rallentare il movimento del nemico
+    int skipframe = 20000; // Variabile per rallentare il movimento del nemico
     enemy->proiettile.id = 3; // Vite della navicella nemica
     int *rec = NULL;
     rec = realdata->jump; // Vettore di raccolta informazioni su rimbalzi tra nemici e morti
@@ -227,7 +227,7 @@ void* nemico(void* p_nemico) {
             rec[id + 1] = 0;
             spinlock[id] = 1;
             pthread_mutex_unlock(&mutex);
-            while (spinlock[id] != 0){;}
+            //while (spinlock[id] != 0){;}
             pthread_mutex_lock(&mutex);
             /* Algoritmo per il ritardo di gioco */
             ++decremento; // Viene incrementata la variabile per il rallentamento
@@ -383,13 +383,13 @@ void screen_threads(WINDOW *w1, int num_nemici, int rimbalzi, int colore) {
         ++fps;
         start = clock();
         i = 0;
-        while (i < maxenemies)
-        {
-            while (spinlock[i] != 1){;}
+        //while (i < maxenemies)
+        //{
+          //  while (spinlock[i] != 1){;}
             //mvwprintw(w1,11+i + 1 +fps ,10,"elaborato %d,%d,%d,%d,nemici:%d",arr[i].coordinata.x,arr[i].coordinata.y,arr[i].id,i,maxenemies);
             //wrefresh(w1);
-            ++i;
-        }
+            //++i;
+        //}
 
         
 
@@ -631,12 +631,12 @@ void screen_threads(WINDOW *w1, int num_nemici, int rimbalzi, int colore) {
         // Sincronizzazione processi + invio info su rimbalzi/uccisioni
         //PUNTO IN CUI I NEMICI RIPRENDONO L'ESECUZIONE
         
-        i = 0;
-        while (i < maxenemies)
-        {
-            spinlock[i] = 0;
-            ++i;
-        }
+        //i = 0;
+        //while (i < maxenemies)
+        //{
+         //   spinlock[i] = 0;
+        //    ++i;
+        //}
         pthread_mutex_unlock(&mutex);
         //il reset lo possiamo fare direttamente nei nemici
         /*reset dei rimbalzi,necessario
