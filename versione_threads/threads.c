@@ -12,7 +12,7 @@ typedef struct{
  * int x = Ascissa del proiettile.
  * int y = Ordinata del proiettile.
  * int direzione = Direzione del proiettile. */
-void* proiettile(void* p_proiettile) {
+void* lancia_proiettili(void* p_proiettile) {
 
     // cambio di tipo da void
     parametro_proiettile *realdata = NULL;
@@ -25,7 +25,8 @@ void* proiettile(void* p_proiettile) {
     /* Struttura del proiettile */
     //non mi pare serva
     pthread_mutex_lock(&mutex);
-    Bullet *proiettile = realdata->bullet // Inizializzazione struttura del proiettile
+    Bullet *proiettile = NULL;
+    proiettile = realdata->bullet; // Inizializzazione struttura del proiettile
     
     // questi li assegnamo quando entriamo nella funzione,dallo schermo
     //proiettile.id = direzione; // Il proiettile verso l'alto e quello verso il basso avranno ID diversi
@@ -115,23 +116,22 @@ void* bomba(void* p_bomba) {
  * Generatore coordinate della nave principale
  *
  * int sys_slownes = Velocità di gioco. */
-void* nave() {
-
+void* nave(void *parametro) {
     /* Ottenimento risoluzione della finestra */
     int maxy, maxx; // Inizializzazione variabili dello schermo
     getmaxyx(stdscr, maxy, maxx); // Funzione di ottenimento della risoluzione
 
     /* Struttura del player */
     pthread_mutex_lock(&mutex);
-    Player player; // Inizializzazione del player
-    player.coordinata.x = 5; // Il player inizia da un'ascissa arbitraria
-    player.coordinata.y = 10; // Il player inizia da un'ordinata arbitraria
-    player.proiettile.x = SCARICO; // Il proiettile non è ancora stato sparato
-    player.proiettile.y = SCARICO; // Il proiettile non è ancora stato sparato
-    player.proiettile.ready = SCARICO; // Il proiettile non è ancora stato sparato
-    player.id = getpid(); // Si prende il pid del player
-    int c; // Carattere letto da input tastiera ( Convertito in intero )
-    pthread_mutex_unlock(&mutex);
+    Player *player = NULL;
+    player = (Player *)parametro; // Inizializzazione del player
+    player->coordinata.x = 5; // Il player inizia da un'ascissa arbitraria
+    player->coordinata.y = 10; // Il player inizia da un'ordinata arbitraria
+    player->proiettile.x = SCARICO; // Il proiettile non è ancora stato sparato
+    player->proiettile.y = SCARICO; // Il proiettile non è ancora stato sparato
+    player->proiettile.ready = SCARICO; // Il proiettile non è ancora stato sparato
+    //player->id = getpid(); // Si prende il pid del player
+    int c; // Carattere letto da input tastiera ( Convertito in intero )pthread_mutex_unlock(&mutex);
 
     /* Movimento del player */
     while (true) {
@@ -140,33 +140,31 @@ void* nave() {
         if (c != ERR) { // Nel caso l'input sia valido
             switch (c) { // Si distingue caso per caso
                 case KEY_UP: // Se è stato premuto tasto in alto, la navetta va verso l'alto
-                    if (player.coordinata.y > LARGHEZZA + 1) { // A patto che sia distanziata da sopra
-                        player.coordinata.y--; // Decremento dell'ordinata
+                    if (player->coordinata.y > LARGHEZZA + 1) { // A patto che sia distanziata da sopra
+                        player->coordinata.y--; // Decremento dell'ordinata
                     }
                     break;
                 case KEY_DOWN: // Se è stato premuto tasto in basso, la navetta va verso il basso
-                    if (player.coordinata.y < maxy - LARGHEZZA) { // A patto che sia distanziata da sotto
-                        player.coordinata.y++; // Incremento dell'ordinata
+                    if (player->coordinata.y < maxy - LARGHEZZA) { // A patto che sia distanziata da sotto
+                        player->coordinata.y++; // Incremento dell'ordinata
                     }
                     break;
                     // lancio proiettile
                 case (int) ' ': // Se è stato premuta la barra spaziatrice, la navetta carica un proiettile
-                    player.proiettile.ready = PRONTO; // Si abilita la flag del proiettile pronto
+                    player->proiettile.ready = PRONTO; // Si abilita la flag del proiettile pronto
                 default:
                     break;
             }
         }
-        player.proiettile.ready = SCARICO; // Il proiettile è stato sparato, caricatore SCARICO.
+        player->proiettile.ready = SCARICO; // Il proiettile è stato sparato, caricatore SCARICO.
         pthread_mutex_unlock(&mutex);
-        napms(10);
+        //napms(10);
     }
 }
 
 typedef struct{
-    int x;
-    int y;
-    int id;
-    int direzione;
+    Player *enemy;
+    int *jump;
 } parametro_nemico;
 /**
  * Spawner dei nemici di livello 1
@@ -176,30 +174,32 @@ typedef struct{
  * int id = Identificativo del nemico (per organizzazione).
  * int direzione = Direzione di partenza del nemico. */
 void* nemico(void* p_nemico) {
+    
 
     /* Ottenimento risoluzione della finestra */
     int maxy, maxx; // Inizializzazione variabili dello schermo
     getmaxyx(stdscr, maxy, maxx); // Funzione di ottenimento della risoluzione
-    srand(time(NULL)); // Inizializzazione del motore generatore di numeri casuali
+    //srand(time(NULL)); // Inizializzazione del motore generatore di numeri casuali
 
     /* Struttura del nemico */
     pthread_mutex_lock(&mutex);
-    Player nemico; // Inizializzazione del nemico
-    parametro_nemico* parametro;
-    parametro = (parametro_nemico*) p_nemico;
-    nemico.proiettile.x = -1; // Inizializzazione del proiettile nemico (ascissa)
-    nemico.proiettile.y = -1; // Inizializzazione del proiettile nemico (ordinata)
-    nemico.proiettile.ready = SCARICO; // Inizializzazione del proiettile nemico (caricatore)
-    nemico.proiettile.riconoscimento = parametro->id; // Inizializzazione del proiettile nemico (ID)
-    nemico.coordinata.x = parametro->x; // Il nemico inizia da un'ascissa assegnata
-    nemico.coordinata.y = parametro->y; // Il nemico inizia da un'ordinata assegnata
-    nemico.id = parametro->id; // Il nemico ottiene l'id assegnatogli
-    int id = parametro->id;
+    parametro_nemico *realdata = NULL;
+    realdata = (parametro_nemico*)p_nemico;
+    Player *nemico = NULL;
+    nemico = realdata->enemy // Inizializzazione del nemico
+
+    nemico->proiettile.x = -1; // Inizializzazione del proiettile nemico (ascissa)
+    nemico->proiettile.y = -1; // Inizializzazione del proiettile nemico (ordinata)
+    nemico->proiettile.ready = SCARICO; // Inizializzazione del proiettile nemico (caricatore)
+    //questi sono da assegnare fuori dalla funzione
+    nemico.proiettile.riconoscimento = id; // Inizializzazione del proiettile nemico (ID)
+    nemico.coordinata.x = x; // Il nemico inizia da un'ascissa assegnata
+    nemico.coordinata.y = y; // Il nemico inizia da un'ordinata assegnata
+    nemico.id = id; // Il nemico ottiene l'id assegnatogli
     int decremento = 0; // Variabile per rallentare il movimento del nemico
     int skipframe = 2*10; // Variabile per rallentare il movimento del nemico
-    int vite = 3; // Vite della navicella nemica
-    int rec[ENEM_TEST + 1] = {}; // Vettore di raccolta informazioni su rimbalzi tra nemici e morti
-    int direzione = parametro->direzione;
+    int nemico->proiettile.id = 3; // Vite della navicella nemica
+    int *rec =  realdata->jump; // Vettore di raccolta informazioni su rimbalzi tra nemici e morti
     pthread_mutex_unlock(&mutex);
 
     /* Movimento del nemico */
@@ -207,10 +207,11 @@ void* nemico(void* p_nemico) {
         while (nemico.coordinata.y >= 4 && nemico.coordinata.y <= maxy - 3) { // Ciclo del rimbalzo dei nemici
 
             pthread_mutex_lock(&mutex);
-            nemico.proiettile.id = vite;
-            nemico.angolo = parametro->direzione; // Viene scritta la direzione del nemico all'interno della struttura
+            //non servono più
+            //nemico->proiettile.id = vite;
+            //nemico->angolo = direzione; // Viene scritta la direzione del nemico all'interno della struttura
             
-            napms(10/2); // Delay per la sincronizzazione di processi
+            //napms(10/2); // Delay per la sincronizzazione di processi
             
             /* Algoritmo per il ritardo di gioco */
             ++decremento; // Viene incrementata la variabile per il rallentamento
@@ -218,47 +219,49 @@ void* nemico(void* p_nemico) {
                 decremento = 0; // Si resetta il decremento
             }
             if (decremento == 0) { // Se il decremento è resettao
-                if (direzione) { // Si controlla la direzione della navicella nemica
-                    nemico.coordinata.y--; // Se va verso l'alto ( con direzione == 1 ) si decrementa
+                if (nemico->angolo) { // Si controlla la direzione della navicella nemica
+                    nemico->coordinata.y--; // Se va verso l'alto ( con direzione == 1 ) si decrementa
                 } else {
-                    nemico.coordinata.y++; // Se va verso il basso ( con direzione == 0 ) si incrementa
+                    nemico->coordinata.y++; // Se va verso il basso ( con direzione == 0 ) si incrementa
                 }
             }
-            
+            //napms(10);
             /* Informazioni su rimbalzi e uccisioni */
             if (rec[0] == 0) {  // Codice per terminzaione speciale
-                vite = 0; // La navicella nemica non ha più vite
+                nemico->proiettile.id = 0; // La navicella nemica non ha più vite
             }
+            /* rimovibile
             if (rec[id + 1] == -1) {
                 --vite; // La navicella nemica perde una vita
-            }
+            }*/
             if (vite == 0) { // Se la navicella ha finito le vite
-                nemico.coordinata.y = -1; // Prende una nuova coordinata per uscire dallo schermo
+                nemico->coordinata.y = -1; // Prende una nuova coordinata per uscire dallo schermo
             }
             // dall'array estrae il suo id,serve per il rimbalzo in caso di collisioni con le navette nemiche
             if (rec[id + 1] == 1) {
-                direzione = !direzione; // Si cambia la direzione della navicella nemica
+                nemico->angolo = !nemico->angolo; // Si cambia la direzione della navicella nemica
                 rec[id + 1] = 0;
             }
             
-            nemico.proiettile.ready = SCARICO; // La bomba nemica è scarica di default
-            if (nemico.proiettile.x == -1 && rand() % 2 == 1) { // Se la bomba non è nello schermo e arriva segnale
-                nemico.proiettile.ready = PRONTO; // Viene sparata una nuova bomba
+            nemico->proiettile.ready = SCARICO; // La bomba nemica è scarica di default
+            if (nemico->proiettile.x == -1 && rand() % 2 == 1) { // Se la bomba non è nello schermo e arriva segnale
+                nemico->proiettile.ready = PRONTO; // Viene sparata una nuova bomba
             }
+            
             pthread_mutex_unlock(&mutex);
             
         } // Fine del ciclo di rimbalzo
 
         pthread_mutex_lock(&mutex);
-        nemico.coordinata.x -= 6; // La navicella nemica avanza finchè non arriva alla x del player
-        direzione = !direzione; // Cambio direzione navicella nemica (per il rimbalzo)
+        nemico->coordinata.x -= 6; // La navicella nemica avanza finchè non arriva alla x del player
+        nemico->angolo = !nemico->angolo; // Cambio direzione navicella nemica (per il rimbalzo)
 
         //Incrementi delle coordinate.y per rientrare nel ciclo
-        if (nemico.coordinata.y <= 3) { // Se il nemico ha raggiunto il bordo alto
-            nemico.coordinata.y++; // Si incrementa la sua ordinata per rientrare nel ciclo
+        if (nemico->coordinata.y <= 3) { // Se il nemico ha raggiunto il bordo alto
+            nemico->coordinata.y++; // Si incrementa la sua ordinata per rientrare nel ciclo
         }
-        if (nemico.coordinata.y >= maxy - 2) { // Se il nemico ha raggiunto il bordo basso
-            nemico.coordinata.y--; // Si decrementa la sua ordinata per rientrare nel ciclo
+        if (nemico->coordinata.y >= maxy - 2) { // Se il nemico ha raggiunto il bordo basso
+            nemico->coordinata.y--; // Si decrementa la sua ordinata per rientrare nel ciclo
         }
         pthread_mutex_unlock(&mutex);
     }
