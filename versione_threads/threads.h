@@ -3,11 +3,11 @@
 
 #include "../globalincludes.h"
 
-#define ENEM_TEST 30 //con + di 8 nemici lo spawner attuale impazzisce,necessario algoritmo migliore
-#define MAX_PROIETTILI 2
-int enemyLV1(int x,int y,int id,int direzione,int *sender,int *receiver);
-void *getinput();
-void screen_threads(WINDOW *w1, int num_nemici, int rimbalzi, int colore);
-
+/* Dichiarazioni delle funzioni threads */
+void* thread_proiettile(void* p_proiettile);
+void* thread_bomba(void* p_bomba);
+void* thread_nave(void *parametro);
+void* thread_nemico(void* p_nemico);
+void screen_threads(WINDOW *w1, int num_nemici, int vite, int colore);
 
 #endif //SO_GAME_MAIN_THREADS_H
