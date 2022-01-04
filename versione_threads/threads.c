@@ -242,8 +242,9 @@ void* nemico(void* p_nemico) {
             enemy->coordinata.y = nemico.coordinata.y;
             rec[id + 1] = 0;
             spinlock[id] = 1;
-            //pthread_mutex_unlock(&mutex);
+            pthread_mutex_lock(&mutex);
             sem_post(&semaph);
+            pthread_mutex_unlock(&mutex);
             //pthread_setschedprio(pthread_self(), max_policy);
             sem_wait(&unlock[id]);
             //pthread_setschedprio(pthread_self(), low_policy);
@@ -424,31 +425,32 @@ void screen_threads(WINDOW *w1, int num_nemici, int rimbalzi, int colore) {
         start = clock();
         for (i = 0; i < maxenemies; i++) {
             sem_getvalue(&unlock[i],&old);
-            if(old){pthread_kill( t_nemico[i], SIGUSR1);}
+            if(old){
+                pthread_kill( t_nemico[i], SIGUSR1);}
+            
 
-            mvwprintw(w1,20+i,70,"new%d",old);
-            wrefresh(w1);
-            sleep(3);
-
+            //mvwprintw(w1,20+i,70,"new%d",old);
+           // wrefresh(w1);
+            ////sleep(3)
         }
         old = 0;
         i = 0;
         while (i < maxenemies)
         {
-            mvwprintw(w1,11+i + 1 ,9,"PRE-CHECK%d blocked for %d",i,old);
+            //mvwprintw(w1,11+i + 1 ,9,"PRE-CHECK%d blocked for %d",i,old);
             wrefresh(w1);
             sem_getvalue(&semaph,&i);
-            wrefresh(w1);
-            sleep(3);
+            //wrefresh(w1);
+            //sleep(3);
             ++old;
         }
         while (i > 0)
         {
             sem_wait(&semaph);
-            mvwprintw(w1,11+i + 1,36,"%d",i);
-            mvwprintw(w1,11+i,10,"lanciato %d,%d,%d,%d,nemici:%d",i,arr[i].coordinata.x,arr[i].coordinata.y,arr[i].id,maxenemies);
-            wrefresh(w1);
-            sleep(1);
+            //mvwprintw(w1,11+i + 1,36,"%d",i);
+            //mvwprintw(w1,11+i,10,"lanciato %d,%d,%d,%d,nemici:%d",i,arr[i].coordinata.x,arr[i].coordinata.y,arr[i].id,maxenemies);
+            //wrefresh(w1);
+            //sleep(1);
             --i;
         }
         
@@ -706,9 +708,9 @@ void screen_threads(WINDOW *w1, int num_nemici, int rimbalzi, int colore) {
             sem_getvalue(&unlock[i],&old);
             sem_post(&unlock[i]);
             sem_getvalue(&unlock[i],&tmp);
-            mvwprintw(w1,11+i,70,"final%d:%d",old,tmp);
-            wrefresh(w1);
-            sleep(3);
+            //mvwprintw(w1,11+i,70,"final%d:%d",old,tmp);
+            //wrefresh(w1);
+            
 
         }//*/
 
