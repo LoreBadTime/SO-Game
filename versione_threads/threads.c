@@ -1,11 +1,13 @@
 #include "./threads.h"
 pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER;
 
+int jump[ENEM_TEST + 1] = {1}; // Array per invio info su rimbalzi uccisioni
+
 typedef struct{
     Bullet *bullet;
     WINDOW *w;
 } parametro_proiettile;
-int skipframe = 50;
+int skipframe = 10;
 
 static int spinlock[ENEM_TEST] = {};
 /**
@@ -192,36 +194,42 @@ void* nemico(void* p_nemico) {
     int maxy, maxx; // Inizializzazione variabili dello schermo
     getmaxyx(stdscr, maxy, maxx); // Funzione di ottenimento della risoluzione
     //srand(time(NULL)); // Inizializzazione del motore generatore di numeri casuali
-
     /* Struttura del nemico */
-    parametro_nemico *realdata = NULL;
-    realdata = (parametro_nemico*)p_nemico;
     Player *enemy = NULL;
-    enemy = realdata->enemy; // Inizializzazione del nemico
+    enemy = (Player *)p_nemico;
+    Player nemico;
     enemy->proiettile.x = -1; // Inizializzazione del proiettile nemico (ascissa)
     enemy->proiettile.y = -1; // Inizializzazione del proiettile nemico (ordinata)
     enemy->proiettile.ready = SCARICO; // Inizializzazione del proiettile nemico (caricatore)
-    //questi sono da assegnare fuori dalla funzione
-    //nemico.proiettile.riconoscimento = id; // Inizializzazione del proiettile nemico (ID)
-    //nemico.coordinata.x = x; // Il nemico inizia da un'ascissa assegnata
-    //nemico.coordinata.y = y; // Il nemico inizia da un'ordinata assegnata
-    //nemico.id = id; // Il nemico ottiene l'id assegnatogli
-    int decremento = 0; // Variabile per rallentare il movimento del nemico
-     // Variabile per rallentare il movimento del nemico
-    enemy->proiettile.id = 3; // Vite della navicella nemica
-    int *rec = NULL;
-    rec = realdata->jump; // Vettore di raccolta informazioni su rimbalzi tra nemici e morti
-    int direzione = enemy->angolo;
-    int vite = 3;
-
-    Player nemico; // Inizializzazione del nemico
     nemico.proiettile.x = -1; // Inizializzazione del proiettile nemico (ascissa)
     nemico.proiettile.y = -1; // Inizializzazione del proiettile nemico (ordinata)
     nemico.proiettile.ready = SCARICO; // Inizializzazione del proiettile nemico (caricatore)
     nemico.proiettile.riconoscimento = enemy->id; // Inizializzazione del proiettile nemico (ID)
     nemico.coordinata.x = enemy->coordinata.x; // Il nemico inizia da un'ascissa assegnata
     nemico.coordinata.y = enemy->coordinata.y; // Il nemico inizia da un'ordinata assegnata
-    int id = enemy->id; // Il nemico ottiene l'id assegnatogli
+    int id = enemy->id;
+    int vite = 3;
+    int direzione = enemy->angolo;
+    int decremento = 0;
+    enemy->proiettile.id = vite;
+    int *rec = NULL;
+    rec = jump;
+    
+    
+    //questi sono da assegnare fuori dalla funzione
+    //nemico.proiettile.riconoscimento = id; // Inizializzazione del proiettile nemico (ID)
+    //nemico.coordinata.x = x; // Il nemico inizia da un'ascissa assegnata
+    //nemico.coordinata.y = y; // Il nemico inizia da un'ordinata assegnata
+    //nemico.id = id; // Il nemico ottiene l'id assegnatogli
+    // Variabile per rallentare il movimento del nemico
+     // Variabile per rallentare il movimento del nemico
+     // Vite della navicella nemica
+    
+     // Vettore di raccolta informazioni su rimbalzi tra nemici e morti
+    
+
+    //Player nemico; // Inizializzazione del nemico
+     // Il nemico ottiene l'id assegnatogli
     //int rec[ENEM_TEST + 1] = {}; // Vettore di raccolta informazioni su rimbalzi tra nemici e morti
 
 
@@ -235,7 +243,7 @@ void* nemico(void* p_nemico) {
             enemy->coordinata.y = nemico.coordinata.y;
             rec[id + 1] = 0;
             spinlock[id] = 1;
-            napms(20);
+            napms(100);
             //pthread_mutex_unlock(&mutex);
             //while (spinlock[id] != 0){;}
             //pthread_mutex_lock(&mutex);
@@ -318,7 +326,7 @@ void screen_threads(WINDOW *w1, int num_nemici, int rimbalzi, int colore) {
 
     /* Strutture per la gestione dei nemici */
     int pr_rec[MAX_PROIETTILI][3];
-    int jump[ENEM_TEST + 1] = {1}; // Array per invio info su rimbalzi uccisioni
+    
     int kill_pr[ENEM_TEST] = {0};
     int maxenemies = num_nemici; ///* personalizzabile Numero di nemici in schermo
     //int arrint[num_nemici][7]; // Contiene alcune info da inviare ai nemici(tra cui il salto e l'uccisione)
@@ -364,14 +372,14 @@ void screen_threads(WINDOW *w1, int num_nemici, int rimbalzi, int colore) {
         //aggiornamento info da inviare ai processi
         //la memoria è condivisa,quindi possiamo passare direttamente
         // il puntatore all'array
-        p_nemico.enemy = &arr[i];
+        //p_nemico.enemy = &arr[i];
         arr[i].coordinata.x = maxx - 4-i;
         arr[i].coordinata.y = i*2;
         arr[i].id = i;
         arr[i].angolo = direzione;
         mvwprintw(w1,11+i,10,"lanciato %d,%d,%d,%d,nemici:%d",i,arr[i].coordinata.x,arr[i].coordinata.y,arr[i].id,maxenemies);
         wrefresh(w1);
-        pthread_create(&t_nemico[i],NULL,nemico,(void *)&p_nemico);
+        pthread_create(&t_nemico[i],NULL,nemico,(void *)&arr[i]);
         ++i;
     }
     //mvwprintw(w1,11+i,10,"DONE");
