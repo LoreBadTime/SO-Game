@@ -17,7 +17,7 @@ static int spinlock[ENEM_TEST] = {};
  * int x = Ascissa del proiettile.
  * int y = Ordinata del proiettile.
  * int direzione = Direzione del proiettile. */
-void* lancia_proiettili(void* p_proiettile) {
+void* thread_proiettile(void* p_proiettile) {
 
     // cambio di tipo da void
     Bullet *realdata = NULL;
@@ -84,7 +84,7 @@ typedef struct{
  * int x = Ascissa della bomba.
  * int y = Ordinata della bomba.
  * int id = Identificativo della bomba. */
-void* bomba(void* p_bomba) {
+void* thread_bomba(void* p_bomba) {
 
     Bullet *bomba = NULL;
 	bomba = (Bullet *)p_bomba;
@@ -126,7 +126,7 @@ void* bomba(void* p_bomba) {
  * Generatore coordinate della nave principale
  *
  * int sys_slownes = Velocità di gioco. */
-void* nave(void *parametro) {
+void* thread_nave(void *parametro) {
     /* Ottenimento risoluzione della finestra */
     int maxy, maxx; // Inizializzazione variabili dello schermo
     getmaxyx(stdscr, maxy, maxx); // Funzione di ottenimento della risoluzione
@@ -185,7 +185,7 @@ typedef struct{
  * int y = Ordinata del nemico.
  * int id = Identificativo del nemico (per organizzazione).
  * int direzione = Direzione di partenza del nemico. */
-void* nemico(void* p_nemico) {
+void* thread_nemico(void* p_nemico) {
     
 
     /* Ottenimento risoluzione della finestra */
@@ -300,7 +300,7 @@ void* nemico(void* p_nemico) {
  * Area di gioco dove verranno gestite stampa e collisioni
  *
  * WINDOW* w1 : Finestra di stampa. */
-void screen_threads(WINDOW *w1, int num_nemici, int rimbalzi, int colore) {
+void screen_threads(WINDOW *w1, int num_nemici, int vite, int colore) {
     werase(w1);
     /* Ottenimento risoluzione della finestra */
     int maxy, maxx; // Inizializzazione variabili dello schermo
@@ -315,7 +315,7 @@ void screen_threads(WINDOW *w1, int num_nemici, int rimbalzi, int colore) {
 
     /* Struttura per la gestione del player */
     Player player; // Inizializzazione struttura player
-    int life = 3; ///* personalizzabile Vite del giocatore
+    int life = vite; ///* personalizzabile Vite del giocatore
     int hit; // Flag se la navetta principale è stata colpita
     int flag_proiettile_ready = 0; // Flag, indica se il proiettile è pronto ad essere sparato o meno
     int invincibility = 0; // Flag e durata di invincibilità
@@ -355,7 +355,7 @@ void screen_threads(WINDOW *w1, int num_nemici, int rimbalzi, int colore) {
     parametro_nemico p_nemico = {}; //= //malloc(sizeof(parametro_nemico));
 
     /* Inizio del gioco */
-    pthread_create(&t_nave, NULL, nave, (void *)&player);
+    pthread_create(&t_nave, NULL, thread_nave, (void *)&player);
     //exit(1);
     p_nemico.jump = jump;
     i = 0;
@@ -373,7 +373,7 @@ void screen_threads(WINDOW *w1, int num_nemici, int rimbalzi, int colore) {
         arr[i].angolo = direzione;
         mvwprintw(w1,11+i,10,"lanciato %d,%d,%d,%d,nemici:%d",i,arr[i].coordinata.x,arr[i].coordinata.y,arr[i].id,maxenemies);
         wrefresh(w1);
-        pthread_create(&t_nemico[i],NULL,nemico,(void *)&arr[i]);
+        pthread_create(&t_nemico[i],NULL,thread_nemico,(void *)&arr[i]);
     }
     //mvwprintw(w1,11+i,10,"DONE");
     //wrefresh(w1);
@@ -418,13 +418,13 @@ void screen_threads(WINDOW *w1, int num_nemici, int rimbalzi, int colore) {
             proiettili[0].id = 0;
             proiettili[0].x = player.coordinata.x;
             proiettili[0].y = player.coordinata.y;
-            pthread_create(&proiettile_alto,NULL,lancia_proiettili,(void *)&proiettili[0]);
+            pthread_create(&proiettile_alto,NULL,thread_proiettile,(void *)&proiettili[0]);
 
             
             proiettili[1].id = 1;
             proiettili[1].x = player.coordinata.x;
             proiettili[1].y = player.coordinata.y;
-            pthread_create(&proiettile_basso,NULL,lancia_proiettili,(void *)&proiettili[1]);            //pthread_join(proiettile_basso,NULL);
+            pthread_create(&proiettile_basso,NULL,thread_proiettile,(void *)&proiettili[1]);            //pthread_join(proiettile_basso,NULL);
             pthread_mutex_unlock(&mutex);
         }
 
@@ -442,7 +442,7 @@ void screen_threads(WINDOW *w1, int num_nemici, int rimbalzi, int colore) {
                 bombe[i].x = arr[i].coordinata.x;
                 bombe[i].y = arr[i].coordinata.y;
                 bombe[i].id = arr[i].proiettile.riconoscimento;
-                pthread_create(&t_bomba,NULL,bomba,(void*)&bombe[i]);
+                pthread_create(&t_bomba,NULL,thread_bomba,(void*)&bombe[i]);
                 //pthread_join(t_bomba,NULL);
             }
         }*/
