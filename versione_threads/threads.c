@@ -5,6 +5,10 @@ typedef struct{
     Bullet *bullet;
     WINDOW *w;
 } parametro_proiettile;
+
+sem_t semaph;
+sem_t unlock[ENEM_TEST];
+
 static int spinlock[ENEM_TEST] = {};
 /**
  * Generatore coordinate del proiettile principale
@@ -179,7 +183,7 @@ void* nemico(void* p_nemico) {
 
     /* Ottenimento risoluzione della finestra */
 
-    pthread_mutex_lock(&mutex);
+    //pthread_mutex_lock(&mutex);
     int maxy, maxx; // Inizializzazione variabili dello schermo
     getmaxyx(stdscr, maxy, maxx); // Funzione di ottenimento della risoluzione
     //srand(time(NULL)); // Inizializzazione del motore generatore di numeri casuali
@@ -198,7 +202,7 @@ void* nemico(void* p_nemico) {
     //nemico.coordinata.y = y; // Il nemico inizia da un'ordinata assegnata
     //nemico.id = id; // Il nemico ottiene l'id assegnatogli
     int decremento = 0; // Variabile per rallentare il movimento del nemico
-    int skipframe = 20000; // Variabile per rallentare il movimento del nemico
+    int skipframe = 10; // Variabile per rallentare il movimento del nemico
     enemy->proiettile.id = 3; // Vite della navicella nemica
     int *rec = NULL;
     rec = realdata->jump; // Vettore di raccolta informazioni su rimbalzi tra nemici e morti
@@ -226,9 +230,11 @@ void* nemico(void* p_nemico) {
             enemy->coordinata.y = nemico.coordinata.y;
             rec[id + 1] = 0;
             spinlock[id] = 1;
-            pthread_mutex_unlock(&mutex);
+            //pthread_mutex_unlock(&mutex);
+            sem_post(&semaph);
+            sem_wait(&unlock[id]);
             //while (spinlock[id] != 0){;}
-            pthread_mutex_lock(&mutex);
+            //pthread_mutex_lock(&mutex);
             /* Algoritmo per il ritardo di gioco */
             ++decremento; // Viene incrementata la variabile per il rallentamento
             if (decremento == skipframe) { // Se questa è uguale ad un certo numero
@@ -337,6 +343,13 @@ void screen_threads(WINDOW *w1, int num_nemici, int rimbalzi, int colore) {
     parametro_nemico p_nemico = {}; //= //malloc(sizeof(parametro_nemico));
 
     /* Inizio del gioco */
+    sem_init(&semaph, 0, 0);
+    for ( i = 0; i < maxenemies; i++)
+    {
+        sem_init(&unlock[i], 0, 0);
+    }
+    
+
     pthread_create(&t_nave, NULL, nave, (void *)&player);
     //exit(1);
     p_nemico.jump = jump;
@@ -376,20 +389,42 @@ void screen_threads(WINDOW *w1, int num_nemici, int rimbalzi, int colore) {
     //pthread_mutex_unlock(&mutex);
     //pthread_mutex_unlock(&mutex);
     // finche non raggiungo il gameover/vittoria,scrivo lo schermo
+    int old = 0;
+    int tmp = 0;
     while (player_started) {
         
         // Contatore fps
         //sleep(1);
         ++fps;
         start = clock();
+        for (i = 0; i < maxenemies; i++) {
+            sem_getvalue(&unlock[i],&old);
+            mvwprintw(w1,20+i,70,"new%d",old);
+            wrefresh(w1);
+            sleep(3);
+
+        }
+        old = 0;
         i = 0;
-        //while (i < maxenemies)
-        //{
-          //  while (spinlock[i] != 1){;}
-            //mvwprintw(w1,11+i + 1 +fps ,10,"elaborato %d,%d,%d,%d,nemici:%d",arr[i].coordinata.x,arr[i].coordinata.y,arr[i].id,i,maxenemies);
-            //wrefresh(w1);
-            //++i;
-        //}
+        while (i < maxenemies)
+        {
+            mvwprintw(w1,11+i + 1 ,9,"PRE-CHECK%d blocked for %d",i,old);
+            wrefresh(w1);
+            sem_getvalue(&semaph,&i);
+            wrefresh(w1);
+            sleep(3);
+            ++old;
+        }
+        while (i > 0)
+        {
+            sem_wait(&semaph);
+            mvwprintw(w1,11+i + 1,36,"%d",i);
+            mvwprintw(w1,11+i,10,"lanciato %d,%d,%d,%d,nemici:%d",i,arr[i].coordinata.x,arr[i].coordinata.y,arr[i].id,maxenemies);
+            wrefresh(w1);
+            sleep(1);
+            --i;
+        }
+        
 
         
 
@@ -435,7 +470,7 @@ void screen_threads(WINDOW *w1, int num_nemici, int rimbalzi, int colore) {
         //pthread_mutex_lock(&mutex);
 
         werase(w1);
-        pthread_mutex_lock(&mutex);
+        //pthread_mutex_lock(&mutex);
 
         // CONTROLLO COLLISIONI
 
@@ -637,12 +672,18 @@ void screen_threads(WINDOW *w1, int num_nemici, int rimbalzi, int colore) {
          //   spinlock[i] = 0;
         //    ++i;
         //}
-        pthread_mutex_unlock(&mutex);
+        //pthread_mutex_unlock(&mutex);
         //il reset lo possiamo fare direttamente nei nemici
-        /*reset dei rimbalzi,necessario
-        for (i = 1; i < ENEM_TEST + 1; i++) {
-            jump[i] = 0;
-        }*/
+        //*reset dei rimbalzi,necessario
+        for (i = 0; i < maxenemies; i++) {
+            sem_getvalue(&unlock[i],&old);
+            sem_post(&unlock[i]);
+            sem_getvalue(&unlock[i],&tmp);
+            mvwprintw(w1,11+i,70,"final%d:%d",old,tmp);
+            wrefresh(w1);
+            sleep(3);
+
+        }//*/
 
         //riduzione dei nemici
         if (killed) {
