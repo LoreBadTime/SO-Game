@@ -1,6 +1,13 @@
 #include "./threads.h"
 pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER;
 
+    pthread_attr_t thAttr;
+    int policy = 0;
+    int max_policy = 0;
+    int low_policy = 0;
+
+
+
 typedef struct{
     Bullet *bullet;
     WINDOW *w;
@@ -17,6 +24,8 @@ static int spinlock[ENEM_TEST] = {};
  * int x = Ascissa del proiettile.
  * int y = Ordinata del proiettile.
  * int direzione = Direzione del proiettile. */
+void sigint_handler( int signal ){;};
+
 void* lancia_proiettili(void* p_proiettile) {
 
     // cambio di tipo da void
@@ -219,6 +228,9 @@ void* nemico(void* p_nemico) {
     int id = enemy->id; // Il nemico ottiene l'id assegnatogli
     //int rec[ENEM_TEST + 1] = {}; // Vettore di raccolta informazioni su rimbalzi tra nemici e morti
 
+    struct sigaction sa = {0};
+    sa.sa_handler = sigint_handler;
+    sigaction( SIGUSR1, &sa, NULL );
 
     /* Movimento del nemico */
     while (vite) { // Si continua a ciclare finchè le vite del nemico sono uguali a 0.
@@ -232,7 +244,9 @@ void* nemico(void* p_nemico) {
             spinlock[id] = 1;
             //pthread_mutex_unlock(&mutex);
             sem_post(&semaph);
+            //pthread_setschedprio(pthread_self(), max_policy);
             sem_wait(&unlock[id]);
+            //pthread_setschedprio(pthread_self(), low_policy);
             //while (spinlock[id] != 0){;}
             //pthread_mutex_lock(&mutex);
             /* Algoritmo per il ritardo di gioco */
@@ -335,6 +349,9 @@ void screen_threads(WINDOW *w1, int num_nemici, int rimbalzi, int colore) {
     int jumpbox = 5; // Distanza di rimbalzo tra un nemico e un altro
     int hitbox = 2; // Distanza dei caratteri dal centro
     
+
+    //pthread_attr_getschedpolicy(&thAttr, &policy);
+    //max_policy = sched_get_priority_max(policy);
     /* Threads e mutex */
     pthread_t t_nave, t_nemico[ENEM_TEST], t_bomba, proiettile_alto, proiettile_basso;
     // queste non servono
@@ -342,6 +359,11 @@ void screen_threads(WINDOW *w1, int num_nemici, int rimbalzi, int colore) {
     parametro_proiettile p_proiettile = {}; //= malloc(sizeof(parametro_proiettile));
     parametro_nemico p_nemico = {}; //= //malloc(sizeof(parametro_nemico));
 
+
+
+    //pthread_attr_init(&thAttr);
+    //pthread_attr_getschedpolicy(&thAttr, &policy);
+    //max_policy = sched_get_priority_max(policy);
     /* Inizio del gioco */
     sem_init(&semaph, 0, 0);
     for ( i = 0; i < maxenemies; i++)
@@ -349,6 +371,7 @@ void screen_threads(WINDOW *w1, int num_nemici, int rimbalzi, int colore) {
         sem_init(&unlock[i], 0, 0);
     }
     
+    int check_thread = 0;
 
     pthread_create(&t_nave, NULL, nave, (void *)&player);
     //exit(1);
@@ -372,13 +395,15 @@ void screen_threads(WINDOW *w1, int num_nemici, int rimbalzi, int colore) {
         arr[i].coordinata.y = i*2;
         arr[i].id = i;
         arr[i].angolo = direzione;
-        mvwprintw(w1,11+i,10,"lanciato %d,%d,%d,%d,nemici:%d",i,arr[i].coordinata.x,arr[i].coordinata.y,arr[i].id,maxenemies);
+        mvwprintw(w1,11+i,10,"lanciato %d,%d,%d,%d,nemici:%d",i,arr[i].coordinata.x,arr[i].coordinata.y,arr[i].id,check_thread);
         wrefresh(w1);
-        pthread_create(&t_nemico[i],NULL,nemico,(void *)&p_nemico);
+        check_thread += pthread_create(&t_nemico[i],NULL,nemico,(void *)&p_nemico);
         ++i;
     }
-    //mvwprintw(w1,11+i,10,"DONE");
-    //wrefresh(w1);
+
+    mvwprintw(w1,30,10,"THREADS %d",check_thread);
+    wrefresh(w1);
+    sleep(20);
 
     //pthread_mutex_lock(&mutex);
     //wrefresh(w1);
@@ -399,6 +424,8 @@ void screen_threads(WINDOW *w1, int num_nemici, int rimbalzi, int colore) {
         start = clock();
         for (i = 0; i < maxenemies; i++) {
             sem_getvalue(&unlock[i],&old);
+            if(old){pthread_kill( t_nemico[i], SIGUSR1);}
+
             mvwprintw(w1,20+i,70,"new%d",old);
             wrefresh(w1);
             sleep(3);
