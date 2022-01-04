@@ -243,7 +243,7 @@ void* nemico(void* p_nemico) {
             enemy->coordinata.y = nemico.coordinata.y;
             rec[id + 1] = 0;
             spinlock[id] = 1;
-            napms(100);
+            napms(20); ///* PERSONALIZZABILE, VELOCITA NEMICI
             //pthread_mutex_unlock(&mutex);
             //while (spinlock[id] != 0){;}
             //pthread_mutex_lock(&mutex);
@@ -359,28 +359,21 @@ void screen_threads(WINDOW *w1, int num_nemici, int rimbalzi, int colore) {
     //exit(1);
     p_nemico.jump = jump;
     i = 0;
-    for (coordinata = 1; i < maxenemies; coordinata++) {
+    for (coordinata = 1; i < maxenemies; coordinata++,i++) {
         mvwprintw(w1,11+i,2,"lancio %d",coordinata);
         wrefresh(w1);
-        coordinata = (coordinata * 3 * 2); //In modo da avere almeno uno sprite di stacco tra i nemici (Asse y)
+        coordinata = (i * 3 * 2); //In modo da avere almeno uno sprite di stacco tra i nemici (Asse y)
         decremento = coordinata / (maxy - 2); //Ogni volta che si supera il maxy viene decrementata la x
-        if (rimbalzi == 0) {
-            if (decremento % 2 == 0) direzione = !direzione; ///* personalizzabile
-        }
+        if (decremento % 2 == 0) direzione = !direzione; ///* personalizzabile
         y_spawner = coordinata % (maxy - 2); //Si prende il modulo per scegliere la coordinata dello sprite
         decremento = (decremento * 3 * 2); //In modo da avere almeno uno sprite di stacco tra i nemici (Asse x)
-        //aggiornamento info da inviare ai processi
-        //la memoria è condivisa,quindi possiamo passare direttamente
-        // il puntatore all'array
-        //p_nemico.enemy = &arr[i];
-        arr[i].coordinata.x = maxx - 4-i;
-        arr[i].coordinata.y = i*2;
+        arr[i].coordinata.x = maxx - 4 - decremento;
+        arr[i].coordinata.y = y_spawner;
         arr[i].id = i;
         arr[i].angolo = direzione;
         mvwprintw(w1,11+i,10,"lanciato %d,%d,%d,%d,nemici:%d",i,arr[i].coordinata.x,arr[i].coordinata.y,arr[i].id,maxenemies);
         wrefresh(w1);
         pthread_create(&t_nemico[i],NULL,nemico,(void *)&arr[i]);
-        ++i;
     }
     //mvwprintw(w1,11+i,10,"DONE");
     //wrefresh(w1);
@@ -643,7 +636,7 @@ void screen_threads(WINDOW *w1, int num_nemici, int rimbalzi, int colore) {
         if (proiettili[1].y >= 2 && flag_pr[1] == 0) { //In modo da non collidere con la linea separatrice
             mvwaddch(w1, proiettili[1].y, proiettili[1].x, '=');
         }
-        if (flag_pr[0] == 0) {
+        if (proiettili[0].y >= 2 && flag_pr[0] == 0) {
             mvwaddch(w1, proiettili[0].y, proiettili[0].x, '=');
         }
 
@@ -671,8 +664,11 @@ void screen_threads(WINDOW *w1, int num_nemici, int rimbalzi, int colore) {
 
         // controllo FPS
         if (seconds > 1) {
-            mvwprintw(w1, 0, 60, "FPS:%d,Media FPS:%d", fps_counter, (int) (total_fps / seconds));
-        }
+                            wattron(w1, COLOR_PAIR(YEL_BL));
+                            mvwprintw(w1, 0, maxx-25, "FPS:%d  Media FPS:%d", fps_counter, (int) (total_fps / seconds));
+                            wattroff(w1, COLOR_PAIR(YEL_BL));
+                        }
+                        
         wrefresh(w1);
         stop = clock();
         res = res + (double) (stop - start);
@@ -697,4 +693,3 @@ void screen_threads(WINDOW *w1, int num_nemici, int rimbalzi, int colore) {
         game_over(w1, player.coordinata.x, player.coordinata.y);
     }
 }
-
