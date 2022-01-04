@@ -1,7 +1,6 @@
 #include "./globalincludes.h"
 
 void main(){
-    //srand(time(NULL));
 	menu();
 }
 
@@ -54,25 +53,25 @@ void menu() {
     init_pair(DARKRED_BL, GM_LESS_DARKER_RED, COLOR_BLACK); // Carattere: ROSSO SCURO, Sfondo: NERO
 
     /* Flag e coordinate per i menù */
-    int i; // Contatore
+    int i,j,w; // Contatore
+    int cambioframe = 0; // Variabile booleana per cambiare il frame selezionando il numero nemici
     int y_SELECT = (maxy / 2) + 2 + fixscreen; // Ordinate scritta menu principale: Indicativa
     int y_START = (maxy / 2) + 5 + fixscreen; // Ordinate scritta menu principale: START
     int y_SETTINGS = (maxy / 2) + 6 + fixscreen; // Ordinate scritta menu principale: SETTINGS
     int y_EXIT = (maxy / 2) + 8 + fixscreen; // Ordinate scritta menu principale: EXIT
     int y_NUMNEMICI = (maxy / 2); // Ordinate scritta menu settings: NUMERO NEMICI
     int y_COLORE = (maxy / 2) + 2; // Ordinate scritta menu settings: COLORI
-    int y_RIMBALZI = (maxy / 2) + 4; // Ordinate scritta menu settings: RIMBALZI
+    int y_VITE = (maxy / 2) + 4; // Ordinate scritta menu settings: VITE
     int y_EXITSETTINGS = (maxy / 2) + 8; // Ordinate scritta menu settings: EXIT
     int settings; // Flag per attivare il ciclo delle settings
-    int numnemici = 5; // Selezione dei nemici nel menu settings
+    int numnemici = 6; // Selezione dei nemici nel menu settings
     int colore = 0; // Selezione del colore nel menu settings
-    int rimbalzi = 0; // Selezione dei rimbalzi nel menu settings
+    int vite = 3; // Selezione delle vite nel menu settings
     int xbase = (maxx / 2) - 10 + fixscreen; // Ascisse di default per i menu
     Posizione oggetto = {(maxx / 2) - 12 + fixscreen,y_START }; // Puntatore dei menù
     
     /* Stringhe visualizzate */
-    char *rimbalzi_ON = "ON"; // Stringa per i rimbalzi
-    char *rimbalzi_OFF = "OFF"; // Stringa per i rimbalzi
+    char *str_vite = "#";
     char *bianco = "BIANCO"; // Stringa per i colori
     char *ciano = "CIANO"; // Stringa per i colori
     char *rosso = "ROSSO"; // Stringa per i colori
@@ -140,8 +139,8 @@ void menu() {
                     exit(0); // Termina l'esecuzione del programma
                 }
                 if (oggetto.y == y_START) { // Scelta menù = Inizia una partita
-                    //screen(w1,numnemici,rimbalzi,colore); // Funzione area di gioco
-                    screen_threads(w1,numnemici,rimbalzi,colore); // Funzione area di gioco
+                    //screen(w1,numnemici,vite,colore); // Funzione area di gioco
+                    screen_threads(w1,numnemici,vite,colore); // Funzione area di gioco
                     wclear(w1); // Pulizia dello schermo
                 }
                 if (oggetto.y == y_SETTINGS) { // Scelta menù = Impostazioni di gioco
@@ -167,6 +166,39 @@ void menu() {
                         wattron(w1, COLOR_PAIR(WHITE_BLACK)); // Start: BIANCO / NERO
                         mvwprintw(w1, y_NUMNEMICI, xbase + 30, "%d",numnemici);
                         wattroff(w1, COLOR_PAIR(WHITE_BLACK)); // End: BIANCO / NERO
+
+                        for(i=1,j=0,w=0;i<numnemici+1;i++){ // Stampa della quantità di nemici selezionati
+                            if(i<=10) {
+                                wattron(w1, COLOR_PAIR(WHITE_BLACK)); // Start: BIANCO / NERO
+                                if(cambioframe % 2 == 0) {
+                                    printnemicolv1_f1(6 * i, maxy / 5, w1); // Stampa nemici
+                                }
+                                else {
+                                    printnemicolv1_f2(6 * i, maxy / 5, w1); // Stampa nemici
+                                }
+                                wattroff(w1, COLOR_PAIR(WHITE_BLACK)); // End: BIANCO / NERO
+                            } else if (j<10){
+                                j++;
+                                wattron(w1, COLOR_PAIR(YEL_BL)); // Start: BIANCO / NERO
+                                if(cambioframe % 2 == 0) {
+                                    printnemicolv1_f1(6 * j, maxy / 5, w1); // Stampa nemici
+                                }
+                                else {
+                                    printnemicolv1_f2(6 * j, maxy / 5, w1); // Stampa nemici
+                                }
+                                wattroff(w1, COLOR_PAIR(YEL_BL)); // End: BIANCO / NERO
+                            } else if (w<=10){
+                                w++;
+                                wattron(w1, COLOR_PAIR(RED_BL)); // Start: BIANCO / NERO
+                                if(cambioframe % 2 == 0) {
+                                    printnemicolv1_f1(6 * w, maxy / 5, w1); // Stampa nemici
+                                }
+                                else {
+                                    printnemicolv1_f2(6 * w, maxy / 5, w1); // Stampa nemici
+                                }
+                                wattroff(w1, COLOR_PAIR(RED_BL)); // End: BIANCO / NERO
+                            }
+                        }
                         
                         /* Riga opzione - COLORE DELLA NAVE */
                         mvwprintw(w1, y_COLORE, xbase, "Selezionare colore nave:");
@@ -201,29 +233,12 @@ void menu() {
                             wattroff(w1, COLOR_PAIR(YEL_BL));  // End: GIALLO / NERO
                         }
                         
-                        /* Riga opzione - RIMBALZI TRA NEMICI */
-                        mvwprintw(w1, y_RIMBALZI, xbase, "Rimbalzi tra nemici:");
-                        if(rimbalzi == 1) { // Rimbalzi attivati
-                            wattron(w1, COLOR_PAIR(GRE_BL)); // Start: VERDE / NERO
-                            mvwprintw(w1, y_RIMBALZI, xbase + 30, "%s", rimbalzi_ON); // Stampa stringa rimbalzi ON
-                            wattroff(w1, COLOR_PAIR(GRE_BL)); // End: VERDE / NERO
-                            
-                            wattron(w1, COLOR_PAIR(WHITE_BLACK)); // Start: BIANCO / NERO
-                            for(i=1;i<numnemici+1;i++){ // Stampa della quantità di nemici selezionati
-                                printnemicolv1_f1(6*i ,maxy/5,w1); // Stampa nemici
-                            }
-                            wattroff(w1, COLOR_PAIR(WHITE_BLACK)); // End: BIANCO / NERO
-                        }
-                        if(rimbalzi == 0) { // Rimbalzi disattivati
-                            wattron(w1, COLOR_PAIR(RED_BL)); // Start: ROSSO / NERO
-                            mvwprintw(w1, y_RIMBALZI, xbase + 30, "%s", rimbalzi_OFF); // Stampa stringa rimbalzi OFF
-                            wattroff(w1, COLOR_PAIR(RED_BL)); // End: ROSSO / NERO
-                            
-                            wattron(w1, COLOR_PAIR(WHITE_BLACK));  // Start: BIANCO / NERO
-                            for(i=1;i<numnemici+1;i++){ // Stampa della quantità di nemici selezionati
-                                printnemicolv1_f2(6*i ,maxy/5,w1); // Stampa nemici
-                            }
-                            wattroff(w1, COLOR_PAIR(WHITE_BLACK));  // End: BIANCO / NERO
+                        /* Riga opzione - VITE DELLA NAVE */
+                        mvwprintw(w1, y_VITE, xbase, "Numero di vite:");
+                        for(i=0;i<vite;i++) {
+                            wattron(w1, COLOR_PAIR(RED_BL)); // Start: VERDE / NERO
+                            mvwprintw(w1, y_VITE, xbase + 30 + i, "%s", str_vite);
+                            wattroff(w1, COLOR_PAIR(RED_BL)); // End: VERDE / NERO
                         }
                         
                         /* Riga opzione - EXIT */
@@ -237,7 +252,7 @@ void menu() {
                                     oggetto.y = y_NUMNEMICI; // Alla prima opzione
                                     oggetto.x = xbase - 2; // E riprende la x della prima opzione
                                 } else {
-                                    if (oggetto.y == y_RIMBALZI) { // Se passa da rimbalzi, il puntatore:
+                                    if (oggetto.y == y_VITE) { // Se passa da vite, il puntatore:
                                         oggetto.y = y_EXITSETTINGS; // Prende le ordinate di EXIT
                                         oggetto.x = xbase + 8; // Prende le ascisse di EXIT
                                     } else {
@@ -251,8 +266,8 @@ void menu() {
                                     oggetto.x = xbase + 8; // E riprende la x della opzione EXIT
                                 } else {
                                     if (oggetto.y == y_EXITSETTINGS) { // Se passa da EXIT, il puntatore:
-                                        oggetto.y = y_RIMBALZI; // Prende le ordinate di RIMBALZI
-                                        oggetto.x = xbase - 2; // Prende le ascisse di RIMBALZI
+                                        oggetto.y = y_VITE; // Prende le ordinate di VITE
+                                        oggetto.x = xbase - 2; // Prende le ascisse di VITE
                                     } else {
                                         oggetto.y -= 2;  // Aggiornamento ordinata dell'indicatore
                                     }
@@ -264,8 +279,10 @@ void menu() {
                                 if (oggetto.y == y_NUMNEMICI) { // Se il puntatore si trova a NUMERO NEMICI
                                     if(numnemici < ENEM_TEST) { // Se non ha raggiunto il massimo di nemici spawnabili
                                         numnemici++; // Aumenta il numero di nemici
+                                        cambioframe++; // Cambia il frame di visualizzazione dei nemici
                                     } else {
                                         numnemici = 1; // Se ha superato il massimo dei nemici, torna a uno
+                                        cambioframe = 0; // Cambia il frame di visualizzazione dei nemici
                                     }
                                 }
                                 
@@ -278,12 +295,10 @@ void menu() {
                                     }
                                 }
                                 
-                                /* Opzione RIMBALZI */
-                                if (oggetto.y == y_RIMBALZI) { // Se il puntatore si trova a RIMBALZI
-                                    if (rimbalzi == 0) { // Se sono disattivati
-                                        rimbalzi = 1; // Li attiva
-                                    } else {
-                                        rimbalzi = 0; // Altrimenti se sono attivi, li disattiva
+                                /* Opzione VITE */
+                                if (oggetto.y == y_VITE) { // Se il puntatore si trova a VITE
+                                    if(vite != MAX_VITE) { // Se queste non hanno raggiunto il massimo
+                                        vite++; // Ne aggiunge una
                                     }
                                 }
                                 break;
@@ -294,8 +309,10 @@ void menu() {
                                 if (oggetto.y == y_NUMNEMICI) { // Se il puntatore si trova a NUMERO NEMICI
                                     if(numnemici - 1 > 0) {  // Se non ha raggiunto il minimo di nemici spawnabili
                                         numnemici--; // Diminusci il numero di nemici
+                                        cambioframe++; // Cambia il frame di visualizzazione dei nemici
                                     } else {
                                         numnemici = ENEM_TEST; // Se ha superato il minimo dei nemici, torna al massimo
+                                        cambioframe = 0; // Cambia il frame di visualizzazione dei nemici
                                     }
                                 }
 
@@ -308,12 +325,10 @@ void menu() {
                                     }
                                 }
 
-                                /* Opzione RIMBALZI */
-                                if (oggetto.y == y_RIMBALZI) { // Se il puntatore si trova a RIMBALZI
-                                    if (rimbalzi == 1) {  // Se sono attivati
-                                        rimbalzi = 0; // Li disattiva
-                                    } else {
-                                        rimbalzi = 1;  // Altrimenti se sono disattivati, li attiva
+                                /* Opzione VITE */
+                                if (oggetto.y == y_VITE) { // Se il puntatore si trova a VITE
+                                    if(vite != 1) { // Se non hanno raggiunto il minimo
+                                        vite--; // Decrementa le vite
                                     }
                                 }
                                 
