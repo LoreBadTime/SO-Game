@@ -17,7 +17,7 @@
 * 	Il gioco non supporta il cambio di risoluzione a RUN-TIME, quindi una volta avviato si prega di mantenere
 *	  la stessa risoluzione con cui è stato lanciato il programma.
 *
-*   Nonostante sia raro che capiti, onde evitare malfunzionamenti al gioco, se si è desidera avviare il gioco in una risoluzione
+*   Nonostante sia raro che capiti, onde evitare malfunzionamenti al gioco, se si desidera avviare il gioco in una risoluzione
 *   qualsiasi diversa rispetto alla precedente si DEVE riaprire un nuovo terminale PRIMA e DOPO averlo
 *   terminato, in quanto le funzioni di ncurses creano problemi una volta che si passa/torna in una risoluzione maggiore/inferiore.
 *
