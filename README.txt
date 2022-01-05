@@ -1,7 +1,9 @@
 *****************************************************************************************************************************
 *
-*	  Space Inveders - Progetto di Lorenzo Concas e Salvatore Castello
+*	  Space Inveders - Progetto di Lorenzo Vittorio Concas e Salvatore Castello  
 *	
+*    Mail: l.concas16@studenti.unica.it Matricola: 60/61/65951
+*
 * 	Il gioco presenta la versione processi e thread, separate dalle due cartelle con il proprio makefile.
 *   Tutto il gioco è stato sviluppato sullo stesso Sistema Operativo e testato nella stessa Vm indicata dai docenti (64 bit).
 *	
