@@ -41,6 +41,8 @@
 #define LINEA_STACCO 3 // Linea di stacco informazioni/gioco
 #define DELAY_1 100 // Delay per la sincronizzazione processi (Breve)
 #define DELAY_2 200 // Delay per la sincronizzazione processi (Lungo)
+#define DELAY_N 6 // Delay per la sincronizzazione processi nemici
+#define DELAY_N1 20 // Secondo delay per la sincronizzazione processi nemici
 #define INVINCIBILITA 180 // Valore di durata invincibilità
 
 #define GM_LESS_DARKER_RED 9

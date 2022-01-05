@@ -29,6 +29,7 @@ void proiettile(WINDOW* w,int x, int y, int direzione, int *pipe) {
         proiettile.x++; // Il proiettile avanza lungo le ascisse
         
         /* Avanzamento lungo l'asse delle ordinate */
+        // Questa parte di codice serve per dare il movimento diagonale ai nemici
         if ( (proiettile.x % DIAGONALE == 1) && (proiettile.id == PROIETTILE_BASSO) ) {
             ++diagonale; // La diagonale del proiettile viene incrementata ogni "DIAGONALE" x.
         }
@@ -36,7 +37,7 @@ void proiettile(WINDOW* w,int x, int y, int direzione, int *pipe) {
             --diagonale; // La diagonale del proiettile viene decrementata ogni "DIAGONALE" x.
         }
         proiettile.y = y + diagonale; // Viene assegnato il proiettile il valore della navicella + la diagonale.
-        usleep(DELAY_1);
+        usleep(DELAY_1); // Delay per sincronizzazione tra processi
         write(pipe[SCRITTURA], &proiettile, sizeof(Bullet)); // Si comunica la nuova posizione del proiettile
         usleep(DELAY_2); // Delay per la sincronizzazione tra processi
     } while ( (proiettile.x <= maxx-2) || ( (proiettile.y <= maxy-2) && (proiettile.y >= LINEA_STACCO) ) );
@@ -45,7 +46,7 @@ void proiettile(WINDOW* w,int x, int y, int direzione, int *pipe) {
     /* Termine esecuzione proiettile */
     proiettile.x = OUT_OF_RANGE; // L'ascissa del proiettile viene impostata fuori dallo schermo
     proiettile.y = OUT_OF_RANGE; // L'ordinata del proiettile viene impostata fuori dallo schermo
-    write(pipe[SCRITTURA], &proiettile, sizeof(Bullet)); // Si comunica la nuova posizione del proiettile
+    write(pipe[SCRITTURA], &proiettile, sizeof(Bullet)); // Si comunica allo schermo che il processo sta per terminare
     usleep(DELAY_2); // Delay per la sincronizzazione tra processi
     close(pipe[SCRITTURA]); // Chiusura di sicurezza per la pipe in scrittura
 }
@@ -77,7 +78,7 @@ void bomba(WINDOW* w,int x, int y, int id,int *pipe) {
         }else{
             skipframe = 0;
         }
-        usleep(DELAY_1);
+        usleep(DELAY_1);// Delay per la sincronizzazione tra processi
         write(pipe[SCRITTURA], &bomba, sizeof(Bullet)); // Scrittura della struttura sulla pipe
         usleep(DELAY_2);// Delay per la sincronizzazione tra processi
         //napms(ENEM_TEST); // Ritardo per rallentare la bomba nemica
@@ -87,7 +88,7 @@ void bomba(WINDOW* w,int x, int y, int id,int *pipe) {
     /* Termine esecuzione bomba */
     bomba.x = OUT_OF_RANGE; // La bomba nemica ha ora una x fuori dallo schermo
     bomba.ready = BORDO; // Si segnala allo schermo che la bomba ha raggiunto il bordo
-    write(pipe[SCRITTURA], &bomba, sizeof(Bullet)); // Scrittura della struttura sulla pipe
+    write(pipe[SCRITTURA], &bomba, sizeof(Bullet)); // Si comunica allo schermo che il processo sta per terminare
     usleep(DELAY_2);// Si crea un delay per la sincronizzazione
     close(pipe[SCRITTURA]); // Chiusura di sicurezza per la pipe in scrittura
 }
@@ -110,7 +111,7 @@ void nave(int *pipe, int sys_slownes) {
     player.proiettile.x = SCARICO; // Il proiettile non è ancora stato sparato
     player.proiettile.y = SCARICO; // Il proiettile non è ancora stato sparato
     player.proiettile.ready = SCARICO; // Il proiettile non è ancora stato sparato
-    player.id = getpid(); // Si prende il pid del player
+    player.id = getpid(); // Si prende il pid del player,servirà per la terminazione a fine gioco
     int c; // Carattere letto da input tastiera ( Convertito in intero )
 
     timeout(0); //Per non bloccare l'esecuzione del programma dato che si aspetta un input da tastiera
@@ -138,7 +139,7 @@ void nave(int *pipe, int sys_slownes) {
                     break;
             }
         }
-        write(pipe[SCRITTURA], &player, sizeof(Player)); // Si scrive la struttura su un buffer
+        write(pipe[SCRITTURA], &player, sizeof(Player)); // Si invia l'input della tastiera allo schermo
         player.proiettile.ready = SCARICO; // Il proiettile è stato sparato, caricatore SCARICO.
         napms(10); // Delay per la sincronizzazione dei processi
     }
@@ -183,7 +184,7 @@ void nemico(int x,int y,int id,int direzione,int *sender,int *receiver) {
             nemico.angolo = direzione; // Viene scritta la direzione del nemico all'interno della struttura
             write(sender[SCRITTURA], &nemico,sizeof(Player)); // Invio della struttura del nemico
             
-            napms(6); // Delay per la sincronizzazione di processi
+            napms(DELAY_N); // Delay per la sincronizzazione di processi
             
             /* Algoritmo per il ritardo di gioco */
             ++decremento; // Viene incrementata la variabile per il rallentamento
@@ -199,11 +200,11 @@ void nemico(int x,int y,int id,int direzione,int *sender,int *receiver) {
             }
             
             read(receiver[LETTURA], rec, (ENEM_TEST + 1) * sizeof(int)); // Lettura delle info vite/rimbalzi
-            usleep(20); // Delay per la sincronizzazione di processi
+            usleep(DELAY_N1); // Delay per la sincronizzazione di processi
             
             /* Informazioni su rimbalzi e uccisioni */
             if (rec[0] == 0) {  // Codice per terminzaione speciale
-                vite = UCCISA; // La navicella nemica non ha più vite
+                vite = UCCISA; // La navicella nemica perde tutte le vite
             }
             if (rec[id + 1] < 0) { // Se arriva il codice di hit
                 vite += rec[id + 1]; // La navicella nemica perde una vita
@@ -211,10 +212,10 @@ void nemico(int x,int y,int id,int direzione,int *sender,int *receiver) {
             if (vite == 0) { // Se la navicella ha finito le vite
                 nemico.coordinata.y = OUT_OF_RANGE; // Prende una nuova coordinata per uscire dallo schermo
             }
-            // Dall'array jump estrae il suo id, serve per il rimbalzo in caso di collisioni con le navette nemiche
+            // Dall'array jump del processo schermo il nemico estrae il suo id,il dato serve per il rimbalzo in caso di collisioni con le navette nemiche
             if (rec[id + 1] == 1) {
                 direzione = !direzione; // Si cambia la direzione della navicella nemica
-                rec[id + 1] = 0;
+                rec[id + 1] = 0; // Modifica del dato dopo aver modificato la direzione
             }
             
             nemico.proiettile.ready = SCARICO; // La bomba nemica è scarica di default
@@ -222,12 +223,12 @@ void nemico(int x,int y,int id,int direzione,int *sender,int *receiver) {
                 nemico.proiettile.ready = PRONTO; // Viene sparata una nuova bomba
             }
             
-        } // Fine del ciclo di rimbalzo
+        } // Fine del ciclo di rimbalzo tra le y del nemico
 
         nemico.coordinata.x -= (LARGHEZZA * 2); // La navicella nemica avanza finchè non arriva alla x del player
-        direzione = !direzione; // Cambio direzione navicella nemica (per il rimbalzo)
+        direzione = !direzione; // Cambio direzione navicella nemica (per il rimbalzo di y)
 
-        //Incrementi delle coordinate.y per rientrare nel ciclo
+        //Incrementi delle coordinate.y per rientrare nel ciclo di calcolo delle y
         if (nemico.coordinata.y <= LINEA_STACCO) { // Se il nemico ha raggiunto il bordo alto
             nemico.coordinata.y++; // Si incrementa la sua ordinata per rientrare nel ciclo
         }
@@ -236,10 +237,10 @@ void nemico(int x,int y,int id,int direzione,int *sender,int *receiver) {
         }
     }
 
-    // Nel caso in cui arrivi alla fine, per non bloccare le pipes
+    // Nel caso in cui arrivi alla fine il nemico si termina
     close(sender[SCRITTURA]); // Chiusura di sicurezza: lato scrittura della pipe che spedisce
     close(receiver[LETTURA]); // Chiusura di sicurezza lato lettura della pipe che riceve
-    exit(0); // Una volta terminato, si termina il processo
+    exit(0); // Terminazione processo
 }
 
 /**
@@ -274,17 +275,15 @@ void screen(WINDOW *w1, int num_nemici, int vite, int colore) {
     /* Strutture per la gestione dei nemici */
     int jump[ENEM_TEST + 1] = {1}; // Array per invio info su rimbalzi e uccisioni
 
-/* Ogni nemico riceve il suo codice speciale mediante questo array
+/* Ogni nemico riceve il suo codice speciale mediante questo array jump[]
    se un elemento dell'array vale 1 il corrispondente nemico rimbalza
    se l'elemento vale 0 il nemico continua nella sua direzione
-   se un elemento dell'array vale -1 o minori il corrispondente nemico rimbalza
+   se un elemento dell'array vale -1 o minori il corrispondente nemico perde una o più vite
 */
     
-    
-    int kill_pr[ENEM_TEST] = {0}; // Array per uccidere i processi
+    int kill_pr[ENEM_TEST] = {0}; // Array che controlla i processi uccisi
     int maxenemies = num_nemici; // Numero di nemici a schermo
-    //int arrint[num_nemici][7]; // Contiene alcune info da inviare ai nemici(tra cui il salto e l'uccisione)
-    Player arr[ENEM_TEST] = {}; // Contiene le info di tutti i nemici, controllare funzione nemico per più info
+    Player arr[ENEM_TEST] = {}; // Contiene le info di tutti i nemici
     Bullet bombe[MAX_PROIETTILI] = {}; // Contiene le info di tutte le bombe nemiche
     int coordinata; // Variabile per spawnare i nemici all'interno dello schermo
     int decremento; // Variabile per distanziare i nemici all'interno dello schermo al momento di spawn
@@ -312,7 +311,7 @@ void screen(WINDOW *w1, int num_nemici, int vite, int colore) {
     pipe(bullet_p); // Crea la pipe per il processo proiettile
     pipe(playerpipe); // Crea la pipe per il processo navicella principale
     pipe(bomba_p); // Crea la pipe per il processo bomba nemica
-    pid_t nemici, spawn, giocatore, proiett, secondo, bomb; // Variabile per i processi
+    pid_t nemici, spawn, giocatore, proiett, secondo, bomb; // Variabili per i processi
 
     /* Inizio del gioco */
     giocatore = fork();
@@ -325,22 +324,17 @@ void screen(WINDOW *w1, int num_nemici, int vite, int colore) {
             nemici = fork();
             switch (nemici) {
                 case 0:
-                    // Spawner di processi nemici
+                    // Spawner dei processi nemici
                     for (coordinata = 1; coordinata < maxenemies + 1; coordinata++) {
                         spawn = fork();
                         switch (spawn) {
                             case 0: // 2) Processo dei nemici
-                                coordinata = (coordinata * 3 *
-                                              2); //In modo da avere almeno uno sprite di stacco tra i nemici (Asse y)
-                                decremento = coordinata /
-                                             (maxy - 2); //Ogni volta che si supera il maxy viene decrementata la x
-                                    if (decremento % 2 == 0) direzione = !direzione;
-                                y_spawner = coordinata %
-                                            (maxy - 2); //Si prende il modulo per scegliere la coordinata dello sprite
-                                decremento = (decremento * 3 *
-                                              2); //In modo da avere almeno uno sprite di stacco tra i nemici (Asse x)
-                                nemico(maxx - decremento - 4, y_spawner, identificativo, direzione, enemy_receiver,
-                                       enemy_sender);
+                                coordinata = (coordinata * 3 *2); //In modo da avere almeno uno sprite di stacco tra i nemici (Asse y)
+                                decremento = coordinata /(maxy - 2); //Ogni volta che si supera il maxy viene decrementata la x
+                                if (decremento % 2 == 0) direzione = !direzione;
+                                y_spawner = coordinata % (maxy - 2); //Si prende il modulo per scegliere la coordinata dello sprite
+                                decremento = (decremento * 3 *2); //In modo da avere almeno uno sprite di stacco tra i nemici (Asse x)
+                                nemico(maxx - decremento - 4, y_spawner, identificativo, direzione, enemy_receiver,enemy_sender); // Funzione del nemico
                                 exit(-1); // Una volta terminato, esce dall'esecuzione
                                 break;
                             default: // Continua l'esecuzione del programma, incrementando l'id del nemico
@@ -352,8 +346,7 @@ void screen(WINDOW *w1, int num_nemici, int vite, int colore) {
                     break;
                 default: // 3) Processo Area di Gioco
                     wait((int *) 0); // Si aspetta l'avvio dei nemici prima di iniziare la scrittura schermo
-                    signal(SIGCHLD,
-                           SIG_IGN); // Serve per eviatare la creazione di processi zomie quando i figli terminano da soli
+                    signal(SIGCHLD,SIG_IGN); // Serve per eviatare la creazione di processi zomie quando i figli terminano da soli
                     /* Chiusura pipes */
                     close(enemy_receiver[SCRITTURA]);
                     close(enemy_sender[LETTURA]);
@@ -362,10 +355,8 @@ void screen(WINDOW *w1, int num_nemici, int vite, int colore) {
                         // Contatore fps
                         ++fps;
                         start = clock();
-
                         // Si leggono le coordinate del giocatore
                         read(playerpipe[LETTURA], &player, sizeof(Player));
-
                         /*  Lancio dei proiettili navetta in caso di input */
                         if (player.proiettile.ready == PRONTO && num_proiettili == 0) {
                             beep(); // Suono
@@ -382,8 +373,7 @@ void screen(WINDOW *w1, int num_nemici, int vite, int colore) {
                                     exit(0); // Una volta terminato, esce dall'esecuzione
                                     break;
                                 default:
-                                    signal(SIGCHLD,
-                                           SIG_IGN); // Per non creare processi Zombie in caso di autoterminazione
+                                    signal(SIGCHLD,SIG_IGN); // Per non creare processi Zombie in caso di autoterminazione
                                     secondo = fork();
                                     switch (secondo) {
                                         case 0:
