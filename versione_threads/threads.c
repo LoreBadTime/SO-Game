@@ -317,10 +317,10 @@ void screen_threads(WINDOW *w1, int num_nemici, int vite, int colore) {
     for (i = 0; i < num_nemici; i++)
         sem_init(&bomb[i], 0, 0);
 
-    proiettili[1].id = 1;
-    proiettili[0].id = 0;
-    pthread_create(&proiettile_basso, NULL, thread_proiettile, (void *) &proiettili[0]);
-    pthread_create(&proiettile_alto, NULL, thread_proiettile, (void *) &proiettili[1]);
+    proiettili[PROIETTILE_ALTO].id = 1;
+    proiettili[PROIETTILE_BASSO].id = 0;
+    pthread_create(&proiettile_basso, NULL, thread_proiettile, (void *) &proiettili[PROIETTILE_BASSO]);
+    pthread_create(&proiettile_alto, NULL, thread_proiettile, (void *) &proiettili[PROIETTILE_ALTO]);
 
 
     for (i = 0; i < maxenemies; i++) {
@@ -365,8 +365,8 @@ void screen_threads(WINDOW *w1, int num_nemici, int vite, int colore) {
             player.proiettile.ready = SCARICO;
             beep();
             // Flag che segnalano i nemici
-            flag_pr[0] = 0;
-            flag_pr[1] = 0;
+            flag_pr[PROIETTILE_BASSO] = 0;
+            flag_pr[PROIETTILE_ALTO] = 0;
             ++num_proiettili;
             ++num_proiettili;
             p_x = player.coordinata.x;
@@ -397,8 +397,6 @@ void screen_threads(WINDOW *w1, int num_nemici, int vite, int colore) {
         pthread_mutex_lock(&mutex);
 
         // CONTROLLO COLLISIONI
-        for (i = 0; i < num_nemici; i++)
-            mvwprintw(w1, 10 + i, 10, "%d) x_%d, y_%d", bombe[i].id, bombe[i].x, bombe[i].y);
 
         for (i = 0; i < num_nemici; i++) {
             if (arr[i].proiettile.id > 0) {
@@ -503,12 +501,12 @@ void screen_threads(WINDOW *w1, int num_nemici, int vite, int colore) {
              * La seconda condizione copre il cannone della navicella principale
              * Se un proiettile nemico colpisce una di queste 5 coordinate, viene
              * Tolta una vita al giocatore e reso il player invincibile per un certo numero di frame*/
-            for (delta = -2; invincibility == 0 && delta < DIM - 2; delta++) {   // controllo hitbox
+            for (delta = -(LARGHEZZA-1); invincibility == 0 && delta < DIM - (LARGHEZZA-1); delta++) {   // controllo hitbox
                 if ((bombe[i].y == player.coordinata.y + delta &&
-                     bombe[i].x == player.coordinata.x - 4) ||
+                     bombe[i].x == player.coordinata.x - (LARGHEZZA+1)) ||
                     (bombe[i].y == player.coordinata.y &&
                      bombe[i].x == player.coordinata.x)) {
-                    invincibility = 180;
+                    invincibility = INVINCIBILITA;
                     --life;
                     break;
                 }
@@ -521,13 +519,13 @@ void screen_threads(WINDOW *w1, int num_nemici, int vite, int colore) {
         }
 
         // Controllo se i proiettili della navetta sono stati disabilitati,in modo da riabilitarli
-        if (flag_pr[0] == 1 && flag_pr[1] == 1) {  // Clear della pipe finchè i processi non finiscono
+        if (flag_pr[PROIETTILE_BASSO] == 1 && flag_pr[PROIETTILE_ALTO] == 1) {  // Clear della pipe finchè i processi non finiscono
             // Primo proiettile
-            proiettili[0].x = -1;
-            proiettili[0].y = -1;
+            proiettili[PROIETTILE_BASSO].x = OUT_OF_RANGE;
+            proiettili[PROIETTILE_BASSO].y = OUT_OF_RANGE;
             // Secondo proiettile   
-            proiettili[1].x = -1;
-            proiettili[1].y = -1;
+            proiettili[PROIETTILE_ALTO].x = OUT_OF_RANGE;
+            proiettili[PROIETTILE_ALTO].y = OUT_OF_RANGE;
 
         }
 
@@ -567,29 +565,27 @@ void screen_threads(WINDOW *w1, int num_nemici, int vite, int colore) {
             if (arr[i].proiettile.id > 0) {
                 stampanemici(w1, arr[i], fps);
             }
-            //mvwprintw(w1,10+i,20,"%d,%d",arr[i].proiettile.id,arr[i].id);
         }
 
         for (i = 0; i < num_nemici; i++) { //Si controlla se qualche bomba ha raggiunto il bordo
             if (bombe[i].ready == BORDO) { //Se il proiettile è arrivato al massimo
                 num_bombe--; // Si riduce il numero di proiettili
-                //questo non può funzionare,ogni volta che si fa la read questo dato si cancella
                 bombe[i].ready = SCARICO; // La navicella nemica è SCARICA
             }
         }
         // Controllo se sono disabilitati per abilitarli al lancio
-        if ((proiettili[1].x == -1 && proiettili[1].y == -1) &&
-            (proiettili[0].x == -1 && proiettili[0].y == -1) &&
+        if ((proiettili[PROIETTILE_ALTO].x == OUT_OF_RANGE && proiettili[PROIETTILE_ALTO].y == OUT_OF_RANGE) &&
+            (proiettili[PROIETTILE_BASSO].x == OUT_OF_RANGE && proiettili[PROIETTILE_BASSO].y == OUT_OF_RANGE) &&
             (num_proiettili != 0)) {
             --num_proiettili;
             --num_proiettili;
         }
         // Stampa proiettili
-        if (proiettili[1].y >= 2 && flag_pr[1] == 0) { //In modo da non collidere con la linea separatrice
-            mvwaddch(w1, proiettili[1].y, proiettili[1].x, '=');
+        if (proiettili[PROIETTILE_ALTO].y >= 2 && flag_pr[PROIETTILE_ALTO] == 0) { //In modo da non collidere con la linea separatrice
+            mvwaddch(w1, proiettili[PROIETTILE_ALTO].y, proiettili[PROIETTILE_ALTO].x, '=');
         }
-        if (proiettili[0].y >= 2 && flag_pr[0] == 0) {
-            mvwaddch(w1, proiettili[0].y, proiettili[0].x, '=');
+        if (proiettili[PROIETTILE_BASSO].y >= 2 && flag_pr[PROIETTILE_BASSO] == 0) {
+            mvwaddch(w1, proiettili[PROIETTILE_BASSO].y, proiettili[PROIETTILE_BASSO].x, '=');
         }
         if (killed) {
             maxenemies -= killed;
