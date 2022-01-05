@@ -19,10 +19,11 @@
 #define MAX_PROIETTILI 2 // Massimo numero di proiettili sparati ( non modificabile )
 #define pos_X 0
 #define pos_Y 1
+#define OUT_OF_RANGE (-1) // Per far uscire dallo schermo vari oggetti
 #define SU 65 /* Freccia su */
 #define GIU 66 /* Freccia giu */
 #define DIM 5
-#define PRONTO 1 // Segnala se il proiettile è pronto ad essere sparato
+#define PRONTO 1 // Segnala se il proiettile è pronto a essere sparato
 #define LARGHEZZA 3 // Larghezza dello sprite dal suo centro (nel player grande 5 -> 2+(centro)=3)
 #define DIAGONALE 8 // Ogni quante x l'ordinata del proiettile viene incrementata
 #define VIVA 1 // Stato navicella nemica
@@ -32,6 +33,15 @@
 #define PROIETTILE_BASSO 0 //ID del proiettile che avanza verso il basso
 #define PROIETTILE_ALTO 1 //ID del proiettile che avanza verso l'alto
 #define MAX_VITE 10 //Vite massimi selezionabili
+#define LETTURA 0 // Valore pipe in lettura
+#define SCRITTURA 1 // Valore pipe in scrittura
+#define X_START_NAVE 5 // Ascissa iniziale della nave
+#define Y_START_NAVE 10 // Ordinata iniziale della nave
+#define SKIP_FRAME_DELAY 20 // Delay dello skip-frame del nemico
+#define LINEA_STACCO 3 // Linea di stacco informazioni/gioco
+#define DELAY_1 100 // Delay per la sincronizzazione processi (Breve)
+#define DELAY_2 200 // Delay per la sincronizzazione processi (Lungo)
+#define INVINCIBILITA 180 // Valore di durata invincibilità
 
 #define GM_LESS_DARKER_RED 9
 #define GM_MORE_DARKER_RED 10
