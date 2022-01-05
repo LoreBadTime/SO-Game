@@ -380,35 +380,39 @@ void screen_threads(WINDOW *w1, int num_nemici, int vite, int colore) {
             }
         }
 
-        werase(w1);
+        werase(w1);  // Cancellazione dello schermo
+
+        /* -- CONTROLLO COLLISIONI -- */
         pthread_mutex_lock(&mutex);
 
-        // CONTROLLO COLLISIONI
-
+        // Collisioni in cui sono coinvolti i nemici
         for (i = 0; i < num_nemici; i++) {
+            // Pseudo-selectionsort per controllare il rimbalzo in caso di collisioni
             if (arr[i].proiettile.id > 0) {
-                ///*pseudo selectionsort per controllare il rimbalzo in caso di collisioni
                 for (w = i + 1; w < num_nemici; w++) {
+                    /* Modificando Jumpbox si puo modificare il rilevamento di caselle prima di fare il salto
+                    * Si controlla: la distanza tra i due nemici,
+                    * se sono nella stessa x e se sono abbastanza vicine si invia un'info al nemico mediante l'array jump */
+                    
+                    // Controllo se i nemici sono ancora vivi
                     if (arr[w].proiettile.id > 0) {
                         // modificando jumpbox si puo modificare il rilevamento di caselle prima di fare il salto
                         // attenzione a non ridurla troppo altrimenti ci potrbbero essere conflitti di sprite
                         // controllo distanza tra i due nemici,controllo se sono nella stessa x e che siano abbastanza vicine
                         // controllo per evitare i controlli successivi sui nemici già uccisi
                         if (kill_pr[i] == 0 && kill_pr[w] == 0) {
-                            // controllo se hanno la stessa x e se hanno una distanza y che potrebbe collidere nei frame dopo
+                            // Si controlla se hanno la stessa x e una distanza y che potrebbe collidere nei frame dopo
                             if ((abs(abs(arr[i].coordinata.y) - abs(arr[w].coordinata.y)) <= jumpbox) &&
                                 arr[i].coordinata.x ==
                                 arr[w].coordinata.x) {
-                                // controllo la loro posizione e se hanno una direzione che potrebbe collidere
+                                // Si controlla la loro posizione e se hanno una direzione che potrebbe collidere
                                 if ((arr[i].coordinata.y < arr[w].coordinata.y && arr[i].angolo == 0 &&
                                      arr[w].angolo == 1) ||
                                     (arr[i].coordinata.y > arr[w].coordinata.y && arr[i].angolo == 1 &&
                                      arr[w].angolo == 0)) {
-                                    // salvataggio dei processi che necessitano di rimbalzo,usando l'id dei processi stessi
+                                    // Salvataggio dei processi che necessitano di rimbalzo, usando l'id dei processi stessi
                                     jump[arr[w].id + 1] = 1;
                                     jump[arr[i].id + 1] = 1;
-                                    // info di debug
-                                    // mvwprintw(w1, arr[i].id + 3, 30, "Hit");
                                     break;
                                 } else {
                                     // Controllo nel caso in cui alcune sprite hanno la stessa direzione,ma collidono (a seguito di qualche salto di x mentre ci sono già altri nemici nella stessa posizione)
@@ -419,18 +423,14 @@ void screen_threads(WINDOW *w1, int num_nemici, int vite, int colore) {
                                         if (arr[i].coordinata.y < arr[w].coordinata.y) {
                                             if (arr[i].angolo) {
                                                 jump[arr[w].id + 1] = 1;
-                                                //jump[arr[i].id + 1] = 0;
                                             } else {
                                                 jump[arr[i].id + 1] = 1;
-                                                //jump[arr[w].id + 1] = 0;
                                             }
                                         } else {
                                             if (arr[i].angolo) {
                                                 jump[arr[i].id + 1] = 1;
-                                                //jump[arr[w].id + 1] = 0;
                                             } else {
                                                 jump[arr[w].id + 1] = 1;
-                                                //jump[arr[i].id + 1] = 0;
                                             }
                                         }
                                         break;
@@ -441,19 +441,15 @@ void screen_threads(WINDOW *w1, int num_nemici, int vite, int colore) {
                     }
                 }
 
-                //collisione navetta/limite con nemico
-                if ((arr[i].coordinata.x <= 5)
-                    //(arr[i].coordinata.x < player.coordinata.x) &&
-                    // abilitazione delle ix in caso potesse servire
-                    // || abs(arr[i].coordinata.y - player.coordinata.y) < 2 && abs(arr[i].coordinata.x - player.coordinata.x) < 2
-                        ) {
-                    //questo killa definitivamente tutti i nemici,ma serve principalmente in caso di gameover
-                    //jump e usata per inviare info ai processi,in questo caso li killa tutti
+                // Collisione navetta/limite con nemico,GameOver nel caso in cui un nemico arrivi nel limite
+                if ( arr[i].coordinata.x <= 5 ) {
+                    /* Questo ciclo uccide definitivamente tutti i nemici,
+                    * ma serve principalmente in caso di gameover */
                     jump[0] = 0;
-                    player_started = 0;
+                    player_started = 0; // Terminazione gioco
                 }
 
-                //collisione proiettile-navetta_nemica
+                // Collisione proiettile-navetta_nemica
                 for (w = 0; w < MAX_PROIETTILI; ++w) {
                     // Primo controllo se il proiettile è attivo
                     if (flag_pr[proiettili[w].id] == 0 && arr[i].proiettile.id > 0 &&
@@ -477,13 +473,14 @@ void screen_threads(WINDOW *w1, int num_nemici, int vite, int colore) {
             }
         }
 
-        //Se la navetta non è nello stato di invincibilita
+        // Collisioni nave principale con bomba
         for (i = 0; i < num_nemici; i++) {
-            // stampa della bomba
-            wattron(w1, COLOR_PAIR(RED_BL));
+            // Stampa della bomba nemica
+            wattron(w1, COLOR_PAIR(RED_BL)); // Start: ROSSO/NERO
             mvwaddch(w1, bombe[i].y, bombe[i].x, 'O');
-            wattroff(w1, COLOR_PAIR(RED_BL));
-            // controllo collisioni navetta - proiettile nemico
+            wattroff(w1, COLOR_PAIR(RED_BL)); // End: ROSSO/NERO
+            
+            // Controllo collisioni navetta - proiettile nemico
             /* La prima condizione dell'if copre la parte sinistra e destra del cannone
              * La seconda condizione copre il cannone della navicella principale
              * Se un proiettile nemico colpisce una di queste 5 coordinate, viene
@@ -494,16 +491,17 @@ void screen_threads(WINDOW *w1, int num_nemici, int vite, int colore) {
                      bombe[i].x == player.coordinata.x - (LARGHEZZA + 1)) ||
                     (bombe[i].y == player.coordinata.y &&
                      bombe[i].x == player.coordinata.x)) {
-                    invincibility = INVINCIBILITA;
-                    --life;
+                    invincibility = INVINCIBILITA; // Viene impostato un valore/tempo di invincibilità
+                    --life; // Il giocatore perde una vita
                     break;
                 }
             }
         }
-        // Condizione d'uscita
+
+        // Condizione d'uscita: Game over, il giocatore ha finito le vite
         if (life == 0) {
             jump[0] = 0;
-            player_started = 0;
+            player_started = 0; // Si imposta il game-over
         }
 
         // Controllo se i proiettili della navetta sono stati disabilitati,in modo da riabilitarli
@@ -517,73 +515,83 @@ void screen_threads(WINDOW *w1, int num_nemici, int vite, int colore) {
 
         }
 
-        switch (colore) { // stampa navetta colorata
+        // Stampa della nave principale
+        switch (colore) { // Stampa della navetta colorata (in base ai settings)
             case 0: // Bianco
-                wattron(w1, COLOR_PAIR(WHITE_BLACK));
+                wattron(w1, COLOR_PAIR(WHITE_BLACK)); // Start: BIANCO/NERO
                 invincibility = print_nave(invincibility, w1, player.coordinata.x, player.coordinata.y);
-                wattroff(w1, COLOR_PAIR(WHITE_BLACK));
+                wattroff(w1, COLOR_PAIR(WHITE_BLACK)); // End: BIANCO/NERO
                 break;
             case 1: // Ciano
-                wattron(w1, COLOR_PAIR(CY_BL));
+                wattron(w1, COLOR_PAIR(CY_BL)); // Start: CIANO/NERO
                 invincibility = print_nave(invincibility, w1, player.coordinata.x, player.coordinata.y);
-                wattroff(w1, COLOR_PAIR(CY_BL));
+                wattroff(w1, COLOR_PAIR(CY_BL)); // End: CIANO/NERO
                 break;
             case 2: // Rosso
-                wattron(w1, COLOR_PAIR(RED_BL));
+                wattron(w1, COLOR_PAIR(RED_BL));// Start: ROSSO/NERO
                 invincibility = print_nave(invincibility, w1, player.coordinata.x, player.coordinata.y);
-                wattroff(w1, COLOR_PAIR(RED_BL));
+                wattroff(w1, COLOR_PAIR(RED_BL));// End: ROSSO/NERO
                 break;
             case 3: // verde
-                wattron(w1, COLOR_PAIR(GRE_BL));
+                wattron(w1, COLOR_PAIR(GRE_BL));// Start: VERDE/NERO
                 invincibility = print_nave(invincibility, w1, player.coordinata.x, player.coordinata.y);
-                wattroff(w1, COLOR_PAIR(GRE_BL));
+                wattroff(w1, COLOR_PAIR(GRE_BL));// End: VERDE/NERO
                 break;
             case 4: // Giallo
-                wattron(w1, COLOR_PAIR(YEL_BL));
+                wattron(w1, COLOR_PAIR(YEL_BL)); // Start: GIALLO/NERO
                 invincibility = print_nave(invincibility, w1, player.coordinata.x, player.coordinata.y);
-                wattroff(w1, COLOR_PAIR(YEL_BL));
+                wattroff(w1, COLOR_PAIR(YEL_BL)); // End: GIALLO/NERO
                 break;
             default:
                 break;
         }
+        // Stampa info e stati del player
         print_info(num_proiettili == 0, life, w1, maxx, maxy); // Stampa stato del player
 
+        // Stampa delle navicelle nemiche
         for (i = 0; i < num_nemici; i++) {
-            // Stampa delle navicelle nemiche
             if (arr[i].proiettile.id > 0) {
                 stampanemici(w1, arr[i], fps);
             }
         }
 
+        // Flag per il numero di bombe
         for (i = 0; i < num_nemici; i++) { //Si controlla se qualche bomba ha raggiunto il bordo
             if (bombe[i].ready == BORDO) { //Se il proiettile è arrivato al massimo
                 num_bombe--; // Si riduce il numero di proiettili
                 bombe[i].ready = SCARICO; // La navicella nemica è SCARICA
             }
         }
-        // Controllo se sono disabilitati per abilitarli al lancio
+        
+        // Controllo se i proiettili sono disabilitati per abilitarli al lancio
         if ((proiettili[PROIETTILE_ALTO].x == OUT_OF_RANGE && proiettili[PROIETTILE_ALTO].y == OUT_OF_RANGE) &&
             (proiettili[PROIETTILE_BASSO].x == OUT_OF_RANGE && proiettili[PROIETTILE_BASSO].y == OUT_OF_RANGE) &&
             (num_proiettili != 0)) {
+            // Se i proiettili sono arrivati alla fine, si decrementa il numero di proiettili nello schermo
             --num_proiettili;
             --num_proiettili;
         }
-        // Stampa proiettili
+        
+        // Stampa proiettile alto
         if (proiettili[PROIETTILE_ALTO].y >= 2 &&
             flag_pr[PROIETTILE_ALTO] == 0) { //In modo da non collidere con la linea separatrice
             mvwaddch(w1, proiettili[PROIETTILE_ALTO].y, proiettili[PROIETTILE_ALTO].x, '=');
         }
+        
+        //Stampa proiettile basso
         if (proiettili[PROIETTILE_BASSO].y >= 2 && flag_pr[PROIETTILE_BASSO] == 0) {
             mvwaddch(w1, proiettili[PROIETTILE_BASSO].y, proiettili[PROIETTILE_BASSO].x, '=');
         }
+        
+        // Vengono ridotti i nemici per diminuire i cicli
         if (killed) {
             maxenemies -= killed;
-            killed = 0;
+            killed = UCCISA; // Si reimpostano i nemici uccisi a 0
         }
 
         pthread_mutex_unlock(&mutex);
 
-        // controllo FPS
+        // Stampa degli FPS
         if (seconds > 1) {
             wattron(w1, COLOR_PAIR(YEL_BL));
             mvwprintw(w1, 0, maxx - 25, "FPS:%d  Media FPS:%d", fps_counter, (int) (total_fps / seconds));
@@ -592,31 +600,33 @@ void screen_threads(WINDOW *w1, int num_nemici, int vite, int colore) {
 
         mvwprintw(w1, 0, 0, " "); // Per eliminare stampe sbagliate di proiettili
         wrefresh(w1);
-        stop = clock();
+        stop = clock(); // Serve per contare i millisecondi
         res = res + (double) (stop - start);
-        if (res / CLOCKS_PER_SEC * 100 >= 1) {
-            total_fps += fps;
+        if (res / CLOCKS_PER_SEC * 100 >= 1) { // raggiunto un secondo aggiorno il contatore fps
+            total_fps += fps; // incremento media fps
             ++seconds;
-            fps_counter = fps;
-            fps = 0;
+            fps_counter = fps; // aggiornamento fps contati
+            fps = 0; //reset degli fps a schermo
             res = 0;
         }
-        start = 0;
-        stop = 0;
-        // uscita in caso di vittoria
+        start = 0; // Viene resettato il timer orologio: start
+        stop = 0; // Viene resettato il timer orologio: stop
+        
+        // Uscita in caso di vittoria
         if (maxenemies == 0) {
-            player_started = 0;
+            player_started = 0;  // Viene impostato il game_over
         }
     }
-    end = 0;
+    /* Chiusura di tutti i threads */
+    end = 0; // I cicli di ogni thread terminano ed escono
     sem_post(&proj[PROIETTILE_BASSO]);
     sem_post(&proj[PROIETTILE_ALTO]);
     for (i = 0; i < ENEM_TEST; i++)
         sem_post(&bomb[i]);
 
-    if (maxenemies == 0) {
+    if (maxenemies == 0) { // Se i nemici sono finiti, vittoria del giocatore
         victory(w1, player.coordinata.x, player.coordinata.y);
-    } else {
+    } else { // Altrimenti ha perso
         game_over(w1, player.coordinata.x, player.coordinata.y);
     }
     pthread_join(proiettile_basso, (void **) 0);
