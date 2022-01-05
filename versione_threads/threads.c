@@ -79,30 +79,33 @@ void* thread_proiettile(void* p_proiettile) {
  * int id = Identificativo della bomba. */
 void* thread_bomba(void* p_bomba) {
 
-    Bullet *bomba = NULL;
-	bomba = (Bullet *)p_bomba;
+    Bullet *realdata = NULL;
+	realdata = (Bullet *)p_bomba;
+    
+    Bullet bomba;
+    bomba.id = realdata->id;
     /* Struttura della bomba */
 
     int skip = 0; // Variabile per rallentare il movimento della bomba
 
     /* Movimento della bomba */
     while(end) {
-        //sem_wait(&bomb[bomba->id]); ///* causa segmentation fault
-        while (bomba->x >= 0) {
+        sem_wait(&bomb[bomba.id]); ///* causa segmentation fault
+        bomba.x = realdata->x;
+        while (bomba.x >= 0) {
             // Avanza verso il giocatore principale
-            if (skip == skipframe) { // Per valori dispari, la bomba avanza, per valori pari invece, rimane ferma
-                bomba->x--; // La bomba avanza verso il giocatore/schermo sinistro
-                skip = 0;
-            }
+             // Per valori dispari, la bomba avanza, per valori pari invece, rimane ferma
+            bomba.x--; // La bomba avanza verso il giocatore/schermo sinistro
             //napms(ENEM_TEST); // Ritardo per rallentare la bomba nemica
             // Si incrementa la variabile per rallentare la bomba
             ++skip;
+            realdata->x = bomba.x;
             napms(10); ///* a quanto pare se troppo lento non spara bombe(?)
         } //La bomba avanza finchè non raggiunge il bordo sinistro dello schermo
 
         /* Termine esecuzione bomba */
-        bomba->x = -1; // La bomba nemica ha ora una x fuori dallo schermo
-        bomba->ready = BORDO; // Si segnala allo schermo che la bomba ha raggiunto il bordo
+        realdata->x = 0; // La bomba nemica ha ora una x fuori dallo schermo
+        realdata->ready = BORDO; // Si segnala allo schermo che la bomba ha raggiunto il bordo
     }
     pthread_exit(0);
 }
@@ -318,7 +321,7 @@ void screen_threads(WINDOW *w1, int num_nemici, int vite, int colore) {
     int maxenemies = num_nemici; ///* personalizzabile Numero di nemici in schermo
     //int arrint[num_nemici][7]; // Contiene alcune info da inviare ai nemici(tra cui il salto e l'uccisione)
     Player arr[ENEM_TEST] = {}; // Contiene le info di tutti i nemici, controllare funzione nemico per più info
-    Bullet bombe[MAX_PROIETTILI] = {}; // Contiene le info di tutte le bombe nemiche
+    Bullet bombe[ENEM_TEST] = {}; // Contiene le info di tutte le bombe nemiche
     int coordinata; // Variabile per spawnare i nemici all'interno dello schermo
     int decremento; // Variabile per distanziare i nemici all'interno dello schermo al momento di spawn
     int identificativo = 0; // Indentificativo di ogni processo nemico
@@ -345,7 +348,7 @@ void screen_threads(WINDOW *w1, int num_nemici, int vite, int colore) {
     sem_init(&proj[0], 0, 0);
     sem_init(&proj[1], 0, 0);
 
-    for (i = 0; i < maxenemies; i++)
+    for (i = 0; i < ENEM_TEST; i++)
         sem_init(&bomb[i], 0, 0);
 
     proiettili[1].id = 1;
@@ -355,7 +358,8 @@ void screen_threads(WINDOW *w1, int num_nemici, int vite, int colore) {
 
 
     for (i = 0; i < maxenemies; i++) {
-        bombe[i].ready = SCARICO; // Bomba lanciata
+        bombe[i].ready = SCARICO;
+        bombe[i].id = i;// Bomba lanciata
         pthread_create(&t_bombe[i], NULL, thread_bomba, (void *) &bombe[i]); // Disabilita le collisioni per qualche motivo
     }
 
@@ -376,7 +380,7 @@ void screen_threads(WINDOW *w1, int num_nemici, int vite, int colore) {
         arr[i].angolo = direzione;
         jump[i + 1] = 0;
         mvwprintw(w1, 11 + i, 10, "lanciato %d,%d,%d,%d,nemici:%d", i, arr[i].coordinata.x, arr[i].coordinata.y,
-                  arr[i].id, maxenemies);
+        arr[i].id, maxenemies);
         wrefresh(w1);
         pthread_create(&t_nemico[i], NULL, thread_nemico, (void *) &arr[i]);
     }
@@ -409,25 +413,25 @@ void screen_threads(WINDOW *w1, int num_nemici, int vite, int colore) {
         //PUNTO IN CUI I NEMICI HANNO FINITO DI ELABORARE LE COORDINATE,SOSPENSIONE DEI NEMICI
 
         // Processo bomba nemica
-        for (i = 0; i < num_bombe + 1; i++) {
+        for (i = 0; i < ENEM_TEST + 1; i++) {
             // Se è possibile lanciare le bombe
-            pthread_mutex_lock(&mutex);
             if (bombe[i].ready == SCARICO && arr[i].proiettile.ready == PRONTO && num_bombe < MAX_PROIETTILI) {
+                pthread_mutex_lock(&mutex);
                 num_bombe++; // Si aumenta il numero di bombe in gioco
                 bombe[i].ready = 1; // Bomba lanciata
                 bombe[i].x = arr[i].coordinata.x;
                 bombe[i].y = arr[i].coordinata.y;
                 bombe[i].id = arr[i].proiettile.riconoscimento;
                 sem_post(&bomb[i]);
+                pthread_mutex_unlock(&mutex);
             }
-            pthread_mutex_unlock(&mutex);
         }
 
         werase(w1);
         pthread_mutex_lock(&mutex);
 
         // CONTROLLO COLLISIONI
-        for (i = 0; i < maxenemies; i++)
+        for (i = 0; i < ENEM_TEST; i++)
             mvwprintw(w1, 10 + i, 10, "%d) x_%d, y_%d", bombe[i].id, bombe[i].x, bombe[i].y);
 
         for (i = 0; i < ENEM_TEST; i++) {
@@ -499,7 +503,7 @@ void screen_threads(WINDOW *w1, int num_nemici, int vite, int colore) {
                 }
 
                 //collisione proiettile-navetta_nemica
-                for (w = 0; w < num_proiettili; ++w) {
+                for (w = 0; w < MAX_PROIETTILI; ++w) {
                     // Primo controllo se il proiettile è attivo
                     if (flag_pr[proiettili[w].id] == 0 && arr[i].proiettile.id > 0 &&
                         // Controlli hitbox tra proiettile navetta nemica
@@ -523,7 +527,7 @@ void screen_threads(WINDOW *w1, int num_nemici, int vite, int colore) {
         }
 
         //Se la navetta non è nello stato di invincibilita
-        for (i = 0; i < num_bombe; i++) {
+        for (i = 0; i < ENEM_TEST; i++) {
             // stampa della bomba
             wattron(w1, COLOR_PAIR(RED_BL));
             mvwaddch(w1, bombe[i].y, bombe[i].x, 'O');
@@ -600,7 +604,7 @@ void screen_threads(WINDOW *w1, int num_nemici, int vite, int colore) {
             //mvwprintw(w1,10+i,20,"%d,%d",arr[i].proiettile.id,arr[i].id);
         }
 
-        for (i = 0; i < num_bombe; i++) { //Si controlla se qualche bomba ha raggiunto il bordo
+        for (i = 0; i < ENEM_TEST; i++) { //Si controlla se qualche bomba ha raggiunto il bordo
             if (bombe[i].ready == BORDO) { //Se il proiettile è arrivato al massimo
                 num_bombe--; // Si riduce il numero di proiettili
                 //questo non può funzionare,ogni volta che si fa la read questo dato si cancella
