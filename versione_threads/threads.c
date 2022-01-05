@@ -70,7 +70,7 @@ void* thread_proiettile(void* p_proiettile) {
         realdata->y = y; // Viene assegnato il proiettile il valore della navicella + la diagonale.
         realdata->x = proiettile.x;
         //pthread_mutex_unlock(&mutex);
-        napms(20);
+        napms(5);
     } while ( (proiettile.x <= maxx-2) || ( (proiettile.y <= maxy-2) && (proiettile.y >= 3) ) );
     /* Il proiettile avanza finché non raggiunge la fine dello schermo */
     //pthread_mutex_lock(&mutex);
@@ -243,10 +243,9 @@ void* thread_nemico(void* p_nemico) {
 
 
     /* Movimento del nemico */
-    while (vite) { // Si continua a ciclare finchè le vite del nemico sono uguali a 0.
-        while (nemico.coordinata.y >= 4 && nemico.coordinata.y <= maxy - 3) { // Ciclo del rimbalzo dei nemici
+    while (enemy->proiettile.id) { // Si continua a ciclare finchè le vite del nemico sono uguali a 0.
+        while (nemico.coordinata.y >= 4 && nemico.coordinata.y <= maxy - 3 && enemy->proiettile.id) { // Ciclo del rimbalzo dei nemici
 
-            enemy->proiettile.id = vite;
             enemy->angolo = direzione; // Viene scritta la direzione del nemico all'interno della struttura
             enemy->coordinata.x = nemico.coordinata.x; // Il nemico inizia da un'ascissa assegnata
             enemy->coordinata.y = nemico.coordinata.y;
@@ -270,19 +269,20 @@ void* thread_nemico(void* p_nemico) {
             }
             /* Informazioni su rimbalzi e uccisioni */
             if (rec[0] == 0) {  // Codice per terminzaione speciale
-                vite = 0; // La navicella nemica non ha più vite
+                enemy->proiettile.id = 0; // La navicella nemica non ha più vite
             }
-            if (rec[id + 1] < 0) {
-                vite += rec[id + 1]; // La navicella nemica perde una vita
-            }
-            if (vite == 0) { // Se la navicella ha finito le vite
-                nemico.coordinata.y = -1; // Prende una nuova coordinata per uscire dallo schermo
-            }
-            // dall'array estrae il suo id,serve per il rimbalzo in caso di collisioni con le navette nemiche
             if (rec[id + 1] == 1) {
                 direzione = !direzione; // Si cambia la direzione della navicella nemica
                 rec[id + 1] = 0;
             }
+            //if (rec[id + 1] < 0) {
+            //    vite += rec[id + 1]; // La navicella nemica perde una vita
+            //}
+            if (enemy->proiettile.id == 0) { // Se la navicella ha finito le vite
+                nemico.coordinata.y = -1; // Prende una nuova coordinata per uscire dallo schermo
+            }
+            // dall'array estrae il suo id,serve per il rimbalzo in caso di collisioni con le navette nemiche
+            
             
             nemico.proiettile.ready = SCARICO; // La bomba nemica è scarica di default
             if (nemico.proiettile.x == -1 && rand() % 2 == 1) { // Se la bomba non è nello schermo e arriva segnale
@@ -303,6 +303,8 @@ void* thread_nemico(void* p_nemico) {
             nemico.coordinata.y--; // Si decrementa la sua ordinata per rientrare nel ciclo
         }
     }
+    enemy->coordinata.y = -1;
+    enemy->coordinata.x = -1;
 }
 
 /**
@@ -369,8 +371,8 @@ void screen_threads(WINDOW *w1, int num_nemici, int vite, int colore) {
 
     proiettili[1].id = 1;
     proiettili[0].id = 0;
-    pthread_create(&proiettile_basso,NULL,lancia_proiettili,(void *)&proiettili[0]);
-    pthread_create(&proiettile_alto,NULL,lancia_proiettili,(void *)&proiettili[1]);
+    pthread_create(&proiettile_basso,NULL,thread_proiettile,(void *)&proiettili[0]);
+    pthread_create(&proiettile_alto,NULL,thread_proiettile,(void *)&proiettili[1]);
 
     pthread_create(&t_nave, NULL, thread_nave, (void *)&player);
     //exit(1);
@@ -467,9 +469,11 @@ void screen_threads(WINDOW *w1, int num_nemici, int vite, int colore) {
 
         // CONTROLLO COLLISIONI
 
-        for (i = 0; i < maxenemies; i++) {
+        for (i = 0; i < ENEM_TEST; i++) {
+            if(arr[i].proiettile.id > 0){
             ///*pseudo selectionsort per controllare il rimbalzo in caso di collisioni
-            for (w = i + 1; w < maxenemies; w++) {
+            for (w = i + 1; w < ENEM_TEST; w++) {
+                if(arr[w].proiettile.id > 0){
                 // modificando jumpbox si puo modificare il rilevamento di caselle prima di fare il salto
                 // attenzione a non ridurla troppo altrimenti ci potrbbero essere conflitti di sprite
                 // controllo distanza tra i due nemici,controllo se sono nella stessa x e che siano abbastanza vicine
@@ -518,6 +522,7 @@ void screen_threads(WINDOW *w1, int num_nemici, int vite, int colore) {
 
                     }
                 }
+                }
             }
             //collisione navetta/limite con nemico
             if ((arr[i].coordinata.x <= 5)
@@ -534,7 +539,7 @@ void screen_threads(WINDOW *w1, int num_nemici, int vite, int colore) {
             //collisione proiettile-navetta_nemica
             for (w = 0; w < num_proiettili; ++w) {
                 // Primo controllo se il proiettile è attivo
-                if (flag_pr[proiettili[w].id] == 0 &&
+                if (flag_pr[proiettili[w].id] == 0 && arr[i].proiettile.id > 0 &&
                     // Controlli hitbox tra proiettile navetta nemica
                     (proiettili[w].x - arr[i].coordinata.x < hitbox &&
                      proiettili[w].x - arr[i].coordinata.x >= 0) &&
@@ -542,15 +547,16 @@ void screen_threads(WINDOW *w1, int num_nemici, int vite, int colore) {
                       -hitbox < proiettili[w].y - arr[i].coordinata.y) ||
                      (-hitbox < proiettili[w].y - arr[i].coordinata.y &&
                       hitbox > proiettili[w].y - arr[i].coordinata.y))) {
-                    jump[arr[i].id + 1] = -1; // invio hit al nemico
+                    --arr[i].proiettile.id; // invio hit al nemico
                     flag_pr[proiettili[w].id] = 1; // disabilitazione proiettile
                     
                     // serve per ridurre i nemici nei vari counter
-                    if (arr[i].proiettile.id == 1) {
+                    if (arr[i].proiettile.id == 0) {
                         ++killed;
                         kill_pr[arr[i].id] = 1;
                     }
                 }
+            }
             }
         }
 
@@ -630,9 +636,11 @@ void screen_threads(WINDOW *w1, int num_nemici, int vite, int colore) {
         }
         print_info(num_proiettili == 0, life, w1, maxx, maxy);// stampa stato del player
 
-        for (i = 0; i < maxenemies; i++) {
+        for (i = 0; i < ENEM_TEST; i++) {
             // Stampa delle navicelle nemiche
-            stampanemici(w1, arr[i], fps);
+            if(arr[i].proiettile.id > 0 ){
+            stampanemici(w1, arr[i], fps);}
+            //mvwprintw(w1,10+i,20,"%d,%d",arr[i].proiettile.id,arr[i].id);
         }
         
         for (i = 0; i < num_bombe; i++) { //Si controlla se qualche bomba ha raggiunto il bordo
@@ -655,6 +663,10 @@ void screen_threads(WINDOW *w1, int num_nemici, int vite, int colore) {
         }
         if (proiettili[0].y >= 2 && flag_pr[0] == 0) {
             mvwaddch(w1, proiettili[0].y, proiettili[0].x, '=');
+        }
+        if (killed) {
+            maxenemies -= killed;
+            killed = 0;
         }
         //sem_getvalue(&proj[1],&i);
         //mvwprintw(w1,20,15,"x:%d,y:%d,i:%d",proiettili[1].y, proiettili[1].x,i);
@@ -679,10 +691,7 @@ void screen_threads(WINDOW *w1, int num_nemici, int vite, int colore) {
         }*/
 
         //riduzione dei nemici
-        if (killed) {
-            maxenemies -= killed;
-            killed = 0;
-        }
+        //*/
 
         // controllo FPS
         if (seconds > 1) {
