@@ -658,12 +658,12 @@ void screen(WINDOW *w1, int num_nemici, int vite, int colore) {
                         
                         // Fine funzione per calcolare gli FPS
                         stop = clock();
-                        res = res + (double) (stop - start);
+                        res = res + (double) (stop - start); // Serve per contare i secondi
                         if (res / CLOCKS_PER_SEC * 100 >= 1) {
-                            total_fps += fps;
+                            total_fps += fps; // incremento media fps
                             ++seconds;
-                            fps_counter = fps;
-                            fps = 0;
+                            fps_counter = fps; // aggiornamento fps contati
+                            fps = 0; //reset degli spa
                             res = 0;
                         }
                         start = 0; // Viene resettato il timer orologio: start
@@ -687,9 +687,10 @@ void screen(WINDOW *w1, int num_nemici, int vite, int colore) {
     // Pulizia processi bombe/proiettili
     while (num_bombe) {
         proiettil.ready = SCARICO;
+        // Lettura continua delle pipes
         do {
             read(bomba_p[LETTURA], &proiettil, sizeof(Bullet));
-        } while (proiettil.ready == BORDO);
+        } while (proiettil.ready == BORDO); // Finché il processo non termina
         --num_bombe;
     }
     while (num_proiettili) {
