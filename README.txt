@@ -14,6 +14,8 @@
 *	
 * 	Il gioco non supporta il cambio di risoluzione a RUN-TIME, quindi una volta avviato si prega di mantenere
 *	  la stessa risoluzione con cui è stato lanciato il programma.
+*   Se si è avviato il gioco in modalità full-screen, una volta terminato, si consiglia di riaprire un nuovo terminale
+*   in quanto le funzioni di ncurses creano problemi una volta che si torna in una risoluzione inferiore.
 *
 *	  Attraverso le impostazioni è possibile scegliere il colore della nave principale, il numero di nemici e le vite.
 *	  Per terminare in qualsiasi momento l'esecuzione del gioco bisogna usare la combinazione di tasti "CTRL + C".
