@@ -248,25 +248,24 @@ void* thread_nemico(void* p_nemico) {
  *
  * WINDOW* w1 : Finestra di stampa. */
 void screen_threads(WINDOW *w1, int num_nemici, int vite, int colore) {
-    werase(w1);
-    end = 1;
-    jump[0] = 1;
+    
     /* Ottenimento risoluzione della finestra */
     int maxy, maxx; // Inizializzazione variabili dello schermo
     getmaxyx(stdscr, maxy, maxx); // Funzione di ottenimento della risoluzione
     wbkgd(w1, COLOR_PAIR(WHITE_BLACK)); // Inizializzazione schermo nero con caratteri bianchi
+    werase(w1); // Refresh dello schermo
     clock_t start, stop; // Variabili per misurare il tempo
-    int fps = 0;
-    int fps_counter = 0;
+    int fps = 0; // Variabile frame per secondo
+    int fps_counter = 0; // Counter per gli fps
     int total_fps = 0; // Media fps
-    int seconds = 0; // secondi totali
-    double res = 0;
+    int seconds = 0; // Secondi totali
+    double res = 0; // Variabile di supporto fps
+    end = 1; // Inizio del programma, i thread non devono terminare
+    jump[0] = 1;
 
     /* Struttura per la gestione del player */
     Player player; // Inizializzazione struttura player
-    int life = vite; ///* personalizzabile Vite del giocatore
-    int hit; // Flag se la navetta principale è stata colpita
-    int flag_proiettile_ready = 0; // Flag, indica se il proiettile è pronto ad essere sparato o meno
+    int life = vite; // Vite del giocatore
     int invincibility = 0; // Flag e durata di invincibilità
     Bullet proiettil; // Struttura di appoggio per la lettura del processo proiettile
     Bullet proiettili[2] = {}; // Struttura per memorizzare i dati dei proiettili
@@ -274,11 +273,8 @@ void screen_threads(WINDOW *w1, int num_nemici, int vite, int colore) {
     int num_proiettili = 0; // Numero di proiettili attualmente in gioco
 
     /* Strutture per la gestione dei nemici */
-    int pr_rec[MAX_PROIETTILI][3];
-
     int kill_pr[ENEM_TEST] = {0};
-    int maxenemies = num_nemici; ///* personalizzabile Numero di nemici in schermo
-    //int arrint[num_nemici][7]; // Contiene alcune info da inviare ai nemici(tra cui il salto e l'uccisione)
+    int maxenemies = num_nemici; // Numero di nemici in schermo
     Player arr[ENEM_TEST] = {}; // Contiene le info di tutti i nemici, controllare funzione nemico per più info
     Bullet bombe[ENEM_TEST] = {}; // Contiene le info di tutte le bombe nemiche
     int coordinata; // Variabile per spawnare i nemici all'interno dello schermo
@@ -291,21 +287,21 @@ void screen_threads(WINDOW *w1, int num_nemici, int vite, int colore) {
     int num_bombe = 0; // Indica il numero di bombe attualmente in gioco
 
     /* Contatori e distanze */
-    int i, j, w; //Contatori vari
+    int i, w; //Contatori vari
     int player_started = 1; // Flag di Game-Start
-    int jumpbox = 5; // Distanza di rimbalzo tra un nemico e un altro
-    int hitbox = 2; // Distanza dei caratteri dal centro
+    int jumpbox = (LARGHEZZA * 2) - 1; // Distanza di rimbalzo tra un nemico e un altro
+    int hitbox = LARGHEZZA - 1; // Distanza dei caratteri dal centro
 
-    /* Threads e mutex */
+    /* Threads ID */
     pthread_t t_nave, t_nemico[ENEM_TEST], t_bomba, proiettile_alto, proiettile_basso, t_bombe[ENEM_TEST];
 
-    /* Inizio del gioco */
-    sem_init(&proj[PROIETTILE_BASSO], 0, 0);
-    sem_init(&proj[PROIETTILE_ALTO], 0, 0);
-
-    for (i = 0; i < num_nemici; i++)
+    /* Inizializzazione semafori */
+    sem_init(&proj[PROIETTILE_BASSO], 0, 0); // Semaforo proiettile basso
+    sem_init(&proj[PROIETTILE_ALTO], 0, 0); // Semaforo proiettile alto
+    for (i = 0; i < num_nemici; i++) // Semaforo per ogni bomba
         sem_init(&bomb[i], 0, 0);
 
+    /* Inizio del gioco */
     proiettili[PROIETTILE_ALTO].id = PROIETTILE_ALTO;
     proiettili[PROIETTILE_BASSO].id = PROIETTILE_BASSO;
     pthread_create(&proiettile_basso, NULL, thread_proiettile, (void *) &proiettili[PROIETTILE_BASSO]);
@@ -327,7 +323,7 @@ void screen_threads(WINDOW *w1, int num_nemici, int vite, int colore) {
         wrefresh(w1);
         coordinata = (i * 3 * 2); //In modo da avere almeno uno sprite di stacco tra i nemici (Asse y)
         decremento = coordinata / (maxy - 2); //Ogni volta che si supera il maxy viene decrementata la x
-        if (decremento % 2 == 0) direzione = !direzione; ///* personalizzabile
+        if (decremento % 2 == 0) direzione = !direzione;
         y_spawner = coordinata % (maxy - 2); //Si prende il modulo per scegliere la coordinata dello sprite
         decremento = (decremento * 3 * 2); //In modo da avere almeno uno sprite di stacco tra i nemici (Asse x)
         arr[i].coordinata.x = maxx - 4 - decremento;
