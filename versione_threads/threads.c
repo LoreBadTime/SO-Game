@@ -153,7 +153,7 @@ void* thread_nave(void *parametro) {
     //player->id = getpid(); // Si prende il pid del player
     int c; // Carattere letto da input tastiera ( Convertito in intero )pthread_mutex_unlock(&mutex);
     
-    timeout(CPU_NAP*10);//timeout per non far andare la CPU al 100%
+    timeout(CPU_NAP);//timeout per non far andare la CPU al 100%
     /* Movimento del player */
     while (end) {
         //usleep(10000); //serve solo per evitare che la CPU vada al 100%
