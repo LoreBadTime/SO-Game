@@ -181,7 +181,7 @@ void* thread_nemico(void* p_nemico) {
     nemico.coordinata.x = enemy->coordinata.x; // Il nemico inizia da un'ascissa assegnata
     nemico.coordinata.y = enemy->coordinata.y; // Il nemico inizia da un'ordinata assegnata
     int *rec = NULL; // Array di supporto per i salti
-    rec = jump; //?
+    rec = jump; // Rec diventa jump
 
 
     /* Movimento del nemico */
@@ -194,8 +194,8 @@ void* thread_nemico(void* p_nemico) {
             enemy->coordinata.x = nemico.coordinata.x; // Il nemico inizia da un'ascissa assegnata
             enemy->coordinata.y = nemico.coordinata.y; // Il nemico inizia da un'ordinata assegnata
             enemy->proiettile.ready = nemico.proiettile.ready; // Si controlla se la bomba è pronta ad essere sparata
-            rec[id + 1] = 0;
-            napms(20);
+            rec[id + 1] = 0; // Reset dei rimbalzi
+            napms(20); // Rallentamento proiettili
 
             /* Algoritmo per il ritardo di gioco */
             ++decremento; // Viene incrementata la variabile per il rallentamento
@@ -261,7 +261,7 @@ void screen_threads(WINDOW *w1, int num_nemici, int vite, int colore) {
     int seconds = 0; // Secondi totali
     double res = 0; // Variabile di supporto fps
     end = 1; // Inizio del programma, i thread non devono terminare
-    jump[0] = 1;
+    jump[0] = 1; // Mantiene i nemici attivi
 
     /* Struttura per la gestione del player */
     Player player; // Inizializzazione struttura player
@@ -273,7 +273,7 @@ void screen_threads(WINDOW *w1, int num_nemici, int vite, int colore) {
     int num_proiettili = 0; // Numero di proiettili attualmente in gioco
 
     /* Strutture per la gestione dei nemici */
-    int kill_pr[ENEM_TEST] = {0};
+    int kill_pr[ENEM_TEST] = {0}; // Segna i nemici uccisi
     int maxenemies = num_nemici; // Numero di nemici in schermo
     Player arr[ENEM_TEST] = {}; // Contiene le info di tutti i nemici, controllare funzione nemico per più info
     Bullet bombe[ENEM_TEST] = {}; // Contiene le info di tutte le bombe nemiche
@@ -389,16 +389,11 @@ void screen_threads(WINDOW *w1, int num_nemici, int vite, int colore) {
             // Pseudo-selectionsort per controllare il rimbalzo in caso di collisioni
             if (arr[i].proiettile.id > 0) {
                 for (w = i + 1; w < num_nemici; w++) {
-                    /* Modificando Jumpbox si puo modificare il rilevamento di caselle prima di fare il salto
-                    * Si controlla: la distanza tra i due nemici,
+                    /* Si controlla: la distanza tra i due nemici,
                     * se sono nella stessa x e se sono abbastanza vicine si invia un'info al nemico mediante l'array jump */
                     
                     // Controllo se i nemici sono ancora vivi
                     if (arr[w].proiettile.id > 0) {
-                        // modificando jumpbox si puo modificare il rilevamento di caselle prima di fare il salto
-                        // attenzione a non ridurla troppo altrimenti ci potrbbero essere conflitti di sprite
-                        // controllo distanza tra i due nemici,controllo se sono nella stessa x e che siano abbastanza vicine
-                        // controllo per evitare i controlli successivi sui nemici già uccisi
                         if (kill_pr[i] == 0 && kill_pr[w] == 0) {
                             // Si controlla se hanno la stessa x e una distanza y che potrebbe collidere nei frame dopo
                             if ((abs(abs(arr[i].coordinata.y) - abs(arr[w].coordinata.y)) <= jumpbox) &&
