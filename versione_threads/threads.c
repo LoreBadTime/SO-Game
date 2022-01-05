@@ -1,20 +1,30 @@
 #include "./threads.h"
+
 pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER;
 
-int jump[ENEM_TEST + 1] = {}; // Array per invio info su rimbalzi uccisioni
+int jump[ENEM_TEST + 1] = {}; // Array per invio info sui rimbalzi
+/* Ogni nemico riceve il suo codice speciale mediante questo array
+   in questa versione l'uso di questo array 
+   è stato ridotto
+   se un elemento dell'array vale 1 il corrispondente nemico rimbalza
+   se l'elemento vale 0 il nemico continua nella sua direzione
+*/
 
-sem_t proj[2];
-sem_t bomb[ENEM_TEST];
+sem_t proj[2]; // Semaforo lanciare i proiettili della navetta
+sem_t bomb[ENEM_TEST]; // Semaforo per lanciare le bombe nemiche
 
+/*         DA ELIMINARE SE NON è USATO
 typedef struct{
     Bullet *bullet;
     WINDOW *w;
 } parametro_proiettile;
+*/
 
-int skipframe = 10;
-int end = 0; 
-int p_x = 0;
-int p_y = 0;
+int skipframe = 10; // Numero di cicli che i nemici saltano prima di spostarsi
+int end = 0; // Variabile globale per terminare tutti i threads alla fine
+
+int p_x = 0; // Variabile x d'aiuto per il lancio dei proiettili della navetta
+int p_y = 0; // Variabily y d'aiuto per il lancio dei proiettili della navetta
 
 /**
  * Generatore coordinate del proiettile principale
@@ -25,7 +35,7 @@ int p_y = 0;
  * int direzione = Direzione del proiettile. */
 void* thread_proiettile(void* p_proiettile) {
 
-    // cambio di tipo da void
+    // Lettura del parametro
     Bullet *realdata = NULL;
     realdata = (Bullet *) p_proiettile;
 
@@ -35,31 +45,30 @@ void* thread_proiettile(void* p_proiettile) {
 
     /* Struttura del proiettile */
     Bullet proiettile; // Inizializzazione struttura del proiettile
-    proiettile.id = realdata->id;
+    proiettile.id = realdata->id; // Ottenimento id del proiettile
 
     int y = 0; // Il proiettile prende le ordinate della navicella principale
     int diagonale = 0; // Diagonale effettuata dal proiettile (ordinate)
-    int skip = 0;
+    int skip = 0; // ?
     /* Movimento del proiettile */
     while (end) {
-        sem_wait(&proj[realdata->id]);
-        proiettile.x = p_x;
-        y = p_y;
+        sem_wait(&proj[realdata->id]); // Attesa lancio proiettile da schermo
+        proiettile.x = p_x; // Ottenimento delle coordinate x della navetta
+        y = p_y; // Ottenimento delle coordinate y della navetta
         do {
             /* Avanzamento lungo l'asse delle ascisse */
-            // Per valori dispari, la bomba avanza, per valori pari invece, rimane ferma
-            proiettile.x++; // La bomba avanza verso il giocatore/schermo sinistro
-            // Il proiettile avanza lungo le ascisse
+            proiettile.x++;
             /* Avanzamento lungo l'asse delle ordinate */
-            if ((proiettile.x % 6 == 1) && (proiettile.id == PROIETTILE_BASSO)) {
+            if ((proiettile.x % DIAGONALE == 1) && (proiettile.id == PROIETTILE_BASSO)) {
                 ++y; // La diagonale del proiettile viene incrementata ogni "DIAGONALE" x.
             }
-            if ((proiettile.x % 6 == 1) && (proiettile.id == PROIETTILE_ALTO)) {
+            if ((proiettile.x % DIAGONALE == 1) && (proiettile.id == PROIETTILE_ALTO)) {
                 --y; // La diagonale del proiettile viene decrementata ogni "DIAGONALE" x.
             }
-            realdata->y = y; // Viene assegnato il proiettile il valore della navicella + la diagonale.
+            /* Scrittura dati nello schermo/dato originale */
+            realdata->y = y; 
             realdata->x = proiettile.x;
-            napms(5);
+            napms(4);// Delay per rallentare i proiettili
         } while (realdata->x > 0 &&
                  ((proiettile.x <= maxx - 2) || ((proiettile.y <= maxy - 2) && (proiettile.y >= 3))));
         /* Il proiettile avanza finché non raggiunge la fine dello schermo */
@@ -100,11 +109,11 @@ void* thread_bomba(void* p_bomba) {
             // Si incrementa la variabile per rallentare la bomba
             ++skip;
             realdata->x = bomba.x;
-            napms(10); ///* a quanto pare se troppo lento non spara bombe(?)
+            napms(30);
         } //La bomba avanza finchè non raggiunge il bordo sinistro dello schermo
 
         /* Termine esecuzione bomba */
-        realdata->x = 0; // La bomba nemica ha ora una x fuori dallo schermo
+        realdata->x = -1; // La bomba nemica ha ora una x fuori dallo schermo
         realdata->ready = BORDO; // Si segnala allo schermo che la bomba ha raggiunto il bordo
     }
     pthread_exit(0);

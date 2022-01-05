@@ -205,13 +205,13 @@ void nemico(int x,int y,int id,int direzione,int *sender,int *receiver) {
             if (rec[0] == 0) {  // Codice per terminzaione speciale
                 vite = UCCISA; // La navicella nemica non ha più vite
             }
-            if (rec[id + 1] < 0) {
+            if (rec[id + 1] < 0) { // Se arriva il codice di hit
                 vite += rec[id + 1]; // La navicella nemica perde una vita
             }
             if (vite == 0) { // Se la navicella ha finito le vite
                 nemico.coordinata.y = OUT_OF_RANGE; // Prende una nuova coordinata per uscire dallo schermo
             }
-            // Dall'array estrae il suo id, serve per il rimbalzo in caso di collisioni con le navette nemiche
+            // Dall'array jump estrae il suo id, serve per il rimbalzo in caso di collisioni con le navette nemiche
             if (rec[id + 1] == 1) {
                 direzione = !direzione; // Si cambia la direzione della navicella nemica
                 rec[id + 1] = 0;
@@ -273,6 +273,14 @@ void screen(WINDOW *w1, int num_nemici, int vite, int colore) {
 
     /* Strutture per la gestione dei nemici */
     int jump[ENEM_TEST + 1] = {1}; // Array per invio info su rimbalzi e uccisioni
+
+/* Ogni nemico riceve il suo codice speciale mediante questo array
+   se un elemento dell'array vale 1 il corrispondente nemico rimbalza
+   se l'elemento vale 0 il nemico continua nella sua direzione
+   se un elemento dell'array vale -1 o minori il corrispondente nemico rimbalza
+*/
+    
+    
     int kill_pr[ENEM_TEST] = {0}; // Array per uccidere i processi
     int maxenemies = num_nemici; // Numero di nemici a schermo
     //int arrint[num_nemici][7]; // Contiene alcune info da inviare ai nemici(tra cui il salto e l'uccisione)
@@ -452,7 +460,7 @@ void screen(WINDOW *w1, int num_nemici, int vite, int colore) {
                                         if ((arr[i].coordinata.y < arr[w].coordinata.y && arr[i].angolo == 0 && arr[w].angolo == 1) ||
                                             (arr[i].coordinata.y > arr[w].coordinata.y && arr[i].angolo == 1 && arr[w].angolo == 0)) {
                                             // Salvataggio dei processi che necessitano di rimbalzo, usando l'id dei processi stessi
-                                            jump[arr[w].id + 1] = 1;
+                                            jump[arr[w].id + 1] = 1; // vedere jump per ulteriori spiegazioni nella dichiarazione di jump
                                             jump[arr[i].id + 1] = 1;
                                             break;
                                         } else {
@@ -502,8 +510,8 @@ void screen(WINDOW *w1, int num_nemici, int vite, int colore) {
                                      (-hitbox < proiettili[w].y - arr[i].coordinata.y &&
                                       hitbox > proiettili[w].y - arr[i].coordinata.y))) {
                                     if (jump[arr[i].id + 1] == 1) {
-                                        jump[arr[i].id + 1] = 0;
-                                    }
+                                        jump[arr[i].id + 1] = 0; // impostazione a zero in caso in cui il nemico deve rimbalzare
+                                    }//la priorità è dell'hit rispetto ai rimbalzi nemici,infatti ad ogni frame i rimbalzi vengono ricalcolati,gli hit
                                     --jump[arr[i].id + 1]; // Invio hit al nemico
                                     flag_pr[proiettili[w].id] = 1; // Disabilitazione proiettile
                                     if (arr[i].proiettile.id == 1) {
