@@ -1,5 +1,27 @@
-Ho creato 2 cartelle separate nel caso in cui potrebbero servire,prendile come cartelle private nel caso in cui ci volessi mettere roba che non vuoi che sia modificata in nessun modo
-
-Nel .gitignore inserisci le cartelle che per comodità non devono essere uploadate
-
-Nel makefile la secoda riga serve per amplificare i colori creabili,per runnare il game basta fare make game,e poi ./game.sh
+*****************************************************************************************************************************
+*
+*	  Space Inveders - Progetto di Lorenzo Concas e Salvatore Castello
+*	
+* 	Il gioco presenta la versione processi e thread, separate dalle due cartelle con il proprio makefile.
+*	
+*	  Il gioco presenta al suo interno una quantità di nemici modificabile nelle impostazioni del gioco stesso
+*	  che vanno da 1 a 30 nemici. Il valore 30 è solo un valore "simbolico", infatti è possibile (ma non consigliato)
+*	  overclockare il numero di nemici presenti, risoluzione permettendo.
+*	
+* 	Il gioco non supporta il cambio di risoluzione a RUN-TIME, quindi una volta avviato si prega di mantenere
+*	  la stessa risoluzione con cui è stato lanciato il programma.
+*
+*	  Attraverso le impostazioni è possibile scegliere il colore della nave principale, il numero di nemici e le vite.
+*	  Per terminare in qualsiasi momento l'esecuzione del gioco bisogna usare la combinazione di tasti "CTRL + C".
+*
+*	  La versione processi presenta una write all'interno della funzione screen(), abbiamo trovato questa funzione
+* 	necessaria per poter implementare i rimbalzi tra i nemici stessi. Oltre ai rimbalzi mandiamo alla funzione anche
+*	  quali nemici devono essere uccisi, tutto nello stesso array.
+* 	Abbiamo preferito utilizzare più pipe per rendere il gioco molto più fluido.
+*
+*   Per la versione thread abbiamo invece usato più semafori e un solo mutex.
+*   Questo ci ha permesso di poter girare il gioco in VM con più di un processore.
+*
+*	  Cordiali saluti e speriamo che il nostro gioco vi piaccia!
+*
+*****************************************************************************************************************************
