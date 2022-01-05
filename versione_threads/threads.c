@@ -12,6 +12,8 @@ typedef struct{
 
 int skipframe = 10;
 int end = 0; 
+int p_x = 0;
+int p_y = 0;
 //static int spinlock[ENEM_TEST] = {};
 /**
  * Generatore coordinate del proiettile principale
@@ -47,11 +49,8 @@ void* thread_proiettile(void* p_proiettile) {
     while (end)
     {
     sem_wait(&proj[realdata->id]);
-    pthread_mutex_lock(&mutex);
-    proiettile.x = realdata->x;
-    y = realdata->y;
-    pthread_mutex_unlock(&mutex);
-
+    proiettile.x = p_x;
+    y = p_y;
     do {
         
         //pthread_mutex_lock(&mutex);
@@ -153,9 +152,11 @@ void* thread_nave(void *parametro) {
     player->proiettile.ready = SCARICO; // Il proiettile non è ancora stato sparato
     //player->id = getpid(); // Si prende il pid del player
     int c; // Carattere letto da input tastiera ( Convertito in intero )pthread_mutex_unlock(&mutex);
-    timeout(0);
+    
+    timeout(CPU_NAP*10);//timeout per non far andare la CPU al 100%
     /* Movimento del player */
     while (end) {
+        //usleep(10000); //serve solo per evitare che la CPU vada al 100%
         c = getch(); // Si aspetta un input da tastiera
         //pthread_mutex_lock(&mutex);
         if (c != ERR) { // Nel caso l'input sia valido
@@ -415,8 +416,11 @@ void screen_threads(WINDOW *w1, int num_nemici, int vite, int colore) {
     // finche non raggiungo il gameover/vittoria,scrivo lo schermo
     while (player_started) {
 
+        usleep(CPU_NAP);//serve solo per non far andare la CPU al 100%(htop),si può rimuovere/commentare;
+
+        
         // Contatore fps
-        //sleep(1);
+
         ++fps;
         start = clock();
         i = 0;
@@ -431,6 +435,7 @@ void screen_threads(WINDOW *w1, int num_nemici, int vite, int colore) {
         
 
         //  Lancio dei proiettili navetta in caso di input 
+        
         if (player.proiettile.ready == PRONTO && num_proiettili == 0) {
             pthread_mutex_lock(&mutex);
             player.proiettile.ready = SCARICO;
@@ -440,10 +445,8 @@ void screen_threads(WINDOW *w1, int num_nemici, int vite, int colore) {
             flag_pr[1] = 0;
             ++num_proiettili;
             ++num_proiettili;
-            proiettili[0].x = player.coordinata.x;
-            proiettili[0].y = player.coordinata.y;
-            proiettili[1].x = player.coordinata.x;
-            proiettili[1].y = player.coordinata.y;
+            p_x = player.coordinata.x;
+            p_y = player.coordinata.y;
             sem_post(&proj[0]);
             sem_post(&proj[1]);
             pthread_mutex_unlock(&mutex);
@@ -596,22 +599,18 @@ void screen_threads(WINDOW *w1, int num_nemici, int vite, int colore) {
         }
 
         // Controllo se i proiettili della navetta sono stati disabilitati,in modo da riabilitarli
-        if (flag_pr[0] == 1 && flag_pr[1] == 1) {  // Clear della pipe finchè i processi non finiscono
+        if (flag_pr[0] == 1) {  // Clear della pipe finchè i processi non finiscono
             // Primo proiettile
-            if (proiettili[0].x != (-1) && proiettili[0].y != -1) {
-                proiettil.x = 0;
-                proiettili[0].x = -1;
-                proiettili[0].y = -1;
-               
-            }
-            // Secondo proiettile
-            if (proiettili[1].x != (-1) && proiettili[1].y != -1) {
-                proiettil.x = 0;
-                proiettili[1].x = -1;
-                proiettili[1].y = -1;
-                
-            }
+            proiettili[0].x = -1;
+            proiettili[0].y = -1;
         }
+            // Secondo proiettile
+        if (flag_pr[1] == 1) {    
+            proiettili[1].x = -1;
+            proiettili[1].y = -1;
+            
+        }
+        
         switch (colore) { // stampa navetta colorata
             case 0: // Bianco
                 wattron(w1, COLOR_PAIR(WHITE_BLACK));
@@ -740,5 +739,7 @@ void screen_threads(WINDOW *w1, int num_nemici, int vite, int colore) {
     {
         pthread_join(t_nemico[i], (void **)0);
     }
+    p_x = 0;
+    p_y = 0;
     
 }

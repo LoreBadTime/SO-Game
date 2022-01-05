@@ -3,6 +3,12 @@
 
 #include "../globalincludes.h"
 
+// macro che serve solo per evitare che la CPU vada al 100 %
+// aumentando questa define si riduce il carico sulla CPU
+// diminuendola invece aumentano le prestazioni,ma l'utilizzo della CPU aumenta 
+
+#define CPU_NAP 10000 
+
 /* Dichiarazioni delle funzioni threads */
 void* thread_proiettile(void* p_proiettile);
 void* thread_bomba(void* p_bomba);
