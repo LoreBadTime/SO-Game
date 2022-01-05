@@ -14,11 +14,13 @@
 *	
 * 	Il gioco non supporta il cambio di risoluzione a RUN-TIME, quindi una volta avviato si prega di mantenere
 *	  la stessa risoluzione con cui è stato lanciato il programma.
-*   Se si è avviato il gioco in modalità full-screen, una volta terminato, si consiglia di riaprire un nuovo terminale
-*   in quanto le funzioni di ncurses creano problemi una volta che si torna in una risoluzione inferiore.
+*   Se si è desidera avviare il gioco in modalità full-screensi consiglia di riaprire un nuovo terminale PRIMA e DOPO averlo
+*   terminato, in quanto le funzioni di ncurses creano problemi una volta che si passa/torna in una risoluzione maggiore/inferiore.
 *
 *	  Attraverso le impostazioni è possibile scegliere il colore della nave principale, il numero di nemici e le vite.
-*	  Per terminare in qualsiasi momento l'esecuzione del gioco bisogna usare la combinazione di tasti "CTRL + C".
+*	  Nonostante sia possibile terminare in qualsiasi momento l'esecuzione del gioco usando la combinazione di tasti "CTRL + C",
+*   sconsigliamo vivamente di farlo, poichè questo potrebbe creare bug critici all'interno del gioco, e di cliccare direttamente
+*   EXIT una volta che si desidera terminare il gioco.
 *
 *	  La versione processi presenta una write all'interno della funzione screen(), abbiamo trovato questa funzione
 * 	necessaria per poter implementare i rimbalzi tra i nemici stessi. Oltre ai rimbalzi mandiamo alla funzione anche
