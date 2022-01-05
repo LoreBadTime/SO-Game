@@ -260,7 +260,7 @@ void screen(WINDOW *w1, int num_nemici, int vite, int colore) {
     int fps = 0; // Variabile frame per secondo
     int fps_counter = 0; // Counter per gli fps
     int total_fps = 0; // Media fps
-    int seconds = 0; // secondi totali
+    int seconds = 0; // Secondi totali
     double res = 0; // Variabile di supporto fps
 
     /* Struttura per la gestione del player */
@@ -479,12 +479,12 @@ void screen(WINDOW *w1, int num_nemici, int vite, int colore) {
                                 }
                             }
 
-                            // Collisione navetta/limite con nemico,GameOver nel caso in cui un nemico arrivi nel limite
+                            // Collisione navetta/limite con nemico, GameOver nel caso in cui un nemico arrivi nel limite
                             if (arr[i].coordinata.x <= 5) {
                                 /* Questo ciclo uccide definitivamente tutti i nemici,
                                  * ma serve principalmente in caso di gameover.
                                  * Jump è usata per inviare info ai processi, in questo caso li uccide tutti */
-                                jump[0] = 0; // Invio odice speciale di autoterminazione 
+                                jump[0] = 0; // Invio codice speciale di autoterminazione 
                                 player_started = 0; // Terminazione gioco
                             }
 
@@ -517,9 +517,9 @@ void screen(WINDOW *w1, int num_nemici, int vite, int colore) {
                         // Collisioni nave principale con bomba
                         for (i = 0; i < num_bombe; i++) {
                             // Stampa della bomba nemica
-                            wattron(w1, COLOR_PAIR(RED_BL)); // Start ROSSO/NERO
+                            wattron(w1, COLOR_PAIR(RED_BL)); // Start: ROSSO/NERO
                             mvwaddch(w1, bombe[i].y, bombe[i].x, 'O');
-                            wattroff(w1, COLOR_PAIR(RED_BL)); // Start ROSSO/NERO
+                            wattroff(w1, COLOR_PAIR(RED_BL)); // End: ROSSO/NERO
 
                             // Controllo collisioni navetta - proiettile nemico
                             /* La prima condizione dell'if copre la parte sinistra e destra del cannone
@@ -656,6 +656,7 @@ void screen(WINDOW *w1, int num_nemici, int vite, int colore) {
                         }
                         
                         wrefresh(w1); // Refresh dello schermo
+                        mvwprintw(w1, 0, 0, " "); // Per eliminare stampe sbagliate di proiettili
                         
                         // Fine funzione per calcolare gli FPS
                         stop = clock();
