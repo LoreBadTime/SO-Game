@@ -1,8 +1,9 @@
 *****************************************************************************************************************************
 *
-*	  Space Inveders - Progetto di Lorenzo Vittorio Concas e Salvatore Castello  
+*	  Space Defender - Progetto di:
 *	
-*    Mail: l.concas16@studenti.unica.it Matricola: 60/61/65951
+*   [60/61/65951] Lorenzo Vittorio Concas   - l.concas16@studenti.unica.it
+*   [60/61/65922] Salvatore Andrea Castello - salvatoreandreacastello@gmail.com / s.castello@studenti.unica.it
 *
 * 	Il gioco presenta la versione processi e thread, separate dalle due cartelle con il proprio makefile.
 *   Tutto il gioco è stato sviluppato sullo stesso Sistema Operativo e testato nella stessa Vm indicata dai docenti (64 bit).
