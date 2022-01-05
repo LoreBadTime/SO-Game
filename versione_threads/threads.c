@@ -357,7 +357,7 @@ void screen_threads(WINDOW *w1, int num_nemici, int vite, int colore) {
     sem_init(&proj[0], 0, 0);
     sem_init(&proj[1], 0, 0);
 
-    for (i = 0; i < ENEM_TEST; i++)
+    for (i = 0; i < num_nemici; i++)
         sem_init(&bomb[i], 0, 0);
 
     proiettili[1].id = 1;
@@ -422,7 +422,7 @@ void screen_threads(WINDOW *w1, int num_nemici, int vite, int colore) {
         //PUNTO IN CUI I NEMICI HANNO FINITO DI ELABORARE LE COORDINATE,SOSPENSIONE DEI NEMICI
 
         // Processo bomba nemica
-        for (i = 0; i < ENEM_TEST + 1; i++) {
+        for (i = 0; i < num_nemici + 1; i++) {
             // Se è possibile lanciare le bombe
             if (bombe[i].ready == SCARICO && arr[i].proiettile.ready == PRONTO && num_bombe < MAX_PROIETTILI) {
                 pthread_mutex_lock(&mutex);
@@ -440,13 +440,13 @@ void screen_threads(WINDOW *w1, int num_nemici, int vite, int colore) {
         pthread_mutex_lock(&mutex);
 
         // CONTROLLO COLLISIONI
-        for (i = 0; i < ENEM_TEST; i++)
+        for (i = 0; i < num_nemici; i++)
             mvwprintw(w1, 10 + i, 10, "%d) x_%d, y_%d", bombe[i].id, bombe[i].x, bombe[i].y);
 
-        for (i = 0; i < ENEM_TEST; i++) {
+        for (i = 0; i < num_nemici; i++) {
             if (arr[i].proiettile.id > 0) {
                 ///*pseudo selectionsort per controllare il rimbalzo in caso di collisioni
-                for (w = i + 1; w < ENEM_TEST; w++) {
+                for (w = i + 1; w < num_nemici; w++) {
                     if (arr[w].proiettile.id > 0) {
                         // modificando jumpbox si puo modificare il rilevamento di caselle prima di fare il salto
                         // attenzione a non ridurla troppo altrimenti ci potrbbero essere conflitti di sprite
@@ -536,7 +536,7 @@ void screen_threads(WINDOW *w1, int num_nemici, int vite, int colore) {
         }
 
         //Se la navetta non è nello stato di invincibilita
-        for (i = 0; i < ENEM_TEST; i++) {
+        for (i = 0; i < num_nemici; i++) {
             // stampa della bomba
             wattron(w1, COLOR_PAIR(RED_BL));
             mvwaddch(w1, bombe[i].y, bombe[i].x, 'O');
@@ -605,7 +605,7 @@ void screen_threads(WINDOW *w1, int num_nemici, int vite, int colore) {
         }
         print_info(num_proiettili == 0, life, w1, maxx, maxy);// stampa stato del player
 
-        for (i = 0; i < ENEM_TEST; i++) {
+        for (i = 0; i < num_nemici; i++) {
             // Stampa delle navicelle nemiche
             if (arr[i].proiettile.id > 0) {
                 stampanemici(w1, arr[i], fps);
@@ -613,7 +613,7 @@ void screen_threads(WINDOW *w1, int num_nemici, int vite, int colore) {
             //mvwprintw(w1,10+i,20,"%d,%d",arr[i].proiettile.id,arr[i].id);
         }
 
-        for (i = 0; i < ENEM_TEST; i++) { //Si controlla se qualche bomba ha raggiunto il bordo
+        for (i = 0; i < num_nemici; i++) { //Si controlla se qualche bomba ha raggiunto il bordo
             if (bombe[i].ready == BORDO) { //Se il proiettile è arrivato al massimo
                 num_bombe--; // Si riduce il numero di proiettili
                 //questo non può funzionare,ogni volta che si fa la read questo dato si cancella
