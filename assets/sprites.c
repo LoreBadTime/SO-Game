@@ -256,7 +256,7 @@ void print_info(int proiettile_pronto,int life,WINDOW *w1,int maxx, int maxy){
     /* Stampa danger zone */
     for(i=2;i<maxy;i++){
         wattron(w1, COLOR_PAIR(DARKRED_BL)); // Start: ROSSO SCURO/NERO
-        mvwaddch(w1,i,8,'|');
+        mvwaddch(w1,i,11,'|');
         wattroff(w1, COLOR_PAIR(DARKRED_BL)); // End: ROSSO SCURO/NERO
     }
 }
