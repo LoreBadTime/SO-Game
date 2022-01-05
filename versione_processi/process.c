@@ -441,8 +441,8 @@ void screen(WINDOW *w1, int num_nemici, int vite, int colore) {
                             for (w = i + 1; w < maxenemies; w++) {
                                 /* Modificando Jumpbox si puo modificare il rilevamento di caselle prima di fare il salto
                                  * Si controlla: la distanza tra i due nemici,
-                                 *               se sono nella stessa x e che siano abbastanza vicine
-                                 * Implementato un controllo per evitare i controlli successivi sui nemici già uccisi */
+                                 * se sono nella stessa x e se sono abbastanza vicine si invia un'info al nemico mediante l'array jump */
+                                // Controllo se i nemici sono ancora vivi
                                 if (kill_pr[i] == 0 && kill_pr[w] == 0) {
                                     // Si controlla se hanno la stessa x e una distanza y che potrebbe collidere nei frame dopo
                                     if ((abs(abs(arr[i].coordinata.y) - abs(arr[w].coordinata.y)) <= jumpbox) && arr[i].coordinata.x == arr[w].coordinata.x) {
@@ -458,7 +458,7 @@ void screen(WINDOW *w1, int num_nemici, int vite, int colore) {
                                              * direzione ma collidono (a seguito di qualche salto di x mentre ci
                                              * sono già altri nemici nella stessa posizione) */
                                             if (((abs(abs(arr[i].coordinata.y) - abs(arr[w].coordinata.y)) <= jumpbox / 2 + 1) && arr[i].angolo == arr[w].angolo)) {
-                                                // In questo caso la collisione necessita di situazioni più specifiche e solo una dovrà rimbalzare
+                                                // In questo caso la collisione necessita di situazioni più specifiche e solo una navicella dovrà rimbalzare
                                                 if (arr[i].coordinata.y < arr[w].coordinata.y) {
                                                     if (arr[i].angolo) {
                                                         jump[arr[w].id + 1] = 1;
@@ -479,20 +479,20 @@ void screen(WINDOW *w1, int num_nemici, int vite, int colore) {
                                 }
                             }
 
-                            // Collisione navetta/limite con nemico
+                            // Collisione navetta/limite con nemico,GameOver nel caso in cui un nemico arrivi nel limite
                             if (arr[i].coordinata.x <= 5) {
                                 /* Questo ciclo uccide definitivamente tutti i nemici,
                                  * ma serve principalmente in caso di gameover.
                                  * Jump è usata per inviare info ai processi, in questo caso li uccide tutti */
-                                jump[0] = 0;
-                                player_started = 0;
+                                jump[0] = 0; // Invio odice speciale di autoterminazione 
+                                player_started = 0; // Terminazione gioco
                             }
 
                             // Collisione proiettile/navetta nemica
                             for (w = 0; w < num_proiettili; ++w) {
                                 // Primo controllo se il proiettile è attivo
                                 if (flag_pr[proiettili[w].id] == 0 &&
-                                    // Controlli hitbox tra proiettile navetta nemica
+                                    // Controlli hitbox tra proiettile e navetta nemica
                                     (proiettili[w].x - arr[i].coordinata.x < hitbox &&
                                      proiettili[w].x - arr[i].coordinata.x >= 0) &&
                                     ((hitbox > proiettili[w].y - arr[i].coordinata.y &&
@@ -501,15 +501,15 @@ void screen(WINDOW *w1, int num_nemici, int vite, int colore) {
                                       hitbox > proiettili[w].y - arr[i].coordinata.y))) {
                                     if (jump[arr[i].id + 1] == 1) {
                                         jump[arr[i].id + 1] = 0; // impostazione a zero in caso in cui il nemico deve rimbalzare
-                                    }//la priorità è dell'hit rispetto ai rimbalzi nemici,infatti ad ogni frame i rimbalzi vengono ricalcolati,gli hit
+                                    }// Devo dare priorità all'hit rispetto ai rimbalzi nemici,infatti ad ogni frame i rimbalzi vengono ricalcolati,gli hit invece no
                                     --jump[arr[i].id + 1]; // Invio hit al nemico
                                     flag_pr[proiettili[w].id] = 1; // Disabilitazione proiettile
                                     if (arr[i].proiettile.id == 1) {
-                                        // Questo ciclo serve per ridurre i nemici nei vari counter
+                                        // Riduzione dei nemici nei vari counter
                                         ++killed;
-                                        kill_pr[arr[i].id] = 1;
+                                        kill_pr[arr[i].id] = 1;// Informazione sul nemico ucciso
                                     }
-                                    --arr[i].proiettile.id;
+                                    --arr[i].proiettile.id; // Simulazione del numero di vite rimaste al nemico
                                 }
                             }
                         }
@@ -545,13 +545,14 @@ void screen(WINDOW *w1, int num_nemici, int vite, int colore) {
 
 
                         // Controllo se i proiettili della navetta sono stati disabilitati, in modo da riabilitarli
-                        if (flag_pr[PROIETTILE_BASSO] == 1 && flag_pr[PROIETTILE_ALTO] == 1) {  // Clear della pipe finchè i processi non finiscono
+                        if (flag_pr[PROIETTILE_BASSO] == 1 && flag_pr[PROIETTILE_ALTO] == 1) {  
                             // Primo proiettile
                             if (proiettili[PROIETTILE_BASSO].x != OUT_OF_RANGE && proiettili[PROIETTILE_BASSO].y != OUT_OF_RANGE) {
                                 proiettil.x = 0;
+                                // Lettura continua del proiettile finchè non si termina da solo
                                 do {
                                     read(bullet_p[LETTURA], &proiettil, sizeof(Bullet));
-                                } while (proiettil.x != OUT_OF_RANGE); // Condizione d'uscita del nemico, dice che è stato terminato
+                                } while (proiettil.x != OUT_OF_RANGE); // Condizione d'uscita del proiettile, ci dice che è stato terminato
                                 proiettili[PROIETTILE_BASSO].x = OUT_OF_RANGE;
                                 proiettili[PROIETTILE_BASSO].y = OUT_OF_RANGE;
                             }
@@ -560,7 +561,7 @@ void screen(WINDOW *w1, int num_nemici, int vite, int colore) {
                                 proiettil.x = 0;
                                 do {
                                     read(bullet_p[LETTURA], &proiettil, sizeof(Bullet));
-                                } while (proiettil.x != OUT_OF_RANGE); // Condizione d'uscita del nemico, dice che è stato terminato
+                                } while (proiettil.x != OUT_OF_RANGE); // Condizione d'uscita del proiettile, ci dice che è stato terminato
                                 proiettili[PROIETTILE_ALTO].x = OUT_OF_RANGE;
                                 proiettili[PROIETTILE_ALTO].y = OUT_OF_RANGE;
                             }
@@ -636,7 +637,7 @@ void screen(WINDOW *w1, int num_nemici, int vite, int colore) {
                             write(enemy_sender[SCRITTURA], jump, (ENEM_TEST + 1) * sizeof(int));
                         }
 
-                        // Vengono resettati i rimbalzi
+                        // Vengono resettati i rimbalzi/hit dei nemici
                         for (i = 1; i < ENEM_TEST + 1; i++) {
                             jump[i] = 0;
                         }
@@ -658,12 +659,12 @@ void screen(WINDOW *w1, int num_nemici, int vite, int colore) {
                         
                         // Fine funzione per calcolare gli FPS
                         stop = clock();
-                        res = res + (double) (stop - start); // Serve per contare i secondi
-                        if (res / CLOCKS_PER_SEC * 100 >= 1) {
+                        res = res + (double) (stop - start); // Serve per contare i millisecondi
+                        if (res / CLOCKS_PER_SEC * 100 >= 1) { // raggiunto un secondo aggiorno il contatore fps
                             total_fps += fps; // incremento media fps
                             ++seconds;
                             fps_counter = fps; // aggiornamento fps contati
-                            fps = 0; //reset degli spa
+                            fps = 0; //reset degli fps a schermo
                             res = 0;
                         }
                         start = 0; // Viene resettato il timer orologio: start
