@@ -424,7 +424,7 @@ void screen_threads(WINDOW *w1, int num_nemici, int vite, int colore) {
         // Processo bomba nemica
         for (i = 0; i < num_nemici + 1; i++) {
             // Se è possibile lanciare le bombe
-            if (bombe[i].ready == SCARICO && arr[i].proiettile.ready == PRONTO && num_bombe < MAX_PROIETTILI) {
+            if (bombe[i].ready == SCARICO && arr[i].proiettile.ready == PRONTO && num_bombe < MAX_PROIETTILI && arr[i].proiettile.id>0) {
                 pthread_mutex_lock(&mutex);
                 num_bombe++; // Si aumenta il numero di bombe in gioco
                 bombe[i].ready = 1; // Bomba lanciata
@@ -647,7 +647,8 @@ void screen_threads(WINDOW *w1, int num_nemici, int vite, int colore) {
             mvwprintw(w1, 0, maxx - 25, "FPS:%d  Media FPS:%d", fps_counter, (int) (total_fps / seconds));
             wattroff(w1, COLOR_PAIR(YEL_BL));
         }
-
+        
+        mvwprintw(w1,0,0," "); // Per eliminare stampe sbagliate di proiettili
         wrefresh(w1);
         stop = clock();
         res = res + (double) (stop - start);
