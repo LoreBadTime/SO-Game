@@ -305,20 +305,16 @@ void screen_threads(WINDOW *w1, int num_nemici, int vite, int colore) {
 
     /* Threads e mutex */
     pthread_t t_nave, t_nemico[ENEM_TEST], t_bomba, proiettile_alto, proiettile_basso, t_bombe[ENEM_TEST];
-    // queste non servono
-    //parametro_bomba p_bomba;  //malloc(sizeof(parametro_bomba));
-    //parametro_proiettile p_proiettile = {}; //= malloc(sizeof(parametro_proiettile));
-    //parametro_nemico p_nemico = {}; //= //malloc(sizeof(parametro_nemico));
 
     /* Inizio del gioco */
-    sem_init(&proj[0], 0, 0);
-    sem_init(&proj[1], 0, 0);
+    sem_init(&proj[PROIETTILE_BASSO], 0, 0);
+    sem_init(&proj[PROIETTILE_ALTO], 0, 0);
 
     for (i = 0; i < num_nemici; i++)
         sem_init(&bomb[i], 0, 0);
 
-    proiettili[PROIETTILE_ALTO].id = 1;
-    proiettili[PROIETTILE_BASSO].id = 0;
+    proiettili[PROIETTILE_ALTO].id = PROIETTILE_ALTO;
+    proiettili[PROIETTILE_BASSO].id = PROIETTILE_BASSO;
     pthread_create(&proiettile_basso, NULL, thread_proiettile, (void *) &proiettili[PROIETTILE_BASSO]);
     pthread_create(&proiettile_alto, NULL, thread_proiettile, (void *) &proiettili[PROIETTILE_ALTO]);
 
@@ -326,7 +322,8 @@ void screen_threads(WINDOW *w1, int num_nemici, int vite, int colore) {
     for (i = 0; i < maxenemies; i++) {
         bombe[i].ready = SCARICO;
         bombe[i].id = i;// Bomba lanciata
-        pthread_create(&t_bombe[i], NULL, thread_bomba, (void *) &bombe[i]); // Disabilita le collisioni per qualche motivo
+        pthread_create(&t_bombe[i], NULL, thread_bomba,
+                       (void *) &bombe[i]); // Disabilita le collisioni per qualche motivo
     }
 
     pthread_create(&t_nave, NULL, thread_nave, (void *) &player);
@@ -346,7 +343,7 @@ void screen_threads(WINDOW *w1, int num_nemici, int vite, int colore) {
         arr[i].angolo = direzione;
         jump[i + 1] = 0;
         mvwprintw(w1, 11 + i, 10, "lanciato %d,%d,%d,%d,nemici:%d", i, arr[i].coordinata.x, arr[i].coordinata.y,
-        arr[i].id, maxenemies);
+                  arr[i].id, maxenemies);
         wrefresh(w1);
         pthread_create(&t_nemico[i], NULL, thread_nemico, (void *) &arr[i]);
     }
@@ -371,8 +368,8 @@ void screen_threads(WINDOW *w1, int num_nemici, int vite, int colore) {
             ++num_proiettili;
             p_x = player.coordinata.x;
             p_y = player.coordinata.y;
-            sem_post(&proj[0]);
-            sem_post(&proj[1]);
+            sem_post(&proj[PROIETTILE_BASSO]);
+            sem_post(&proj[PROIETTILE_ALTO]);
             pthread_mutex_unlock(&mutex);
         }
 
@@ -381,7 +378,8 @@ void screen_threads(WINDOW *w1, int num_nemici, int vite, int colore) {
         // Processo bomba nemica
         for (i = 0; i < num_nemici + 1; i++) {
             // Se è possibile lanciare le bombe
-            if (bombe[i].ready == SCARICO && arr[i].proiettile.ready == PRONTO && num_bombe < MAX_PROIETTILI && arr[i].proiettile.id>0) {
+            if (bombe[i].ready == SCARICO && arr[i].proiettile.ready == PRONTO && num_bombe < MAX_PROIETTILI &&
+                arr[i].proiettile.id > 0) {
                 pthread_mutex_lock(&mutex);
                 num_bombe++; // Si aumenta il numero di bombe in gioco
                 bombe[i].ready = 1; // Bomba lanciata
@@ -449,11 +447,11 @@ void screen_threads(WINDOW *w1, int num_nemici, int vite, int colore) {
                                         break;
                                     }
                                 }
-
                             }
                         }
                     }
                 }
+
                 //collisione navetta/limite con nemico
                 if ((arr[i].coordinata.x <= 5)
                     //(arr[i].coordinata.x < player.coordinata.x) &&
@@ -501,9 +499,10 @@ void screen_threads(WINDOW *w1, int num_nemici, int vite, int colore) {
              * La seconda condizione copre il cannone della navicella principale
              * Se un proiettile nemico colpisce una di queste 5 coordinate, viene
              * Tolta una vita al giocatore e reso il player invincibile per un certo numero di frame*/
-            for (delta = -(LARGHEZZA-1); invincibility == 0 && delta < DIM - (LARGHEZZA-1); delta++) {   // controllo hitbox
+            for (delta = -(LARGHEZZA - 1);
+                 invincibility == 0 && delta < DIM - (LARGHEZZA - 1); delta++) {   // controllo hitbox
                 if ((bombe[i].y == player.coordinata.y + delta &&
-                     bombe[i].x == player.coordinata.x - (LARGHEZZA+1)) ||
+                     bombe[i].x == player.coordinata.x - (LARGHEZZA + 1)) ||
                     (bombe[i].y == player.coordinata.y &&
                      bombe[i].x == player.coordinata.x)) {
                     invincibility = INVINCIBILITA;
@@ -519,7 +518,7 @@ void screen_threads(WINDOW *w1, int num_nemici, int vite, int colore) {
         }
 
         // Controllo se i proiettili della navetta sono stati disabilitati,in modo da riabilitarli
-        if (flag_pr[PROIETTILE_BASSO] == 1 && flag_pr[PROIETTILE_ALTO] == 1) {  // Clear della pipe finchè i processi non finiscono
+        if (flag_pr[PROIETTILE_BASSO] == 1 && flag_pr[PROIETTILE_ALTO] == 1) {
             // Primo proiettile
             proiettili[PROIETTILE_BASSO].x = OUT_OF_RANGE;
             proiettili[PROIETTILE_BASSO].y = OUT_OF_RANGE;
@@ -558,7 +557,7 @@ void screen_threads(WINDOW *w1, int num_nemici, int vite, int colore) {
             default:
                 break;
         }
-        print_info(num_proiettili == 0, life, w1, maxx, maxy);// stampa stato del player
+        print_info(num_proiettili == 0, life, w1, maxx, maxy); // Stampa stato del player
 
         for (i = 0; i < num_nemici; i++) {
             // Stampa delle navicelle nemiche
@@ -581,7 +580,8 @@ void screen_threads(WINDOW *w1, int num_nemici, int vite, int colore) {
             --num_proiettili;
         }
         // Stampa proiettili
-        if (proiettili[PROIETTILE_ALTO].y >= 2 && flag_pr[PROIETTILE_ALTO] == 0) { //In modo da non collidere con la linea separatrice
+        if (proiettili[PROIETTILE_ALTO].y >= 2 &&
+            flag_pr[PROIETTILE_ALTO] == 0) { //In modo da non collidere con la linea separatrice
             mvwaddch(w1, proiettili[PROIETTILE_ALTO].y, proiettili[PROIETTILE_ALTO].x, '=');
         }
         if (proiettili[PROIETTILE_BASSO].y >= 2 && flag_pr[PROIETTILE_BASSO] == 0) {
@@ -601,7 +601,7 @@ void screen_threads(WINDOW *w1, int num_nemici, int vite, int colore) {
             wattroff(w1, COLOR_PAIR(YEL_BL));
         }
 
-        mvwprintw(w1,0,0," "); // Per eliminare stampe sbagliate di proiettili
+        mvwprintw(w1, 0, 0, " "); // Per eliminare stampe sbagliate di proiettili
         wrefresh(w1);
         stop = clock();
         res = res + (double) (stop - start);
@@ -620,9 +620,9 @@ void screen_threads(WINDOW *w1, int num_nemici, int vite, int colore) {
         }
     }
     end = 0;
-    sem_post(&proj[0]);
-    sem_post(&proj[1]);
-    for(i=0;i<ENEM_TEST;i++)
+    sem_post(&proj[PROIETTILE_BASSO]);
+    sem_post(&proj[PROIETTILE_ALTO]);
+    for (i = 0; i < ENEM_TEST; i++)
         sem_post(&bomb[i]);
 
     if (maxenemies == 0) {
