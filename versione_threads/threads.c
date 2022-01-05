@@ -3,6 +3,8 @@ pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER;
 
 int jump[ENEM_TEST + 1] = {1}; // Array per invio info su rimbalzi uccisioni
 
+sem_t proj[2];
+
 typedef struct{
     Bullet *bullet;
     WINDOW *w;
@@ -28,10 +30,7 @@ void* lancia_proiettili(void* p_proiettile) {
     getmaxyx(stdscr, maxy, maxx); // Funzione di ottenimento della risoluzione
 
     /* Struttura del proiettile */
-    //non mi pare serva
-    Bullet proiettile;
-    proiettile.x = realdata->x; // Inizializzazione struttura del proiettile
-    proiettile.y = realdata->y;
+    Bullet proiettile; // Inizializzazione struttura del proiettile
     proiettile.id = realdata->id;
 
     
@@ -40,10 +39,18 @@ void* lancia_proiettili(void* p_proiettile) {
     //proiettile.id = direzione; // Il proiettile verso l'alto e quello verso il basso avranno ID diversi
     //proiettile.ready = 0; // Il proiettile è stato sparato
     //proiettile.x = x; // Il proiettile prende le ascisse della navicella principale
-    int y = proiettile.y; // Il proiettile prende le ordinate della navicella principale
+    int y = 0; // Il proiettile prende le ordinate della navicella principale
     int diagonale = 0; // Diagonale effettuata dal proiettile (ordinate)
     int skip = 0;
     /* Movimento del proiettile */
+    while (1)
+    {
+    sem_wait(&proj[realdata->id]);
+    pthread_mutex_lock(&mutex);
+    proiettile.x = realdata->x;
+    y = realdata->y;
+    pthread_mutex_unlock(&mutex);
+
     do {
         
         //pthread_mutex_lock(&mutex);
@@ -63,13 +70,15 @@ void* lancia_proiettili(void* p_proiettile) {
         realdata->y = y; // Viene assegnato il proiettile il valore della navicella + la diagonale.
         realdata->x = proiettile.x;
         //pthread_mutex_unlock(&mutex);
-        napms(10);
+        napms(20);
     } while ( (proiettile.x <= maxx-2) || ( (proiettile.y <= maxy-2) && (proiettile.y >= 3) ) );
     /* Il proiettile avanza finché non raggiunge la fine dello schermo */
     //pthread_mutex_lock(&mutex);
     /* Termine esecuzione proiettile */
+    //realdata->ready = 1;
     realdata->x=-1; // L'ascissa del proiettile viene impostata fuori dallo schermo
     realdata->y=-1; // L'ordinata del proiettile viene impostata fuori dallo schermo
+    }    
    //pthread_mutex_unlock(&mutex);
 }
 /*
@@ -356,8 +365,16 @@ void screen_threads(WINDOW *w1, int num_nemici, int rimbalzi, int colore) {
 
     /* Inizio del gioco */
     pthread_create(&t_nave, NULL, nave, (void *)&player);
+    sem_init(&proj[0],0,0);
+    sem_init(&proj[1],0,0);
+
+    proiettili[1].id = 1;
+    proiettili[0].id = 0;
+    pthread_create(&proiettile_basso,NULL,lancia_proiettili,(void *)&proiettili[0]);
+    pthread_create(&proiettile_alto,NULL,lancia_proiettili,(void *)&proiettili[1]);
+
     //exit(1);
-    p_nemico.jump = jump;
+    
     i = 0;
     for (coordinata = 1; i < maxenemies; coordinata++) {
         mvwprintw(w1,11+i,2,"lancio %d",coordinata);
@@ -395,7 +412,7 @@ void screen_threads(WINDOW *w1, int num_nemici, int rimbalzi, int colore) {
     //pthread_mutex_unlock(&mutex);
     // finche non raggiungo il gameover/vittoria,scrivo lo schermo
     while (player_started) {
-        
+
         // Contatore fps
         //sleep(1);
         ++fps;
@@ -415,32 +432,28 @@ void screen_threads(WINDOW *w1, int num_nemici, int rimbalzi, int colore) {
         if (player.proiettile.ready == PRONTO && num_proiettili == 0) {
             pthread_mutex_lock(&mutex);
             player.proiettile.ready = SCARICO;
-            //beep();
+            beep();
             // Flag che segnalano i nemici
             flag_pr[0] = 0;
             flag_pr[1] = 0;
             ++num_proiettili;
             ++num_proiettili;
-            
-            proiettili[0].id = 0;
             proiettili[0].x = player.coordinata.x;
             proiettili[0].y = player.coordinata.y;
-            pthread_create(&proiettile_alto,NULL,lancia_proiettili,(void *)&proiettili[0]);
-
-            
-            proiettili[1].id = 1;
             proiettili[1].x = player.coordinata.x;
             proiettili[1].y = player.coordinata.y;
-            pthread_create(&proiettile_basso,NULL,lancia_proiettili,(void *)&proiettili[1]);            //pthread_join(proiettile_basso,NULL);
+            sem_post(&proj[0]);
+            sem_post(&proj[1]);
             pthread_mutex_unlock(&mutex);
         }
 
 
         //PUNTO IN CUI I NEMICI HANNO FINITO DI ELABORARE LE COORDINATE,SOSPENSIONE DEI NEMICI
-        /*
+        
         // Processo bomba nemica
         for (i = 0; i < num_bombe + 1; i++) {
             // Se è possibile lanciare le bombe
+            pthread_mutex_lock(&mutex);
             if (bombe[i].ready == SCARICO && arr[i].proiettile.ready == PRONTO && num_bombe < MAX_PROIETTILI) {
                 num_bombe++; // Si aumenta il numero di bombe in gioco
                 bombe[i].ready = 1; // Bomba lanciata
@@ -452,7 +465,8 @@ void screen_threads(WINDOW *w1, int num_nemici, int rimbalzi, int colore) {
                 pthread_create(&t_bomba,NULL,bomba,(void*)&bombe[i]);
                 //pthread_join(t_bomba,NULL);
             }
-        }*/
+            pthread_mutex_unlock(&mutex);
+        }
         //pthread_mutex_lock(&mutex);
 
         werase(w1);
@@ -537,6 +551,7 @@ void screen_threads(WINDOW *w1, int num_nemici, int rimbalzi, int colore) {
                       hitbox > proiettili[w].y - arr[i].coordinata.y))) {
                     jump[arr[i].id + 1] = -1; // invio hit al nemico
                     flag_pr[proiettili[w].id] = 1; // disabilitazione proiettile
+                    
                     // serve per ridurre i nemici nei vari counter
                     if (arr[i].proiettile.id == 1) {
                         ++killed;
@@ -581,12 +596,14 @@ void screen_threads(WINDOW *w1, int num_nemici, int rimbalzi, int colore) {
                 proiettil.x = 0;
                 proiettili[0].x = -1;
                 proiettili[0].y = -1;
+               
             }
             // Secondo proiettile
             if (proiettili[1].x != (-1) && proiettili[1].y != -1) {
                 proiettil.x = 0;
                 proiettili[1].x = -1;
                 proiettili[1].y = -1;
+                
             }
         }
         switch (colore) { // stampa navetta colorata
@@ -633,7 +650,7 @@ void screen_threads(WINDOW *w1, int num_nemici, int rimbalzi, int colore) {
             }
         }
         // Controllo se sono disabilitati per abilitarli al lancio
-        if ((proiettili[1].x == -1 && proiettili[1].y == -1) &&
+        if ((proiettili[1].x == -1 && proiettili[1].y == -1) && 
             (proiettili[0].x == -1 && proiettili[0].y == -1) &&
             (num_proiettili != 0)) {
             --num_proiettili;
@@ -646,6 +663,11 @@ void screen_threads(WINDOW *w1, int num_nemici, int rimbalzi, int colore) {
         if (flag_pr[0] == 0) {
             mvwaddch(w1, proiettili[0].y, proiettili[0].x, '=');
         }
+        //sem_getvalue(&proj[1],&i);
+        //mvwprintw(w1,20,15,"x:%d,y:%d,i:%d",proiettili[1].y, proiettili[1].x,i);
+        //sem_getvalue(&proj[0],&i);
+        //mvwprintw(w1,18,15,"x:%d,y:%d,i:%d",proiettili[0].y, proiettili[0].x,i);
+        
 
         // Sincronizzazione processi + invio info su rimbalzi/uccisioni
         //PUNTO IN CUI I NEMICI RIPRENDONO L'ESECUZIONE
