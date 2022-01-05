@@ -247,7 +247,7 @@ void nemico(int x,int y,int id,int direzione,int *sender,int *receiver) {
  * Area di gioco dove verranno gestite stampa e collisioni
  *
  * WINDOW* w1 : Finestra di stampa. */
-void screen(WINDOW *w1, int num_nemici, int rimbalzi, int colore) {
+void screen(WINDOW *w1, int num_nemici, int vite, int colore) {
 
     /* Ottenimento risoluzione della finestra */
     int maxy, maxx; // Inizializzazione variabili dello schermo
@@ -262,7 +262,7 @@ void screen(WINDOW *w1, int num_nemici, int rimbalzi, int colore) {
 
     /* Struttura per la gestione del player */
     Player player; // Inizializzazione struttura player
-    int life = 3; ///* personalizzabile Vite del giocatore
+    int life = vite; ///* personalizzabile Vite del giocatore
     int hit; // Flag se la navetta principale è stata colpita
     int flag_proiettile_ready = 0; // Flag, indica se il proiettile è pronto ad essere sparato o meno
     int invincibility = 0; // Flag e durata di invincibilità
@@ -326,9 +326,7 @@ void screen(WINDOW *w1, int num_nemici, int rimbalzi, int colore) {
                                               2); //In modo da avere almeno uno sprite di stacco tra i nemici (Asse y)
                                 decremento = coordinata /
                                              (maxy - 2); //Ogni volta che si supera il maxy viene decrementata la x
-                                if (rimbalzi == 0) {
                                     if (decremento % 2 == 0) direzione = !direzione; ///* personalizzabile
-                                }
                                 y_spawner = coordinata %
                                             (maxy - 2); //Si prende il modulo per scegliere la coordinata dello sprite
                                 decremento = (decremento * 3 *
@@ -631,7 +629,7 @@ void screen(WINDOW *w1, int num_nemici, int rimbalzi, int colore) {
                         }
 
                         // Stampa proiettile basso
-                        if (flag_pr[0] == 0) {
+                        if (proiettili[0].y >= 2 && flag_pr[0] == 0) {
                             mvwaddch(w1, proiettili[0].y, proiettili[0].x, '=');
                         }
 
@@ -653,7 +651,9 @@ void screen(WINDOW *w1, int num_nemici, int rimbalzi, int colore) {
 
                         // Stampa degli FPS
                         if (seconds > 1) {
-                            mvwprintw(w1, 0, maxx-17, "FPS:%d,Media FPS:%d", fps_counter, (int) (total_fps / seconds));
+                            wattron(w1, COLOR_PAIR(YEL_BL));
+                            mvwprintw(w1, 0, maxx-25, "FPS:%d  Media FPS:%d", fps_counter, (int) (total_fps / seconds));
+                            wattroff(w1, COLOR_PAIR(YEL_BL));
                         }
                         
                         wrefresh(w1); // Refresh dello schermo

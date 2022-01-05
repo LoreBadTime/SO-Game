@@ -12,9 +12,11 @@
 #include <semaphore.h>
 #include "./assets/animations.h"
 #include "./assets/sprites.h"
-//#include "./versione_processi/process.h"
+#include "./versione_processi/process.h"
 #include "./versione_threads/threads.h"
 
+#define ENEM_TEST 30 // Massimo numero di nemici giocabili
+#define MAX_PROIETTILI 2 // Massimo numero di proiettili sparati ( non modificabile )
 #define pos_X 0
 #define pos_Y 1
 #define SU 65 /* Freccia su */
@@ -29,6 +31,7 @@
 #define SCARICO 0 //Il caricatore dei proiettili principali o delle bombe è scarico
 #define PROIETTILE_BASSO 0 //ID del proiettile che avanza verso il basso
 #define PROIETTILE_ALTO 1 //ID del proiettile che avanza verso l'alto
+#define MAX_VITE 10 //Vite massimi selezionabili
 
 #define GM_LESS_DARKER_RED 9
 #define GM_MORE_DARKER_RED 10
