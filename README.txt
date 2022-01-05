@@ -23,7 +23,7 @@
 *
 *	  Nonostante sia possibile terminare in qualsiasi momento l'esecuzione del gioco usando la combinazione di tasti "CTRL + C",
 *   sconsigliamo vivamente di farlo, poichè questo potrebbe creare bug critici all'interno del gioco, e di cliccare direttamente
-*   EXIT una volta che si desidera terminare il gioco.
+*   EXIT all'interno del menù una volta che si desidera terminare il gioco.
 *
 *	  Attraverso le impostazioni è possibile scegliere il colore della nave principale, il numero di nemici e le vite.
 *
