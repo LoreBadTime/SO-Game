@@ -216,7 +216,7 @@ void* thread_nemico(void* p_nemico) {
             }
             if (rec[id + 1] == 1) {
                 direzione = !direzione; // Si cambia la direzione della navicella nemica
-                rec[id + 1] = 0;
+                rec[id + 1] = 0; // Reset del dato di rimbalzo
             }
             if (enemy->proiettile.id == 0) { // Se la navicella ha finito le vite
                 nemico.coordinata.y = OUT_OF_RANGE; // Prende una nuova coordinata per uscire dallo schermo
@@ -304,43 +304,38 @@ void screen_threads(WINDOW *w1, int num_nemici, int vite, int colore) {
     /* Inizio del gioco */
     proiettili[PROIETTILE_ALTO].id = PROIETTILE_ALTO;
     proiettili[PROIETTILE_BASSO].id = PROIETTILE_BASSO;
+    /* Thread dei proiettili */
     pthread_create(&proiettile_basso, NULL, thread_proiettile, (void *) &proiettili[PROIETTILE_BASSO]);
     pthread_create(&proiettile_alto, NULL, thread_proiettile, (void *) &proiettili[PROIETTILE_ALTO]);
 
-
+    /* Thread delle bombe */
     for (i = 0; i < maxenemies; i++) {
-        bombe[i].ready = SCARICO;
-        bombe[i].id = i;// Bomba lanciata
+        bombe[i].ready = SCARICO; // inizializzazione bomba a non lanciata
+        bombe[i].id = i; // assegnamento id a bomba
         pthread_create(&t_bombe[i], NULL, thread_bomba,
-                       (void *) &bombe[i]); // Disabilita le collisioni per qualche motivo
+                       (void *) &bombe[i]); // Lancio Bomba
     }
-
+    /* Thread di gestione dell'input */
     pthread_create(&t_nave, NULL, thread_nave, (void *) &player);
 
     i = 0;
     for (coordinata = 1; i < maxenemies; coordinata++, i++) {
-        mvwprintw(w1, 11 + i, 2, "lancio %d", coordinata);
-        wrefresh(w1);
         coordinata = (i * 3 * 2); //In modo da avere almeno uno sprite di stacco tra i nemici (Asse y)
         decremento = coordinata / (maxy - 2); //Ogni volta che si supera il maxy viene decrementata la x
         if (decremento % 2 == 0) direzione = !direzione;
         y_spawner = coordinata % (maxy - 2); //Si prende il modulo per scegliere la coordinata dello sprite
         decremento = (decremento * 3 * 2); //In modo da avere almeno uno sprite di stacco tra i nemici (Asse x)
+        // Assegnamenti variabili di spawn dei nemici
         arr[i].coordinata.x = maxx - 4 - decremento;
         arr[i].coordinata.y = y_spawner;
         arr[i].id = i;
         arr[i].angolo = direzione;
-        jump[i + 1] = 0;
-        mvwprintw(w1, 11 + i, 10, "lanciato %d,%d,%d,%d,nemici:%d", i, arr[i].coordinata.x, arr[i].coordinata.y,
-                  arr[i].id, maxenemies);
-        wrefresh(w1);
+        jump[i + 1] = 0; // Pulizia dei rimbalzi in caso di precedenti giocate
         pthread_create(&t_nemico[i], NULL, thread_nemico, (void *) &arr[i]);
     }
 
     while (player_started) {
-
         usleep(CPU_NAP);//serve solo per non far andare la CPU al 100%(htop),si può rimuovere/commentare;
-
         // Contatore fps
         ++fps;
         start = clock();
@@ -348,15 +343,17 @@ void screen_threads(WINDOW *w1, int num_nemici, int vite, int colore) {
         //  Lancio dei proiettili navetta in caso di input
         if (player.proiettile.ready == PRONTO && num_proiettili == 0) {
             pthread_mutex_lock(&mutex);
-            player.proiettile.ready = SCARICO;
+            player.proiettile.ready = SCARICO; // Flag per disabilitare il lanciatore dei proiettili
             beep();
-            // Flag che segnalano i nemici
+            // Flag che segnalano che i proiettili sono attivi
             flag_pr[PROIETTILE_BASSO] = 0;
             flag_pr[PROIETTILE_ALTO] = 0;
             ++num_proiettili;
             ++num_proiettili;
+            // Assegnamento coordinate del player ai proiettilli
             p_x = player.coordinata.x;
             p_y = player.coordinata.y;
+            // Lancio proiettili
             sem_post(&proj[PROIETTILE_BASSO]);
             sem_post(&proj[PROIETTILE_ALTO]);
             pthread_mutex_unlock(&mutex);
@@ -372,6 +369,7 @@ void screen_threads(WINDOW *w1, int num_nemici, int vite, int colore) {
                 pthread_mutex_lock(&mutex);
                 num_bombe++; // Si aumenta il numero di bombe in gioco
                 bombe[i].ready = 1; // Bomba lanciata
+                // Assegnamento coordinate di lancio
                 bombe[i].x = arr[i].coordinata.x;
                 bombe[i].y = arr[i].coordinata.y;
                 bombe[i].id = arr[i].proiettile.riconoscimento;
@@ -383,6 +381,7 @@ void screen_threads(WINDOW *w1, int num_nemici, int vite, int colore) {
         werase(w1);  // Cancellazione dello schermo
 
         /* -- CONTROLLO COLLISIONI -- */
+        // Blocco necessario per processare lo schermo
         pthread_mutex_lock(&mutex);
 
         // Collisioni in cui sono coinvolti i nemici
@@ -463,7 +462,7 @@ void screen_threads(WINDOW *w1, int num_nemici, int vite, int colore) {
                         --arr[i].proiettile.id; // invio hit al nemico
                         flag_pr[proiettili[w].id] = 1; // disabilitazione proiettile
 
-                        // serve per ridurre i nemici nei vari counter
+                        // Serve per ridurre il numero dei nemici nei vari counter
                         if (arr[i].proiettile.id == 0) {
                             ++killed;
                             kill_pr[arr[i].id] = 1;
@@ -618,8 +617,9 @@ void screen_threads(WINDOW *w1, int num_nemici, int vite, int colore) {
         }
     }
     /* Chiusura di tutti i threads */
-    end = 0; // I cicli di ogni thread terminano ed escono
-    sem_post(&proj[PROIETTILE_BASSO]);
+    end = 0; // Variabile che termina tutti i thread
+    // Reset dei semafori nel caso di giocate multiple
+    sem_post(&proj[PROIETTILE_BASSO]); 
     sem_post(&proj[PROIETTILE_ALTO]);
     for (i = 0; i < ENEM_TEST; i++)
         sem_post(&bomb[i]);
@@ -629,12 +629,15 @@ void screen_threads(WINDOW *w1, int num_nemici, int vite, int colore) {
     } else { // Altrimenti ha perso
         game_over(w1, player.coordinata.x, player.coordinata.y);
     }
+    /* Chiusura Threads */
     pthread_join(proiettile_basso, (void **) 0);
     pthread_join(proiettile_alto, (void **) 0);
     pthread_join(t_nave, (void **) 0);
     for (i = 0; i < num_nemici; i++) {
         pthread_join(t_nemico[i], (void **) 0);
+        pthread_join(t_bombe[i], (void **) 0);
     }
-    p_x = 0;
+
+    p_x = 0; // Reset delle variabili del proiettile per più giocate
     p_y = 0;
 }
