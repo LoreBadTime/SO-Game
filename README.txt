@@ -3,6 +3,7 @@
 *	  Space Inveders - Progetto di Lorenzo Concas e Salvatore Castello
 *	
 * 	Il gioco presenta la versione processi e thread, separate dalle due cartelle con il proprio makefile.
+*   Tutto il gioco è stato sviluppato sullo stesso Sistema Operativo e testato nella stessa Vm indicata dai docenti (64 bit).
 *	
 *	  Il gioco presenta al suo interno una quantità di nemici modificabile nelle impostazioni del gioco stesso
 *	  che vanno da 1 a 30 nemici. Il valore 30 è solo un valore "simbolico", infatti è possibile (ma non consigliato)
