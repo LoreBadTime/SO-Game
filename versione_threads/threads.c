@@ -68,7 +68,7 @@ void* thread_proiettile(void* p_proiettile) {
             /* Scrittura dati nello schermo/dato originale */
             realdata->y = y; 
             realdata->x = proiettile.x;
-            napms(4);// Delay per rallentare i proiettili
+            napms(5);// Delay per rallentare i proiettili
         } while (realdata->x > 0 &&
                  ((proiettile.x <= maxx - 2) || ((proiettile.y <= maxy - 2) && (proiettile.y >= 3))));
         /* Il proiettile avanza finché non raggiunge la fine dello schermo */
@@ -109,7 +109,7 @@ void* thread_bomba(void* p_bomba) {
             // Si incrementa la variabile per rallentare la bomba
             ++skip;
             realdata->x = bomba.x;
-            napms(30);
+            napms(20);
         } //La bomba avanza finchè non raggiunge il bordo sinistro dello schermo
 
         /* Termine esecuzione bomba */
@@ -350,8 +350,8 @@ void screen_threads(WINDOW *w1, int num_nemici, int vite, int colore) {
     pthread_t t_nave, t_nemico[ENEM_TEST], t_bomba, proiettile_alto, proiettile_basso, t_bombe[ENEM_TEST];
     // queste non servono
     //parametro_bomba p_bomba;  //malloc(sizeof(parametro_bomba));
-    parametro_proiettile p_proiettile = {}; //= malloc(sizeof(parametro_proiettile));
-    parametro_nemico p_nemico = {}; //= //malloc(sizeof(parametro_nemico));
+    //parametro_proiettile p_proiettile = {}; //= malloc(sizeof(parametro_proiettile));
+    //parametro_nemico p_nemico = {}; //= //malloc(sizeof(parametro_nemico));
 
     /* Inizio del gioco */
     sem_init(&proj[0], 0, 0);
