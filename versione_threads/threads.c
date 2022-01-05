@@ -71,7 +71,7 @@ void* thread_proiettile(void* p_proiettile) {
         realdata->x = proiettile.x;
         //pthread_mutex_unlock(&mutex);
         napms(5);
-    } while ( (proiettile.x <= maxx-2) || ( (proiettile.y <= maxy-2) && (proiettile.y >= 3) ) );
+    } while (realdata->x > 0 && ((proiettile.x <= maxx-2) || ( (proiettile.y <= maxy-2) && (proiettile.y >= 3) )) );
     /* Il proiettile avanza finché non raggiunge la fine dello schermo */
     //pthread_mutex_lock(&mutex);
     /* Termine esecuzione proiettile */
@@ -599,13 +599,11 @@ void screen_threads(WINDOW *w1, int num_nemici, int vite, int colore) {
         }
 
         // Controllo se i proiettili della navetta sono stati disabilitati,in modo da riabilitarli
-        if (flag_pr[0] == 1) {  // Clear della pipe finchè i processi non finiscono
+        if (flag_pr[0] == 1 && flag_pr[1] == 1) {  // Clear della pipe finchè i processi non finiscono
             // Primo proiettile
             proiettili[0].x = -1;
             proiettili[0].y = -1;
-        }
-            // Secondo proiettile
-        if (flag_pr[1] == 1) {    
+            // Secondo proiettile   
             proiettili[1].x = -1;
             proiettili[1].y = -1;
             
